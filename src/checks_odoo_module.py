@@ -13,7 +13,10 @@ DFTL_README_FILES = ["README.rst", "README.md", "README.txt"]
 
 def installable(method):
     def inner(self):
-        msg_tmpl = "Skipped check '%s' module '%s'" % (method.__name__, self.odoo_addon_name)
+        msg_tmpl = "Skipped check '%s' module '%s'" % (
+            method.__name__,
+            self.odoo_addon_name,
+        )
         if self.odoo_addon_name == "absa":
             print(self.manifest_error)
         if self.manifest_error:
@@ -36,15 +39,18 @@ class ChecksOdooModule:
         self.is_module_installable = self._is_module_installable()
 
     def _manifest_content(self):
-        if not os.path.isfile(os.path.join(self.odoo_addon_path, "__init__.py")) or not os.path.isfile(
-            self.manifest_path
-        ):
+        if not os.path.isfile(
+            os.path.join(self.odoo_addon_path, "__init__.py")
+        ) or not os.path.isfile(self.manifest_path):
             return {}
         with open(self.manifest_path) as f_manifest:
             try:
                 return ast.literal_eval(f_manifest.read())
             except BaseException as e:
-                self.manifest_error = "Manifest %s with error %s" % (self.manifest_path, e)
+                self.manifest_error = "Manifest %s with error %s" % (
+                    self.manifest_path,
+                    e,
+                )
         return {}
 
     def _is_module_installable(self):
@@ -56,7 +62,10 @@ class ChecksOdooModule:
             readme_path = os.path.join(self.odoo_addon_path, readme_name)
             if os.path.isfile(readme_path):
                 return True
-        print("Missing %s file. Template here: %s" % (DFTL_README_FILES[0], DFTL_README_TMPL_URL))
+        print(
+            "Missing %s file. Template here: %s"
+            % (DFTL_README_FILES[0], DFTL_README_TMPL_URL)
+        )
         return False
 
     def check_manifest(self):

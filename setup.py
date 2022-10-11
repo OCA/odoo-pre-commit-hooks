@@ -14,7 +14,9 @@ def generate_dependencies():
 
 
 def read(*names, **kwargs):
-    with io.open(join(dirname(__file__), *names), encoding=kwargs.get("encoding", "utf8")) as fh:
+    with io.open(
+        join(dirname(__file__), *names), encoding=kwargs.get("encoding", "utf8")
+    ) as fh:
         return fh.read()
 
 
@@ -24,7 +26,9 @@ setup(
     license="LGPL-3.0-or-later",
     description="odoo-pre-commit-hooks to use in pre-commit-config.yml files",
     long_description="{}".format(
-        re.compile("^.. start-badges.*^.. end-badges", re.M | re.S).sub("", read("README.rst")),
+        re.compile("^.. start-badges.*^.. end-badges", re.M | re.S).sub(
+            "", read("README.rst")
+        ),
     ),
     author="Odoo Community Association (OCA)",
     author_email="support@odoo-community.org",
