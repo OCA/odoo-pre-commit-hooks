@@ -27,7 +27,7 @@ setup(
     description="odoo-pre-commit-hooks to use in pre-commit-config.yml files",
     long_description="{}".format(
         re.compile("^.. start-badges.*^.. end-badges", re.M | re.S).sub(
-            "", read("README.rst")
+            "", read("README.md")
         ),
     ),
     author="Odoo Community Association (OCA)",
