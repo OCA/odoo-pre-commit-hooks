@@ -6,6 +6,8 @@ import sys
 
 from restructuredtext_lint import lint_file as rst_lint
 
+from . import tools
+
 
 class ChecksRST:
     def __init__(self, rst_path):
@@ -37,20 +39,5 @@ class ChecksRST:
         return True
 
 
-def main_rst_syntax_error():
-    global_res = True
-    for fname in sys.argv[1:]:
-        obj = ChecksRST(fname)
-        res = obj.check_rst_syntax_error()
-        if not res:
-            global_res = False
-    if not global_res:
-        sys.exit(1)
-
-
-def main():
-    main_rst_syntax_error()
-
-
 if __name__ == "__main__":
-    main()
+    tools.main(ChecksRST, sys.argv[1:])

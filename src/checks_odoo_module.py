@@ -7,7 +7,10 @@ import ast
 import os
 import sys
 
-DFTL_README_TMPL_URL = "https://github.com/OCA/maintainer-tools/blob/master/template/module/README.rst"  # no-qa
+# from . import tools
+import tools
+
+DFTL_README_TMPL_URL = "https://github.com/OCA/maintainer-tools/blob/master/template/module/README.rst"  # noqa: B950
 DFTL_README_FILES = ["README.rst", "README.md", "README.txt"]
 
 
@@ -17,8 +20,6 @@ def installable(method):
             method.__name__,
             self.odoo_addon_name,
         )
-        if self.odoo_addon_name == "absa":
-            print(self.manifest_error)
         if self.manifest_error:
             print("%s with error: '%s'" % (msg_tmpl, self.manifest_error))
         elif not self.is_module_installable:
@@ -39,9 +40,11 @@ class ChecksOdooModule:
         self.is_module_installable = self._is_module_installable()
 
     def _manifest_content(self):
-        if not os.path.isfile(
-            os.path.join(self.odoo_addon_path, "__init__.py")
-        ) or not os.path.isfile(self.manifest_path):
+        if (
+            not os.path.isfile(os.path.join(self.odoo_addon_path, "__init__.py"))
+            or not os.path.isfile(self.manifest_path)
+            or os.path.basename(self.manifest_path) != "__manifest__.py"
+        ):
             return {}
         with open(self.manifest_path) as f_manifest:
             try:
@@ -72,25 +75,8 @@ class ChecksOdooModule:
         if not self.manifest_content:
             print("%s could not be loaded" % (self.manifest_path))
             return False
-
-
-def main_missing_readme():
-    global_res = True
-    for fname in sys.argv[1:]:
-        obj = ChecksOdooModule(fname)
-        res = obj.check_missing_readme()
-        if not res:
-            global_res = False
-        res = obj.check_manifest()
-        if not res:
-            global_res = False
-    if not global_res:
-        sys.exit(1)
-
-
-def main():
-    main_missing_readme()
+        return True
 
 
 if __name__ == "__main__":
-    main()
+    tools.main(ChecksOdooModule, sys.argv[1:])
