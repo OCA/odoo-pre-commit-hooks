@@ -68,8 +68,8 @@ setup(
     extras_require={},
     entry_points={
         "console_scripts": [
-            "odoo-missing-readme = checks_odoo_module:main_missing_readme",
-            "odoo-rst-syntax = checks_rst:main_rst_syntax_error",
+            "odoo-missing-readme = checks_odoo_module:main",
+            "odoo-rst-syntax = checks_rst:main",
         ]
     },
 )

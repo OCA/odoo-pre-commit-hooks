@@ -78,5 +78,9 @@ class ChecksOdooModule:
         return True
 
 
+def main(do_exit=True):
+    tools.main(ChecksOdooModule, sys.argv[1:], do_exit=do_exit)
+
+
 if __name__ == "__main__":
-    tools.main(ChecksOdooModule, sys.argv[1:])
+    main()
