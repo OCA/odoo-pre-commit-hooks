@@ -62,10 +62,10 @@ setup(
     python_requires=">=3.5",
     install_requires=generate_dependencies(),
     extras_require={},
-    # entry_points={
-    #     "console_scripts": [
-    #         "odoo-missing-readme-hook = checks_odoo_module:main",
-    #         "odoo-rst-syntax-hook = checks_rst:main",
-    #     ]
-    # },
+    entry_points={
+        "console_scripts": [
+            "odoo-missing-readme-hook = checks_odoo_module:main",
+            "odoo-rst-syntax-hook = checks_rst:main",
+        ]
+    },
 )

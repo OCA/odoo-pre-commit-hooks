@@ -7,7 +7,7 @@ import ast
 import os
 import sys
 
-from . import tools
+from pre_commit_hooks.tools import main as tools_main
 
 DFTL_README_TMPL_URL = "https://github.com/OCA/maintainer-tools/blob/master/template/module/README.rst"  # noqa: B950
 DFTL_README_FILES = ["README.rst", "README.md", "README.txt"]
@@ -15,9 +15,9 @@ DFTL_README_FILES = ["README.rst", "README.md", "README.txt"]
 
 def installable(method):
     def inner(self):
-        msg_tmpl = "Skipped check '%s' module '%s'" % (
+        msg_tmpl = "Skipped check '%s' for '%s'" % (
             method.__name__,
-            self.odoo_addon_name,
+            self.manifest_path,
         )
         if self.manifest_error:
             print("%s with error: '%s'" % (msg_tmpl, self.manifest_error))
@@ -31,19 +31,19 @@ def installable(method):
 
 class ChecksOdooModule:
     def __init__(self, manifest_path):
-        self.manifest_path = os.path.relpath(manifest_path)
-        self.odoo_addon_path = os.path.dirname(self.manifest_path)
+        self.manifest_path = manifest_path
+        self.odoo_addon_path = os.path.dirname(manifest_path)
         self.odoo_addon_name = os.path.basename(self.odoo_addon_path)
         self.manifest_error = ""
         self.manifest_content = self._manifest_content()
         self.is_module_installable = self._is_module_installable()
 
     def _manifest_content(self):
-        if (
-            not os.path.isfile(os.path.join(self.odoo_addon_path, "__init__.py"))
-            or not os.path.isfile(self.manifest_path)
-            or os.path.basename(self.manifest_path) != "__manifest__.py"
-        ):
+        if os.path.basename(self.manifest_path) != "__manifest__.py" or not os.path.isfile(self.manifest_path):
+            print("The path %s is not __manifest__.py file" % self.manifest_path)
+            return {}
+        if not os.path.isfile(os.path.join(self.odoo_addon_path, "__init__.py")):
+            print("The path %s does not have __init__.py file")
             return {}
         with open(self.manifest_path) as f_manifest:
             try:
@@ -78,7 +78,7 @@ class ChecksOdooModule:
 
 
 def main(do_exit=True):
-    tools.main(ChecksOdooModule, sys.argv[1:], do_exit=do_exit)
+    tools_main(ChecksOdooModule, sys.argv[1:], do_exit=do_exit)
 
 
 if __name__ == "__main__":

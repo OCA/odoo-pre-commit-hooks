@@ -1,3 +1,4 @@
+import os
 import sys
 
 
@@ -14,9 +15,10 @@ def main(class_def, fnames, do_exit=True):
     success = True
     checks = getattr_checks(class_def)
     for fname in fnames:
-        obj = class_def(fname)
+        obj = class_def(os.path.realpath(fname))
         for check in checks:
             res = getattr(obj, check)()
+            # TODO: Return file, lineno, check name and result
             if not res and success:
                 success = False
     if do_exit:

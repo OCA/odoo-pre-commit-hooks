@@ -6,7 +6,7 @@ import sys
 
 from restructuredtext_lint import lint_file as rst_lint
 
-from . import tools
+from pre_commit_hooks.tools import main as tools_main
 
 
 class ChecksRST:
@@ -40,7 +40,7 @@ class ChecksRST:
 
 
 def main(do_exit=True):
-    tools.main(ChecksRST, sys.argv[1:], do_exit=do_exit)
+    tools_main(ChecksRST, sys.argv[1:], do_exit=do_exit)
 
 
 if __name__ == "__main__":
