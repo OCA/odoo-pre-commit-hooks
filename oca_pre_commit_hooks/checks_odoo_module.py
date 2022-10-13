@@ -7,7 +7,7 @@ import ast
 import os
 import sys
 
-from pre_commit_hooks.tools import main as tools_main
+from oca_pre_commit_hooks.tools import main as tools_main
 
 DFTL_README_TMPL_URL = "https://github.com/OCA/maintainer-tools/blob/master/template/module/README.rst"  # noqa: B950
 DFTL_README_FILES = ["README.rst", "README.md", "README.txt"]

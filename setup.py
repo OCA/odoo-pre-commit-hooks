@@ -27,10 +27,10 @@ setup(
     author="Odoo Community Association (OCA)",
     author_email="support@odoo-community.org",
     url="https://github.com/OCA/odoo-pre-commit-hooks",
-    packages=find_packages("oca_odoo_pre_commit_hooks"),
-    package_dir={"": "oca_odoo_pre_commit_hooks"},
+    packages=find_packages("oca_pre_commit_hooks"),
+    package_dir={"": "oca_pre_commit_hooks"},
     py_modules=[
-        splitext(basename(path))[0] for path in glob("oca_odoo_pre_commit_hooks/*.py")
+        splitext(basename(path))[0] for path in glob("oca_pre_commit_hooks/*.py")
     ],
     include_package_data=True,
     zip_safe=False,
@@ -56,7 +56,7 @@ setup(
     },
     keywords=[
         "pre-commit",
-        "oca",
+        "OCA",
         "Odoo Community Association",
         "pre-commit-hook",
     ],
@@ -65,8 +65,8 @@ setup(
     extras_require={},
     entry_points={
         "console_scripts": [
-            "odoo-missing-readme-hook = checks_odoo_module:main",
-            "odoo-rst-syntax-hook = checks_rst:main",
+            "oca-missing-readme-hook = checks_odoo_module:main",
+            "oca-rst-syntax-hook = checks_rst:main",
         ]
     },
 )

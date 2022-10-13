@@ -4,8 +4,9 @@
 import re
 import sys
 
-from pre_commit_hooks.tools import main as tools_main
 from restructuredtext_lint import lint_file as rst_lint
+
+from oca_pre_commit_hooks.tools import main as tools_main
 
 
 class ChecksRST:
