@@ -1,7 +1,5 @@
 #!/usr/bin/env python
-from __future__ import absolute_import, print_function
 
-import io
 import re
 from glob import glob
 from os.path import basename, dirname, join, splitext
@@ -14,7 +12,7 @@ def generate_dependencies():
 
 
 def read(*names, **kwargs):
-    with io.open(
+    with open(
         join(dirname(__file__), *names), encoding=kwargs.get("encoding", "utf8")
     ) as fh:
         return fh.read()
@@ -25,17 +23,14 @@ setup(
     version="0.0.1",
     license="LGPL-3.0-or-later",
     description="odoo-pre-commit-hooks to use in pre-commit-config.yml files",
-    long_description="{}".format(
-        re.compile("^.. start-badges.*^.. end-badges", re.M | re.S).sub(
-            "", read("README.md")
-        ),
-    ),
+    long_description=read("README.md"),
+    long_description_content_type="text/markdown",
     author="Odoo Community Association (OCA)",
     author_email="support@odoo-community.org",
     url="https://github.com/OCA/odoo-pre-commit-hooks",
-    packages=find_packages("src"),
-    package_dir={"": "src"},
-    py_modules=[splitext(basename(path))[0] for path in glob("src/*.py")],
+    packages=find_packages("pre_commit_hooks"),
+    package_dir={"": "pre_commit_hooks"},
+    py_modules=[splitext(basename(path))[0] for path in glob("pre_commit_hooks/*.py")],
     include_package_data=True,
     zip_safe=False,
     classifiers=[
@@ -62,14 +57,15 @@ setup(
         "pre-commit",
         "oca",
         "Odoo Community Association",
+        "pre-commit-hook",
     ],
     python_requires=">=3.5",
     install_requires=generate_dependencies(),
     extras_require={},
-    entry_points={
-        "console_scripts": [
-            "odoo-missing-readme = checks_odoo_module:main",
-            "odoo-rst-syntax = checks_rst:main",
-        ]
-    },
+    # entry_points={
+    #     "console_scripts": [
+    #         "odoo-missing-readme-hook = checks_odoo_module:main",
+    #         "odoo-rst-syntax-hook = checks_rst:main",
+    #     ]
+    # },
 )

@@ -7,8 +7,7 @@ import ast
 import os
 import sys
 
-# from . import tools
-import tools
+from . import tools
 
 DFTL_README_TMPL_URL = "https://github.com/OCA/maintainer-tools/blob/master/template/module/README.rst"  # noqa: B950
 DFTL_README_FILES = ["README.rst", "README.md", "README.txt"]
