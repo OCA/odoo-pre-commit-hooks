@@ -39,7 +39,9 @@ class ChecksOdooModule:
         self.is_module_installable = self._is_module_installable()
 
     def _manifest_content(self):
-        if os.path.basename(self.manifest_path) != "__manifest__.py" or not os.path.isfile(self.manifest_path):
+        if os.path.basename(
+            self.manifest_path
+        ) != "__manifest__.py" or not os.path.isfile(self.manifest_path):
             print("The path %s is not __manifest__.py file" % self.manifest_path)
             return {}
         if not os.path.isfile(os.path.join(self.odoo_addon_path, "__init__.py")):

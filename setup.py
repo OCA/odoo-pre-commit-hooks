@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import re
 from glob import glob
 from os.path import basename, dirname, join, splitext
 
@@ -28,9 +27,11 @@ setup(
     author="Odoo Community Association (OCA)",
     author_email="support@odoo-community.org",
     url="https://github.com/OCA/odoo-pre-commit-hooks",
-    packages=find_packages("pre_commit_hooks"),
-    package_dir={"": "pre_commit_hooks"},
-    py_modules=[splitext(basename(path))[0] for path in glob("pre_commit_hooks/*.py")],
+    packages=find_packages("oca_odoo_pre_commit_hooks"),
+    package_dir={"": "oca_odoo_pre_commit_hooks"},
+    py_modules=[
+        splitext(basename(path))[0] for path in glob("oca_odoo_pre_commit_hooks/*.py")
+    ],
     include_package_data=True,
     zip_safe=False,
     classifiers=[

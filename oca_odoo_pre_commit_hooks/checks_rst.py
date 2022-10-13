@@ -4,9 +4,8 @@
 import re
 import sys
 
-from restructuredtext_lint import lint_file as rst_lint
-
 from pre_commit_hooks.tools import main as tools_main
+from restructuredtext_lint import lint_file as rst_lint
 
 
 class ChecksRST:
