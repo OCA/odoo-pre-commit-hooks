@@ -65,8 +65,7 @@ setup(
     extras_require={},
     entry_points={
         "console_scripts": [
-            "oca-missing-readme-hook = checks_odoo_module:main",
-            "oca-rst-syntax-hook = checks_rst:main",
+            "oca-checks-odoo-module = checks_odoo_module:main",
         ]
     },
 )
