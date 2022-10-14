@@ -1,6 +1,7 @@
 # Hooks are using print directly
 # pylint: disable=print-used
-
+import re
+import os
 from collections import defaultdict
 
 from lxml import etree
@@ -30,7 +31,7 @@ class ChecksOdooModuleXML:
         self.checks_errors = defaultdict(list)
 
     def check_xml_records(self):
-        """Check xml_redundant_module_name.
+        """* Check xml_redundant_module_name
 
         If the module is called "module_a" and the xmlid is
         <record id="module_a.xmlid_name1" ...
@@ -38,7 +39,7 @@ class ChecksOdooModuleXML:
         The "module_a." is redundant it could be replaced to only
         <record id="xmlid_name1" ...
 
-        Check xml_duplicate_record_id
+        * Check xml_duplicate_record_id
 
         If a module has duplicated record_id AKA xml_ids
         file1.xml
@@ -81,3 +82,20 @@ class ChecksOdooModuleXML:
                 f'Duplicate xml record id "{xmlid_key}" in '
                 f'{", ".join(f"{record.base}:{record.sourceline}" for record in records[1:])}'
             )
+
+    def check_xml_not_valid_char_link(self):
+        """The resource in in src/href contains a not valid character"""
+        # TODO: It is not working yet
+        for manifest_xml in self.manifest_xmls:
+            if not manifest_xml["node"]:
+                continue
+            for name, attr in (('link', 'href'), ('script', 'src')):
+                nodes = manifest_xml["node"].xpath('.//%s[@%s]' % (name, attr))
+                for node in nodes:
+                    resource = node.get(attr, '')
+                    ext = os.path.splitext(os.path.basename(resource))[1]
+                    if (resource.startswith('/') and not re.search('^[.][a-zA-Z]+$', ext)):
+                        self.checks_errors["check_xml_not_valid_char_link"].append(
+                            f'{manifest_xml["filename"]}:{node.sourceline} '
+                            f'The resource in in src/href contains a not valid character'
+                        )
