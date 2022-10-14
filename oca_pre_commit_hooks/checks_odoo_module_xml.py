@@ -30,13 +30,21 @@ class ChecksOdooModuleXML:
         self.checks_errors = defaultdict(list)
 
     def check_xml_records(self):
-        """Check redundant module name in odoo xml.
+        """Check xml_redundant_module_name.
 
         If the module is called "module_a" and the xmlid is
         <record id="module_a.xmlid_name1" ...
 
         The "module_a." is redundant it could be replaced to only
         <record id="xmlid_name1" ...
+
+        Check xml_duplicate_record_id
+
+        If a module has duplicated record_id AKA xml_ids
+        file1.xml
+            <record id="xmlid_name1"
+        file2.xml
+            <record id="xmlid_name1"
         """
         # TODO: Add autofix option
         xmlids_section = defaultdict(list)
