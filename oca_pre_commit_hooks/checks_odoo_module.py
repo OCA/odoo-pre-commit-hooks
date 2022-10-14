@@ -105,15 +105,12 @@ class ChecksOdooModule:
 
     @installable
     def check_xml(self):
-        for xml_manifest in self.manifest_referenced_files[".xml"]:
-            checks_xml_obj = checks_odoo_module_xml.ChecksOdooModuleXML(
-                xml_manifest, self.odoo_addon_name
-            )
-            if not checks_xml_obj.node:
-                continue
-            for check_xml_meth in tools.getattr_checks(checks_xml_obj):
-                check_xml_meth()
-            self.checks_errors.update(checks_xml_obj.checks_errors)
+        checks_xml_obj = checks_odoo_module_xml.ChecksOdooModuleXML(
+            self.manifest_referenced_files[".xml"], self.odoo_addon_name
+        )
+        for check_xml_meth in tools.getattr_checks(checks_xml_obj):
+            check_xml_meth()
+        self.checks_errors.update(checks_xml_obj.checks_errors)
 
 
 def main(do_exit=True):
