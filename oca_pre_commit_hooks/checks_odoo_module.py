@@ -74,15 +74,15 @@ class ChecksOdooModule:
 
     def _referenced_files_by_extension(self):
         ext_referenced_files = defaultdict(list)
-        for data_type in DFTL_MANIFEST_DATA_KEYS:
-            for fname in self.manifest_dict.get(data_type) or []:
+        for data_section in DFTL_MANIFEST_DATA_KEYS:
+            for fname in self.manifest_dict.get(data_section) or []:
                 ext_referenced_files[os.path.splitext(fname)[1]].append(
                     {
                         "filename": os.path.realpath(
                             os.path.join(self.odoo_addon_path, os.path.normpath(fname))
                         ),
                         "filename_short": os.path.normpath(fname),
-                        "data_type": data_type,
+                        "data_section": data_section,
                     }
                 )
         return ext_referenced_files
