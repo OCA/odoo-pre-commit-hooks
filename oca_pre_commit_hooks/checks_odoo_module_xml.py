@@ -39,21 +39,20 @@ class ChecksOdooModuleXML:
         try:
             priority_node = view.xpath("field[@name='priority'][1]")[0]
             return int(priority_node.get("eval", priority_node.text) or 0)
-        except (IndexError, ValueError):  # pylint: disable=except-pass
+        except (IndexError, ValueError):
             # IndexError: If the field is not found
             # ValueError: If the value found is not valid integer
-            pass
-        return 0
+            return 0
 
     @staticmethod
     def _is_replaced_field(view):
         try:
             arch = view.xpath("field[@name='arch' and @type='xml'][1]")[0]
         except IndexError:
-            return None
+            return False
         replaces = arch.xpath(
-            ".//field[@name='name' and @position='replace'][1]"
-        ) + arch.xpath(".//*[@position='replace'][1]")
+            ".//field[@name='name' and @position='replace'][1] | .//*[@position='replace'][1]"
+        )
         return bool(replaces)
 
     def check_xml_records(self):
