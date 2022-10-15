@@ -22,7 +22,7 @@ class ChecksOdooModuleCSV:
         csvids = defaultdict(list)
         for manifest_csv in self.manifest_csvs:
             try:
-                with open(manifest_csv["filename"], "r") as f_csv:
+                with open(manifest_csv["filename"], "r", encoding="UTF-8") as f_csv:
                     csv_r = csv.DictReader(f_csv)
                     if not csv_r or "id" not in csv_r.fieldnames:
                         continue

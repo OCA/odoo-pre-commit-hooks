@@ -200,6 +200,7 @@ class ChecksOdooModuleXML:
         for field_key, fields in xml_fields.items():
             if len(fields) < 2:
                 continue
+            # FIXME: manifest_xml is a variable used in the loop
             self.checks_errors["xml_duplicate_fields"].append(
                 f'{manifest_xml["filename"]}:{fields[0].sourceline} '
                 f'Duplicate xml field "{field_key[0]}" in lines '
@@ -210,7 +211,7 @@ class ChecksOdooModuleXML:
         """The resource in in src/href contains a not valid character"""
         for manifest_xml in self.manifest_xmls:
             for name, attr in (("link", "href"), ("script", "src")):
-                nodes = manifest_xml["node"].xpath(".//%s[@%s]" % (name, attr))
+                nodes = manifest_xml["node"].xpath(f".//{name}[@{attr}]")
                 for node in nodes:
                     resource = node.get(attr, "")
                     ext = os.path.splitext(os.path.basename(resource))[1]
@@ -277,7 +278,7 @@ class ChecksOdooModuleXML:
             "t-field-options",
             "t-raw-options",
         }
-        deprecated_attrs = "|".join("@%s" % d for d in deprecated_directives)
+        deprecated_attrs = "|".join(f"@{d}" for d in deprecated_directives)
         xpath = (
             f"/odoo//template//*[{deprecated_attrs}] | "
             f"/openerp//template//*[{deprecated_attrs}]"

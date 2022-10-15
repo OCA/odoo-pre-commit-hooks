@@ -42,10 +42,10 @@ class ChecksOdooModulePO:
         self.checks_errors = defaultdict(list)
         for manifest_po in manifest_pos:
             try:
-                po = polib.pofile(manifest_po["filename"])
+                polib_file = polib.pofile(manifest_po["filename"])
                 manifest_po.update(
                     {
-                        "po": po,
+                        "po": polib_file,
                         "file_error": None,
                     }
                 )
@@ -72,7 +72,7 @@ class ChecksOdooModulePO:
             return
         try:
             main_str % printf_args
-        except Exception:  # pragma: no cover
+        except Exception:  # pylint: disable=broad-except  # pragma: no cover
             # The original source string couldn't be parsed correctly
             # So return early without error in order to avoid a false error
             return
@@ -96,7 +96,7 @@ class ChecksOdooModulePO:
             return
         try:
             main_str.format(*msgid_args, **msgid_kwargs)
-        except Exception:
+        except Exception:  # pylint: disable=broad-except
             # The original source string couldn't be parsed correctly
             # So return early without error in order to avoid a false error
             return
@@ -178,7 +178,8 @@ class ChecksOdooModulePO:
                     kwargs[match_items["key"]] = var
         return tuple(args) or kwargs
 
-    def _get_po_line_number(self, po_entry):
+    @staticmethod
+    def _get_po_line_number(po_entry):
         """Get line number of a PO entry similar to 'msgfmt' output
         entry.linenum returns line number of the definition of the entry
         'msgfmt' returns line number of the 'msgid'
@@ -262,7 +263,7 @@ class ChecksOdooModulePO:
                 )
                 msg_id_short = re.sub(r"[\n\t]*", "", entries[0].msgid[:40]).strip()
                 if len(entries[0].msgid) > 40:
-                    msg_id_short = "%s..." % msg_id_short
+                    msg_id_short = f"{msg_id_short}..."
                 self.checks_errors["po_duplicate_message_definition"].append(
                     f'{manifest_po["filename"]}:{linenum} '
                     f'Duplicate PO message definition "{msg_id_short}" '

@@ -13,8 +13,8 @@ def generate_dependencies():
 def read(*names, **kwargs):
     with open(
         join(dirname(__file__), *names), encoding=kwargs.get("encoding", "utf8")
-    ) as fh:
-        return fh.read()
+    ) as file_obj:
+        return file_obj.read()
 
 
 setup(

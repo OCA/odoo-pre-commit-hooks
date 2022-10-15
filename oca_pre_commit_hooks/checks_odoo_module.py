@@ -24,14 +24,11 @@ MANIFEST_NAMES = ("__openerp__.py", "__manifest__.py")
 
 def installable(method):
     def inner(self):
-        msg_tmpl = "Skipped check '%s' for '%s'" % (
-            method.__name__,
-            self.manifest_path,
-        )
+        msg_tmpl = f"Skipped check '{method.__name__}' for '{self.manifest_path}'"
         if self.error:
-            print("%s with error: '%s'" % (msg_tmpl, self.error))
+            print(f"{msg_tmpl} with error: '{self.error}'")
         elif not self.is_module_installable:
-            print("%s is not installable" % (msg_tmpl))
+            print(f"{msg_tmpl} is not installable")
         else:
             return method(self)
 
@@ -57,7 +54,8 @@ class ChecksOdooModule:
         self.manifest_referenced_files = self._referenced_files_by_extension()
         self.checks_errors = defaultdict(list)
 
-    def _get_manifest_file_path(self, original_manifest_path):
+    @staticmethod
+    def _get_manifest_file_path(original_manifest_path):
         for manifest_name in MANIFEST_NAMES:
             manifest_path = os.path.join(original_manifest_path, manifest_name)
             if os.path.isfile(manifest_path):
@@ -68,19 +66,17 @@ class ChecksOdooModule:
         if os.path.basename(
             self.manifest_path
         ) not in MANIFEST_NAMES or not os.path.isfile(self.manifest_path):
-            print("The path %s is not %s file" % (self.manifest_path, MANIFEST_NAMES))
+            print(f"The path {self.manifest_path} is not {MANIFEST_NAMES} file")
             return {}
         if not os.path.isfile(os.path.join(self.odoo_addon_path, "__init__.py")):
-            print("The path %s does not have __init__.py file" % self.manifest_path)
+            print(f"The path {self.manifest_path} does not have __init__.py file")
             return {}
-        with open(self.manifest_path) as f_manifest:
+        with open(self.manifest_path, "r", encoding="UTF-8") as f_manifest:
             try:
                 return ast.literal_eval(f_manifest.read())
-            except BaseException as e:  # Using same way than odoo
-                self.error = "Manifest %s with error %s" % (
-                    self.manifest_path,
-                    e,
-                )
+            # Using same way than odoo
+            except BaseException as err:  # pylint: disable=broad-except
+                self.error = f"Manifest {self.manifest_path} with error {err}"
         return {}
 
     def _is_installable(self):
