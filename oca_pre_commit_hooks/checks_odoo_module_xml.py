@@ -7,8 +7,7 @@ from collections import defaultdict
 from lxml import etree
 
 DFTL_MIN_PRIORITY = 99
-
-# TODO: _skip_files_ext skip check based on comment XML
+DFLT_DEPRECATED_TREE_ATTRS = ["colors", "fonts", "string"]
 
 
 class ChecksOdooModuleXML:
@@ -88,6 +87,9 @@ class ChecksOdooModuleXML:
 
         * Check xml_dangerous_filter_wo_user
         Check dangerous filter without a user assigned.
+
+        * Check xml_deprecated_tree_attribute
+        The tree-view declaration is using a deprecated attribute.
         """
         xmlids_section = defaultdict(list)
         xml_fields = defaultdict(list)
@@ -130,8 +132,8 @@ class ChecksOdooModuleXML:
                         f'better using only <record id="{xmlid_name}"'
                     )
 
-                # view_dangerous_replace_low_priority
                 if record.get("model") == "ir.ui.view":
+                    # view_dangerous_replace_low_priority
                     priority = self._get_priority(record)
                     is_replaced_field = self._is_replaced_field(record)
                     # TODO: Add self.config.min_priority instead of DFTL_MIN_PRIORITY
@@ -142,6 +144,18 @@ class ChecksOdooModuleXML:
                             f'{manifest_xml["filename"]}:{record.sourceline} '
                             'Dangerous use of "replace" from view '
                             f"with priority {priority} < {DFTL_MIN_PRIORITY}"
+                        )
+
+                    # deprecated_tree_attribute
+                    deprecate_attrs = {"string", "colors", "fonts"}
+                    xpath = f".//tree[{'|'.join(f'@{a}' for a in deprecate_attrs)}]"
+                    for deprecate_attr_node in record.xpath(xpath):
+                        deprecate_attr_str = ",".join(
+                            set(deprecate_attr_node.attrib.keys()) & deprecate_attrs
+                        )
+                        self.checks_errors["xml_deprecated_tree_attribute"].append(
+                            f'{manifest_xml["filename"]}:{deprecate_attr_node.sourceline} '
+                            f'Deprecated "<tree {deprecate_attr_str}=..."'
                         )
 
                 # xml_create_user_wo_reset_password
@@ -271,9 +285,8 @@ class ChecksOdooModuleXML:
 
         for manifest_xml in self.manifest_xmls:
             for node in manifest_xml["node"].xpath(xpath):
-                # Find which directive was used exactly.
-                directive = (set(node.attrib) & deprecated_directives).pop()
+                directive_str = ", ".join(set(node.attrib) & deprecated_directives)
                 self.checks_errors["xml_deprecated_qweb_directive"].append(
                     f'{manifest_xml["filename"]}:{node.sourceline} '
-                    f'Deprecated QWeb directive "{directive}". Use "t-options" instead'
+                    f'Deprecated QWeb directive "{directive_str}". Use "t-options" instead'
                 )
