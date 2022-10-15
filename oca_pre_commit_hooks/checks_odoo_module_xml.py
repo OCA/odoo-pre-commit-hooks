@@ -8,6 +8,8 @@ from lxml import etree
 
 DFTL_MIN_PRIORITY = 99
 
+# TODO: _skip_files_ext skip check based on comment XML
+
 
 class ChecksOdooModuleXML:
     def __init__(self, manifest_xmls, module_name):
@@ -121,7 +123,7 @@ class ChecksOdooModuleXML:
                     self.checks_errors["xml_redundant_module_name"].append(
                         f'{manifest_xml["filename"]}:{record.sourceline} Redundant module'
                         f' name <record id="{record_id}" '
-                        'better using only <record id="{xmlid_name}"'
+                        f'better using only <record id="{xmlid_name}"'
                     )
 
                 # view_dangerous_replace_low_priority
@@ -175,4 +177,30 @@ class ChecksOdooModuleXML:
                         self.checks_errors["check_xml_not_valid_char_link"].append(
                             f'{manifest_xml["filename"]}:{node.sourceline} '
                             f"The resource in in src/href contains a not valid character"
+                        )
+
+    def check_xml_dangerous_qweb_replace_low_priority(self):
+        """Check dangerous qweb view defined with low priority"""
+        for manifest_xml in self.manifest_xmls:
+            if not manifest_xml["node"]:
+                continue
+            for template in manifest_xml["node"].xpath(
+                "/odoo//template|/openerp//template"
+            ):
+                try:
+                    priority = int(template.get("priority"))
+                except (ValueError, TypeError):
+                    priority = 0
+                for child in template.iterchildren():
+                    # TODO: Add self.config.min_priority instead of DFTL_MIN_PRIORITY
+                    if (
+                        child.get("position") == "replace"
+                        and priority < DFTL_MIN_PRIORITY
+                    ):
+                        self.checks_errors[
+                            "xml_dangerous_qweb_replace_low_priority"
+                        ].append(
+                            f'{manifest_xml["filename"]}:{template.sourceline} '
+                            'Dangerous use of "replace" from view '
+                            f"with priority {priority} < {DFTL_MIN_PRIORITY}"
                         )
