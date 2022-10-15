@@ -1,5 +1,3 @@
-# Hooks are using print directly
-# pylint: disable=print-used
 import os
 import re
 from collections import defaultdict
@@ -189,7 +187,6 @@ class ChecksOdooModuleXML:
         for xmlid_key, records in xmlids_section.items():
             if len(records) < 2:
                 continue
-            # TODO: Use relative path e.g. os.path.relpath(record.base, self.module_path)
             self.checks_errors["xml_duplicate_record_id"].append(
                 f'{manifest_xml["filename"]}:{records[0].sourceline} '
                 f'Duplicate xml record id "{xmlid_key}" in '

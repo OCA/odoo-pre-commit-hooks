@@ -36,6 +36,9 @@ class ChecksOdooModule:
     # TODO: Support check by version
     # TODO: skip_files_ext skip check based on comment XML
     # TODO: Support configuration file to set custom value for DFTL_ global variables
+    # TODO: Use relative path for name of files in msg check
+    #       e.g. os.path.relpath(record.base, pwd)
+    # TODO: Add autofix option and autofix the files
     def __init__(self, manifest_path):
         self.manifest_path = self._get_manifest_file_path(manifest_path)
         self.odoo_addon_path = os.path.dirname(self.manifest_path)
