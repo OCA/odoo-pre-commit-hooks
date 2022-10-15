@@ -12,6 +12,7 @@ class ChecksOdooModuleXML:
     def __init__(self, manifest_xmls, module_name):
         self.module_name = module_name
         self.manifest_xmls = manifest_xmls
+        self.checks_errors = defaultdict(list)
         for manifest_xml in manifest_xmls:
             try:
                 with open(manifest_xml["filename"], "rb") as f_xml:
@@ -31,7 +32,6 @@ class ChecksOdooModuleXML:
                 self.checks_errors["check_xml_syntax_error"].append(
                     f'{manifest_xml["filename"]} {xml_err}'
                 )
-        self.checks_errors = defaultdict(list)
 
     @staticmethod
     def _get_priority(view):
