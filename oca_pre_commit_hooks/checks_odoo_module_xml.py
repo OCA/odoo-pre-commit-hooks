@@ -161,7 +161,7 @@ class ChecksOdooModuleXML:
                 # xml_create_user_wo_reset_password
                 if (
                     record.get("model") == "res.users"
-                    and record.xpath("field[@name='name']")
+                    and record.xpath("field[@name='name'][1]")
                     and "no_reset_password" not in (record.get("context") or "")
                 ):
                     # if exists field="name" then is a new record
