@@ -82,6 +82,11 @@ class ChecksOdooModuleXML:
             <field name="priority" eval="10"/>
             ...
                 <field name="name" position="replace"/>
+
+                # create_user_wo_reset_password
+        * Check xml_create_user_wo_reset_password
+            records of user without context="{'no_reset_password': True}"
+            This context avoid send email and mail log warning
         """
         xmlids_section = defaultdict(list)
         xml_fields = defaultdict(list)
@@ -139,6 +144,20 @@ class ChecksOdooModuleXML:
                             'Dangerous use of "replace" from view '
                             f"with priority {priority} < {DFTL_MIN_PRIORITY}"
                         )
+
+                # xml_create_user_wo_reset_password
+                if (
+                    record.get("model") == "res.users"
+                    and record.xpath("field[@name='name']")
+                    and "no_reset_password" not in (record.get("context") or "")
+                ):
+                    # if exists field="name" then is a new record
+                    # then should be context
+                    self.checks_errors["xml_create_user_wo_reset_password"].append(
+                        f'{manifest_xml["filename"]}:{record.sourceline} '
+                        "record res.users without "
+                        "context=\"{'no_reset_password': True}\""
+                    )
 
         # xmlids_duplicated
         for xmlid_key, records in xmlids_section.items():
