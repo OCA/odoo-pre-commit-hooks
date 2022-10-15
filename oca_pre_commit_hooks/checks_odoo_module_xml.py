@@ -37,7 +37,7 @@ class ChecksOdooModuleXML:
         try:
             priority_node = view.xpath("field[@name='priority'][1]")[0]
             return int(priority_node.get("eval", priority_node.text) or 0)
-        except (IndexError, ValueError):
+        except (IndexError, ValueError):  # pylint: disable=except-pass
             # IndexError: If the field is not found
             # ValueError: If the value found is not valid integer
             pass
@@ -75,6 +75,11 @@ class ChecksOdooModuleXML:
             <record id="xmlid_name1"...
                 <field name="field_name1"...
                 <field name="field_name1"...
+
+        * Check xml_view_dangerous_replace_low_priority in ir.ui.view
+            <field name="priority" eval="10"/>
+            ...
+                <field name="name" position="replace"/>
         """
         xmlids_section = defaultdict(list)
         xml_fields = defaultdict(list)
@@ -119,14 +124,14 @@ class ChecksOdooModuleXML:
                         'better using only <record id="{xmlid_name}"'
                     )
 
-                # view_dangerous_replace_wo_priority
+                # view_dangerous_replace_low_priority
                 if record.get("model") == "ir.ui.view":
                     priority = self._get_priority(record)
                     is_replaced_field = self._is_replaced_field(record)
                     # TODO: Add self.config.min_priority instead of DFTL_MIN_PRIORITY
                     if is_replaced_field and priority < DFTL_MIN_PRIORITY:
                         self.checks_errors[
-                            "xml_view_dangerous_replace_wo_priority"
+                            "xml_view_dangerous_replace_low_priority"
                         ].append(
                             f'{manifest_xml["filename"]}:{record.sourceline} '
                             'Dangerous use of "replace" from view '
