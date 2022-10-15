@@ -1,7 +1,7 @@
 # Hooks are using print directly
 # pylint: disable=print-used
-import re
 import os
+import re
 from collections import defaultdict
 
 from lxml import etree
@@ -85,17 +85,18 @@ class ChecksOdooModuleXML:
 
     def check_xml_not_valid_char_link(self):
         """The resource in in src/href contains a not valid character"""
-        # TODO: It is not working yet
         for manifest_xml in self.manifest_xmls:
             if not manifest_xml["node"]:
                 continue
-            for name, attr in (('link', 'href'), ('script', 'src')):
-                nodes = manifest_xml["node"].xpath('.//%s[@%s]' % (name, attr))
+            for name, attr in (("link", "href"), ("script", "src")):
+                nodes = manifest_xml["node"].xpath(".//%s[@%s]" % (name, attr))
                 for node in nodes:
-                    resource = node.get(attr, '')
+                    resource = node.get(attr, "")
                     ext = os.path.splitext(os.path.basename(resource))[1]
-                    if (resource.startswith('/') and not re.search('^[.][a-zA-Z]+$', ext)):
+                    if resource.startswith("/") and not re.search(
+                        "^[.][a-zA-Z]+$", ext
+                    ):
                         self.checks_errors["check_xml_not_valid_char_link"].append(
                             f'{manifest_xml["filename"]}:{node.sourceline} '
-                            f'The resource in in src/href contains a not valid character'
+                            f"The resource in in src/href contains a not valid character"
                         )
