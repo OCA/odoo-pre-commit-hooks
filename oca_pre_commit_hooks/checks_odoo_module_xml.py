@@ -46,18 +46,22 @@ class ChecksOdooModuleXML:
             <record id="xmlid_name1"
         file2.xml
             <record id="xmlid_name1"
+
+        * Check xml_duplicate_fields in all record nodes
+            <record id="xmlid_name1"...
+                <field name="field_name1"...
+                <field name="field_name1"...
         """
-        # TODO: Add autofix option
         xmlids_section = defaultdict(list)
+        xml_fields = defaultdict(list)
         for manifest_xml in self.manifest_xmls:
             if not manifest_xml["node"]:
                 continue
             for record in manifest_xml["node"].xpath(
-                "/odoo//record | /openerp//record"
+                "/odoo//record[@id] | /openerp//record[@id]"
             ):
                 record_id = record.get("id")
-                if not record_id:
-                    continue
+                # xmlids_duplicated
                 xmlid_key = (
                     f"{manifest_xml['data_section']}/{record_id}"
                     f"_noupdate_{record.getparent().get('noupdate', '0')}"
@@ -66,13 +70,32 @@ class ChecksOdooModuleXML:
                 xmlid_module, xmlid_name = (
                     record_id.split(".") if "." in record_id else ["", record_id]
                 )
-                if xmlid_module != self.module_name:
-                    continue
-                self.checks_errors["xml_redundant_module_name"].append(
-                    f'{manifest_xml["filename"]}:{record.sourceline} Redundant module'
-                    f' name <record id="{record_id}" '
-                    'better using only <record id="{xmlid_name}"'
-                )
+
+                # fields_duplicated
+                if not record.xpath('field[@name="inherit_id"]'):
+                    for field in record.xpath(
+                        "field[@name] | field/*/field[@name] | "
+                        "field/*/field/tree/field[@name] | "
+                        "field/*/field/form/field[@name]"
+                    ):
+                        field_key = (
+                            field.get("name"),
+                            field.get("context"),
+                            field.get("filter_domain"),
+                            field.getparent(),
+                        )
+                        xml_fields[field_key].append(field)
+
+                # redundant_module_name
+                # TODO: Add autofix option
+                if xmlid_module == self.module_name:
+                    self.checks_errors["xml_redundant_module_name"].append(
+                        f'{manifest_xml["filename"]}:{record.sourceline} Redundant module'
+                        f' name <record id="{record_id}" '
+                        'better using only <record id="{xmlid_name}"'
+                    )
+
+        # xmlids_duplicated
         for xmlid_key, records in xmlids_section.items():
             if len(records) < 2:
                 continue
@@ -81,6 +104,16 @@ class ChecksOdooModuleXML:
                 f'{manifest_xml["filename"]}:{records[0].sourceline} '
                 f'Duplicate xml record id "{xmlid_key}" in '
                 f'{", ".join(f"{record.base}:{record.sourceline}" for record in records[1:])}'
+            )
+
+        # fields_duplicated
+        for field_key, fields in xml_fields.items():
+            if len(fields) < 2:
+                continue
+            self.checks_errors["xml_duplicate_fields"].append(
+                f'{manifest_xml["filename"]}:{fields[0].sourceline} '
+                f'Duplicate xml field "{field_key[0]}" in lines '
+                f'{", ".join(f"{field.sourceline}" for field in fields[1:])}'
             )
 
     def check_xml_not_valid_char_link(self):
