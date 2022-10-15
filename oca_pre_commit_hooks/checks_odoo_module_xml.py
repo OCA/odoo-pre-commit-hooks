@@ -102,9 +102,6 @@ class ChecksOdooModuleXML:
                     f"_noupdate_{record.getparent().get('noupdate', '0')}"
                 )
                 xmlids_section[xmlid_key].append(record)
-                xmlid_module, xmlid_name = (
-                    record_id.split(".") if "." in record_id else ["", record_id]
-                )
 
                 # fields_duplicated
                 if not record.xpath('field[@name="inherit_id"]'):
@@ -122,6 +119,9 @@ class ChecksOdooModuleXML:
                         xml_fields[field_key].append(field)
 
                 # redundant_module_name
+                xmlid_module, xmlid_name = (
+                    record_id.split(".") if "." in record_id else ["", record_id]
+                )
                 if xmlid_module == self.module_name:
                     # TODO: Add autofix option
                     self.checks_errors["xml_redundant_module_name"].append(
@@ -187,6 +187,7 @@ class ChecksOdooModuleXML:
         for xmlid_key, records in xmlids_section.items():
             if len(records) < 2:
                 continue
+            # FIXME: manifest_xml is a variable used in the loop
             self.checks_errors["xml_duplicate_record_id"].append(
                 f'{manifest_xml["filename"]}:{records[0].sourceline} '
                 f'Duplicate xml record id "{xmlid_key}" in '
