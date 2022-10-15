@@ -37,7 +37,7 @@ class ChecksOdooModuleCSV:
                             )
                         )
             except (FileNotFoundError, csv.Error) as csv_err:
-                self.checks_errors["check_csv_syntax_error"].append(
+                self.checks_errors["csv_syntax_error"].append(
                     f'{manifest_csv["filename"]} {csv_err}'
                 )
         for csvid, records in csvids.items():

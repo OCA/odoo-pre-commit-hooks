@@ -29,7 +29,7 @@ class ChecksOdooModuleXML:
                         "file_error": xml_err,
                     }
                 )
-                self.checks_errors["check_xml_syntax_error"].append(
+                self.checks_errors["xml_syntax_error"].append(
                     f'{manifest_xml["filename"]} {xml_err}'
                 )
 
@@ -217,7 +217,7 @@ class ChecksOdooModuleXML:
                     if resource.startswith("/") and not re.search(
                         "^[.][a-zA-Z]+$", ext
                     ):
-                        self.checks_errors["check_xml_not_valid_char_link"].append(
+                        self.checks_errors["xml_not_valid_char_link"].append(
                             f'{manifest_xml["filename"]}:{node.sourceline} '
                             f"The resource in in src/href contains a not valid character"
                         )

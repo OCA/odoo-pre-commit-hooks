@@ -58,7 +58,7 @@ class ChecksOdooModulePO:
                     }
                 )
                 msg = str(po_err).replace(f'{manifest_po["filename"]} ', "").strip()
-                self.checks_errors["check_po_syntax_error"].append(
+                self.checks_errors["po_syntax_error"].append(
                     f'{manifest_po["filename"]} {msg}'
                 )
 
