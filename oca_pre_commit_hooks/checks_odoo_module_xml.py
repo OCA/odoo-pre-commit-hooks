@@ -83,7 +83,6 @@ class ChecksOdooModuleXML:
             ...
                 <field name="name" position="replace"/>
 
-                # create_user_wo_reset_password
         * Check xml_create_user_wo_reset_password
             records of user without context="{'no_reset_password': True}"
             This context avoid send email and mail log warning
