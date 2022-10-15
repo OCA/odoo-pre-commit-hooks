@@ -122,8 +122,8 @@ class ChecksOdooModuleXML:
                         xml_fields[field_key].append(field)
 
                 # redundant_module_name
-                # TODO: Add autofix option
                 if xmlid_module == self.module_name:
+                    # TODO: Add autofix option
                     self.checks_errors["xml_redundant_module_name"].append(
                         f'{manifest_xml["filename"]}:{record.sourceline} Redundant module'
                         f' name <record id="{record_id}" '
@@ -238,9 +238,20 @@ class ChecksOdooModuleXML:
             for odoo_node in manifest_xml["node"].xpath("/odoo"):
                 for children_count, _ in enumerate(odoo_node.iterchildren(), start=1):
                     if children_count == 2 and len(odoo_node.xpath("/data")) == 1:
+                        # TODO: Add autofix option
                         self.checks_errors["xml_deprecated_data_node"].append(
                             f'{manifest_xml["filename"]}:{odoo_node.sourceline} '
                             'Use <odoo> instead of <odoo><data> or use <odoo noupdate="1"> '
                             'instead of <odoo><data noupdate="1">'
                         )
                         break
+
+    def check_xml_deprecated_openerp_node(self):
+        """Check deprecated <openerp> xml node"""
+        for manifest_xml in self.manifest_xmls:
+            for openerp_node in manifest_xml["node"].xpath("/openerp"):
+                # TODO: Add autofix option
+                self.checks_errors["xml_deprecated_openerp_xml_node"].append(
+                    f'{manifest_xml["filename"]}:{openerp_node.sourceline} '
+                    "Deprecated <openerp> xml node"
+                )
