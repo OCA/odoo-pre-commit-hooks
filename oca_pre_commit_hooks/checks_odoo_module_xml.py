@@ -18,7 +18,7 @@ class ChecksOdooModuleXML:
                     manifest_xml.update(
                         {
                             "node": etree.parse(f_xml),
-                            "node_error": None,
+                            "file_error": None,
                         }
                     )
             except (FileNotFoundError, etree.XMLSyntaxError) as xml_err:
@@ -26,7 +26,7 @@ class ChecksOdooModuleXML:
                 manifest_xml.update(
                     {
                         "node": etree.Element("__empty__"),
-                        "node_error": xml_err,
+                        "file_error": xml_err,
                     }
                 )
         self.checks_errors = defaultdict(list)

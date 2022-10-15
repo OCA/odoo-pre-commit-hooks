@@ -8,7 +8,7 @@ import os
 import sys
 from collections import defaultdict
 
-from oca_pre_commit_hooks import checks_odoo_module_xml, tools
+from oca_pre_commit_hooks import checks_odoo_module_xml, tools, checks_odoo_module_csv
 
 DFTL_README_TMPL_URL = "https://github.com/OCA/maintainer-tools/blob/master/template/module/README.rst"  # noqa: B950
 DFTL_README_FILES = ["README.md", "README.txt", "README.rst"]
@@ -39,6 +39,8 @@ class ChecksOdooModule:
     # TODO: Use relative path for name of files in msg check
     #       e.g. os.path.relpath(record.base, pwd)
     # TODO: Add autofix option and autofix the files
+    # TODO: ir.model.access.csv:5 Duplicate csv record ... in ir.model.access.csv:6
+    #       Use ir.model.access.csv:5 Duplicate csv record ... in line 6
     def __init__(self, manifest_path):
         self.manifest_path = self._get_manifest_file_path(manifest_path)
         self.odoo_addon_path = os.path.dirname(self.manifest_path)
@@ -111,12 +113,27 @@ class ChecksOdooModule:
 
     @installable
     def check_xml(self):
-        checks_xml_obj = checks_odoo_module_xml.ChecksOdooModuleXML(
-            self.manifest_referenced_files[".xml"], self.odoo_addon_name
+        fnames = self.manifest_referenced_files[".xml"]
+        if not fnames:
+            return
+        checks_obj = checks_odoo_module_xml.ChecksOdooModuleXML(
+            fnames, self.odoo_addon_name
         )
-        for check_xml_meth in tools.getattr_checks(checks_xml_obj):
-            check_xml_meth()
-        self.checks_errors.update(checks_xml_obj.checks_errors)
+        for check_meth in tools.getattr_checks(checks_obj):
+            check_meth()
+        self.checks_errors.update(checks_obj.checks_errors)
+
+    @installable
+    def check_csv(self):
+        fnames = self.manifest_referenced_files[".csv"]
+        if not fnames:
+            return
+        checks_obj = checks_odoo_module_csv.ChecksOdooModuleCSV(
+            fnames, self.odoo_addon_name
+        )
+        for check_meth in tools.getattr_checks(checks_obj):
+            check_meth()
+        self.checks_errors.update(checks_obj.checks_errors)
 
 
 def main(do_exit=True):
