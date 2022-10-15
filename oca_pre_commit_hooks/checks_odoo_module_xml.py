@@ -86,6 +86,9 @@ class ChecksOdooModuleXML:
         * Check xml_create_user_wo_reset_password
             records of user without context="{'no_reset_password': True}"
             This context avoid send email and mail log warning
+
+        * Check xml_dangerous_filter_wo_user
+        Check dangerous filter without a user assigned.
         """
         xmlids_section = defaultdict(list)
         xml_fields = defaultdict(list)
@@ -157,6 +160,19 @@ class ChecksOdooModuleXML:
                         "record res.users without "
                         "context=\"{'no_reset_password': True}\""
                     )
+
+                # xml_dangerous_filter_wo_user
+                if record.get("model") == "ir.filters":
+                    ir_filter_fields = record.xpath(
+                        "field[@name='name' or @name='user_id']"
+                    )
+                    # if exists field="name" then is a new record
+                    # then should be field="user_id" too
+                    if ir_filter_fields and len(ir_filter_fields) == 1:
+                        self.checks_errors["xml_dangerous_filter_wo_user"].append(
+                            f'{manifest_xml["filename"]}:{record.sourceline} '
+                            "Dangerous filter without explicit `user_id`"
+                        )
 
         # xmlids_duplicated
         for xmlid_key, records in xmlids_section.items():
