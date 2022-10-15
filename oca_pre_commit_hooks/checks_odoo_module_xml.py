@@ -22,12 +22,14 @@ class ChecksOdooModuleXML:
                         }
                     )
             except (FileNotFoundError, etree.XMLSyntaxError) as xml_err:
-                # xml syntax error is raised from another hook
                 manifest_xml.update(
                     {
                         "node": etree.Element("__empty__"),
                         "file_error": xml_err,
                     }
+                )
+                self.checks_errors["check_xml_syntax_error"].append(
+                    f'{manifest_xml["filename"]} {xml_err}'
                 )
         self.checks_errors = defaultdict(list)
 
@@ -187,7 +189,7 @@ class ChecksOdooModuleXML:
         for xmlid_key, records in xmlids_section.items():
             if len(records) < 2:
                 continue
-            # FIXME: manifest_xml is a variable used in the loop
+            # FIXME: manifest_xml is a variable used in the loop
             self.checks_errors["xml_duplicate_record_id"].append(
                 f'{manifest_xml["filename"]}:{records[0].sourceline} '
                 f'Duplicate xml record id "{xmlid_key}" in '

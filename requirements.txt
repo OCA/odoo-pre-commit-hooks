@@ -5,3 +5,6 @@ docutils<=0.19.*
 
 # xml checks
 lxml>=4.2.3
+
+# po checks
+polib<=1.1.1

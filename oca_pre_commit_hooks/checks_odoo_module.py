@@ -4,11 +4,17 @@
 # pylint: disable=print-used
 
 import ast
+import glob
 import os
 import sys
 from collections import defaultdict
 
-from oca_pre_commit_hooks import checks_odoo_module_xml, tools, checks_odoo_module_csv
+from oca_pre_commit_hooks import (
+    checks_odoo_module_csv,
+    checks_odoo_module_po,
+    checks_odoo_module_xml,
+    tools,
+)
 
 DFTL_README_TMPL_URL = "https://github.com/OCA/maintainer-tools/blob/master/template/module/README.rst"  # noqa: B950
 DFTL_README_FILES = ["README.md", "README.txt", "README.rst"]
@@ -38,8 +44,8 @@ class ChecksOdooModule:
     # TODO: Support configuration file to set custom value for DFTL_ global variables
     # TODO: Use relative path for name of files in msg check
     #       e.g. os.path.relpath(record.base, pwd)
-    # TODO: Add autofix option and autofix the files
-    # TODO: ir.model.access.csv:5 Duplicate csv record ... in ir.model.access.csv:6
+    # TODO: Add autofix option and autofix the files
+    # TODO: ir.model.access.csv:5 Duplicate csv record ... in ir.model.access.csv:6
     #       Use ir.model.access.csv:5 Duplicate csv record ... in line 6
     def __init__(self, manifest_path):
         self.manifest_path = self._get_manifest_file_path(manifest_path)
@@ -93,6 +99,20 @@ class ChecksOdooModule:
                         "data_section": data_section,
                     }
                 )
+        # The i18n[_extra]/*.po[t] files are not defined in the manifest
+        fnames = glob.glob(
+            os.path.join(self.odoo_addon_path, "i18n*", "*.po")
+        ) + glob.glob(os.path.join(self.odoo_addon_path, "i18n*", "*.pot"))
+        for fname in fnames:
+            ext_referenced_files[os.path.splitext(fname)[1].lower()].append(
+                {
+                    "filename": os.path.realpath(
+                        os.path.join(self.odoo_addon_path, os.path.normpath(fname))
+                    ),
+                    "filename_short": os.path.normpath(fname),
+                    "data_section": "default",
+                }
+            )
         return ext_referenced_files
 
     def check_manifest(self):
@@ -129,6 +149,21 @@ class ChecksOdooModule:
         if not fnames:
             return
         checks_obj = checks_odoo_module_csv.ChecksOdooModuleCSV(
+            fnames, self.odoo_addon_name
+        )
+        for check_meth in tools.getattr_checks(checks_obj):
+            check_meth()
+        self.checks_errors.update(checks_obj.checks_errors)
+
+    @installable
+    def check_po(self):
+        fnames = (
+            self.manifest_referenced_files[".po"]
+            + self.manifest_referenced_files[".pot"]
+        )
+        if not fnames:
+            return
+        checks_obj = checks_odoo_module_po.ChecksOdooModulePO(
             fnames, self.odoo_addon_name
         )
         for check_meth in tools.getattr_checks(checks_obj):
