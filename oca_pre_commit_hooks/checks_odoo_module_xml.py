@@ -255,3 +255,25 @@ class ChecksOdooModuleXML:
                     f'{manifest_xml["filename"]}:{openerp_node.sourceline} '
                     "Deprecated <openerp> xml node"
                 )
+
+    def check_xml_deprecated_qweb_directive(self):
+        """Check for use of deprecated QWeb directives t-*-options."""
+        deprecated_directives = {
+            "t-esc-options",
+            "t-field-options",
+            "t-raw-options",
+        }
+        deprecated_attrs = "|".join("@%s" % d for d in deprecated_directives)
+        xpath = (
+            f"/odoo//template//*[{deprecated_attrs}] | "
+            f"/openerp//template//*[{deprecated_attrs}]"
+        )
+
+        for manifest_xml in self.manifest_xmls:
+            for node in manifest_xml["node"].xpath(xpath):
+                # Find which directive was used exactly.
+                directive = (set(node.attrib) & deprecated_directives).pop()
+                self.checks_errors["xml_deprecated_qweb_directive"].append(
+                    f'{manifest_xml["filename"]}:{node.sourceline} '
+                    f'Deprecated QWeb directive "{directive}". Use "t-options" instead'
+                )

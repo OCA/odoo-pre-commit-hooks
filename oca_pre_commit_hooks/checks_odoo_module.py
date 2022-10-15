@@ -33,6 +33,7 @@ def installable(method):
 
 
 class ChecksOdooModule:
+    # TODO: Support check by version
     def __init__(self, manifest_path):
         self.manifest_path = self._get_manifest_file_path(manifest_path)
         self.odoo_addon_path = os.path.dirname(self.manifest_path)
