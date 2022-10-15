@@ -238,3 +238,16 @@ class ChecksOdooModuleXML:
                             'Dangerous use of "replace" from view '
                             f"with priority {priority} < {DFTL_MIN_PRIORITY}"
                         )
+
+    def check_xml_deprecated_data_node(self):
+        """Check deprecated <data> node inside <odoo> xml node"""
+        for manifest_xml in self.manifest_xmls:
+            for odoo_node in manifest_xml["node"].xpath("/odoo"):
+                for children_count, _ in enumerate(odoo_node.iterchildren(), start=1):
+                    if children_count == 2 and len(odoo_node.xpath("/data")) == 1:
+                        self.checks_errors["xml_deprecated_data_node"].append(
+                            f'{manifest_xml["filename"]}:{odoo_node.sourceline} '
+                            'Use <odoo> instead of <odoo><data> or use <odoo noupdate="1"> '
+                            'instead of <odoo><data noupdate="1">'
+                        )
+                        break
