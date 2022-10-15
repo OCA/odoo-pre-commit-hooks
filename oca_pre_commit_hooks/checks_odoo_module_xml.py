@@ -28,7 +28,7 @@ class ChecksOdooModuleXML:
                 # xml syntax error is raised from another hook
                 manifest_xml.update(
                     {
-                        "node": None,
+                        "node": etree.Element("__empty__"),
                         "node_error": xml_err,
                     }
                 )
@@ -93,8 +93,6 @@ class ChecksOdooModuleXML:
         xmlids_section = defaultdict(list)
         xml_fields = defaultdict(list)
         for manifest_xml in self.manifest_xmls:
-            if not manifest_xml["node"]:
-                continue
             for record in manifest_xml["node"].xpath(
                 "/odoo//record[@id] | /openerp//record[@id]"
             ):
@@ -198,8 +196,6 @@ class ChecksOdooModuleXML:
     def check_xml_not_valid_char_link(self):
         """The resource in in src/href contains a not valid character"""
         for manifest_xml in self.manifest_xmls:
-            if not manifest_xml["node"]:
-                continue
             for name, attr in (("link", "href"), ("script", "src")):
                 nodes = manifest_xml["node"].xpath(".//%s[@%s]" % (name, attr))
                 for node in nodes:
@@ -216,8 +212,6 @@ class ChecksOdooModuleXML:
     def check_xml_dangerous_qweb_replace_low_priority(self):
         """Check dangerous qweb view defined with low priority"""
         for manifest_xml in self.manifest_xmls:
-            if not manifest_xml["node"]:
-                continue
             for template in manifest_xml["node"].xpath(
                 "/odoo//template|/openerp//template"
             ):
