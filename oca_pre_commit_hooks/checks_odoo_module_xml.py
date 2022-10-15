@@ -6,6 +6,8 @@ from collections import defaultdict
 
 from lxml import etree
 
+DFTL_MIN_PRIORITY = 99
+
 
 class ChecksOdooModuleXML:
     def __init__(self, manifest_xmls, module_name):
@@ -29,6 +31,28 @@ class ChecksOdooModuleXML:
                     }
                 )
         self.checks_errors = defaultdict(list)
+
+    @staticmethod
+    def _get_priority(view):
+        try:
+            priority_node = view.xpath("field[@name='priority'][1]")[0]
+            return int(priority_node.get("eval", priority_node.text) or 0)
+        except (IndexError, ValueError):
+            # IndexError: If the field is not found
+            # ValueError: If the value found is not valid integer
+            pass
+        return 0
+
+    @staticmethod
+    def _is_replaced_field(view):
+        try:
+            arch = view.xpath("field[@name='arch' and @type='xml'][1]")[0]
+        except IndexError:
+            return None
+        replaces = arch.xpath(
+            ".//field[@name='name' and @position='replace'][1]"
+        ) + arch.xpath(".//*[@position='replace'][1]")
+        return bool(replaces)
 
     def check_xml_records(self):
         """* Check xml_redundant_module_name
@@ -94,6 +118,20 @@ class ChecksOdooModuleXML:
                         f' name <record id="{record_id}" '
                         'better using only <record id="{xmlid_name}"'
                     )
+
+                # view_dangerous_replace_wo_priority
+                if record.get("model") == "ir.ui.view":
+                    priority = self._get_priority(record)
+                    is_replaced_field = self._is_replaced_field(record)
+                    # TODO: Add self.config.min_priority instead of DFTL_MIN_PRIORITY
+                    if is_replaced_field and priority < DFTL_MIN_PRIORITY:
+                        self.checks_errors[
+                            "xml_view_dangerous_replace_wo_priority"
+                        ].append(
+                            f'{manifest_xml["filename"]}:{record.sourceline} '
+                            'Dangerous use of "replace" from view '
+                            f"with priority {priority} < {DFTL_MIN_PRIORITY}"
+                        )
 
         # xmlids_duplicated
         for xmlid_key, records in xmlids_section.items():
