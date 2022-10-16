@@ -1,7 +1,6 @@
 import glob
 import unittest
 
-
 import oca_pre_commit_hooks
 
 ALL_CHECKS = [
