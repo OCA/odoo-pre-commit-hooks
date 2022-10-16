@@ -25,14 +25,15 @@ ALL_CODE_ERRORS = {
 
 
 class TestChecks(unittest.TestCase):
-    # TODO: Test po, xml and csv syntax error
-    def get_all_code_errors(self, all_check_errors):
+    # TODO: Test po, xml and csv syntax error
+
+    @staticmethod
+    def get_all_code_errors(all_check_errors):
         check_errors_keys = set()
         for check_errors in all_check_errors:
             check_errors_keys |= set(check_errors.keys())
         return check_errors_keys
 
- 
     def test_checks(self):
         manifest_paths = glob.glob("./test_repo/*/__openerp__.py") + glob.glob("./test_repo/*/__manifest__.py")
         all_check_errors = oca_pre_commit_hooks.checks_odoo_module.run(manifest_paths, do_exit=False, verbose=True)
@@ -41,5 +42,5 @@ class TestChecks(unittest.TestCase):
 
     def test_non_exists_path(self):
         all_check_errors = oca_pre_commit_hooks.checks_odoo_module.run("/tmp/no_exists", do_exit=False, verbose=True)
-        all_code_errors = self.get_all_code_errors(all_check_errors)
-        self.assertEqual({'manifest_syntax_error'}, check_errors_keys)
+        check_errors_keys = self.get_all_code_errors(all_check_errors)
+        self.assertEqual({"manifest_syntax_error"}, check_errors_keys)

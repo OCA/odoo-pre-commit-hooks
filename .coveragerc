@@ -22,7 +22,7 @@ exclude_lines =
     # Have to re-enable the standard pragma
     pragma: no cover
     # tests do not exit to evaluate the returned value
-    if do_exit: 
+    if do_exit:
 
 [html]
 show_contexts=True
