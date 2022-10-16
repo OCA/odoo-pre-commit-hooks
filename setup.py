@@ -11,9 +11,7 @@ def generate_dependencies():
 
 
 def read(*names, **kwargs):
-    with open(
-        join(dirname(__file__), *names), encoding=kwargs.get("encoding", "utf8")
-    ) as file_obj:
+    with open(join(dirname(__file__), *names), encoding=kwargs.get("encoding", "utf8")) as file_obj:
         return file_obj.read()
 
 
@@ -29,9 +27,7 @@ setup(
     url="https://github.com/OCA/odoo-pre-commit-hooks",
     packages=find_packages("oca_pre_commit_hooks"),
     package_dir={"": "oca_pre_commit_hooks"},
-    py_modules=[
-        splitext(basename(path))[0] for path in glob("oca_pre_commit_hooks/*.py")
-    ],
+    py_modules=[splitext(basename(path))[0] for path in glob("oca_pre_commit_hooks/*.py")],
     include_package_data=True,
     zip_safe=False,
     classifiers=[

@@ -6,11 +6,7 @@ import os
 import sys
 from collections import defaultdict
 
-from oca_pre_commit_hooks import (
-    checks_odoo_module_csv,
-    checks_odoo_module_po,
-    checks_odoo_module_xml,
-)
+from oca_pre_commit_hooks import checks_odoo_module_csv, checks_odoo_module_po, checks_odoo_module_xml
 
 DFTL_README_TMPL_URL = "https://github.com/OCA/maintainer-tools/blob/master/template/module/README.rst"  # noqa: B950
 DFTL_README_FILES = ["README.md", "README.txt", "README.rst"]
