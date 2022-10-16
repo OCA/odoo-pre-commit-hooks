@@ -58,9 +58,7 @@ class ChecksOdooModulePO:
                     }
                 )
                 msg = str(po_err).replace(f'{manifest_data["filename"]} ', "").strip()
-                self.checks_errors["po_syntax_error"].append(
-                    f'{manifest_data["filename"]} {msg}'
-                )
+                self.checks_errors["po_syntax_error"].append(f'{manifest_data["filename"]} {msg}')
 
     @staticmethod
     def parse_printf(main_str, secondary_str):
@@ -89,9 +87,7 @@ class ChecksOdooModulePO:
         """Compute args and kwargs of main_str to parse secondary_str
         Using secondary_str.format(_get_printf_str_args_kwargs(main_str))
         """
-        msgid_args, msgid_kwargs = ChecksOdooModulePO._get_format_str_args_kwargs(
-            main_str
-        )
+        msgid_args, msgid_kwargs = ChecksOdooModulePO._get_format_str_args_kwargs(main_str)
         if not msgid_args and not msgid_kwargs:
             return
         try:
@@ -123,11 +119,7 @@ class ChecksOdooModulePO:
         placeholders = []
         for line in format_str.splitlines():
             try:
-                placeholders.extend(
-                    name
-                    for _, name, _, _ in string.Formatter().parse(line)
-                    if name is not None
-                )
+                placeholders.extend(name for _, name, _, _ in string.Formatter().parse(line) if name is not None)
             except ValueError:
                 continue
             for placeholder in placeholders:
@@ -145,11 +137,7 @@ class ChecksOdooModulePO:
                     # named "{var0} {var1} {var2} {var0}"
                     format_str_kwargs[placeholder] = 0
         if format_str_args:
-            format_str_args = (
-                range(len(format_str_args))
-                if max(format_str_args) == 0
-                else range(max(format_str_args))
-            )
+            format_str_args = range(len(format_str_args)) if max(format_str_args) == 0 else range(max(format_str_args))
         return format_str_args, format_str_kwargs
 
     @staticmethod
@@ -258,9 +246,7 @@ class ChecksOdooModulePO:
                 if len(entries) < 2:
                     continue
                 linenum = self._get_po_line_number(entries[0])
-                duplicated_str = ", ".join(
-                    map(str, map(self._get_po_line_number, entries[1:]))
-                )
+                duplicated_str = ", ".join(map(str, map(self._get_po_line_number, entries[1:])))
                 msg_id_short = re.sub(r"[\n\t]*", "", entries[0].msgid[:40]).strip()
                 if len(entries[0].msgid) > 40:
                     msg_id_short = f"{msg_id_short}..."

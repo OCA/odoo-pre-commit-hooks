@@ -29,9 +29,7 @@ class ChecksOdooModuleXML:
                         "file_error": xml_err,
                     }
                 )
-                self.checks_errors["xml_syntax_error"].append(
-                    f'{manifest_data["filename"]} {xml_err}'
-                )
+                self.checks_errors["xml_syntax_error"].append(f'{manifest_data["filename"]} {xml_err}')
 
     @staticmethod
     def _get_priority(view):
@@ -49,9 +47,7 @@ class ChecksOdooModuleXML:
             arch = view.xpath("field[@name='arch' and @type='xml'][1]")[0]
         except IndexError:
             return False
-        replaces = arch.xpath(
-            ".//field[@name='name' and @position='replace'][1] | .//*[@position='replace'][1]"
-        )
+        replaces = arch.xpath(".//field[@name='name' and @position='replace'][1] | .//*[@position='replace'][1]")
         return bool(replaces)
 
     def check_xml_records(self):
@@ -94,9 +90,7 @@ class ChecksOdooModuleXML:
         xmlids_section = defaultdict(list)
         xml_fields = defaultdict(list)
         for manifest_data in self.manifest_datas:
-            for record in manifest_data["node"].xpath(
-                "/odoo//record[@id] | /openerp//record[@id]"
-            ):
+            for record in manifest_data["node"].xpath("/odoo//record[@id] | /openerp//record[@id]"):
                 record_id = record.get("id")
                 # xmlids_duplicated
                 xmlid_key = (
@@ -120,70 +114,10 @@ class ChecksOdooModuleXML:
                         )
                         xml_fields[field_key].append((manifest_data["filename"], field))
 
-                # redundant_module_name
-                xmlid_module, xmlid_name = (
-                    record_id.split(".") if "." in record_id else ["", record_id]
-                )
-                if xmlid_module == self.module_name:
-                    # TODO: Add autofix option
-                    self.checks_errors["xml_redundant_module_name"].append(
-                        f'{manifest_data["filename"]}:{record.sourceline} Redundant module'
-                        f' name <record id="{record_id}" '
-                        f'better using only <record id="{xmlid_name}"'
-                    )
-
-                if record.get("model") == "ir.ui.view":
-                    # view_dangerous_replace_low_priority
-                    priority = self._get_priority(record)
-                    is_replaced_field = self._is_replaced_field(record)
-                    # TODO: Add self.config.min_priority instead of DFTL_MIN_PRIORITY
-                    if is_replaced_field and priority < DFTL_MIN_PRIORITY:
-                        self.checks_errors[
-                            "xml_view_dangerous_replace_low_priority"
-                        ].append(
-                            f'{manifest_data["filename"]}:{record.sourceline} '
-                            'Dangerous use of "replace" from view '
-                            f"with priority {priority} < {DFTL_MIN_PRIORITY}"
-                        )
-
-                    # deprecated_tree_attribute
-                    deprecate_attrs = {"string", "colors", "fonts"}
-                    xpath = f".//tree[{'|'.join(f'@{a}' for a in deprecate_attrs)}]"
-                    for deprecate_attr_node in record.xpath(xpath):
-                        deprecate_attr_str = ",".join(
-                            set(deprecate_attr_node.attrib.keys()) & deprecate_attrs
-                        )
-                        self.checks_errors["xml_deprecated_tree_attribute"].append(
-                            f'{manifest_data["filename"]}:{deprecate_attr_node.sourceline} '
-                            f'Deprecated "<tree {deprecate_attr_str}=..."'
-                        )
-
-                # xml_create_user_wo_reset_password
-                if (
-                    record.get("model") == "res.users"
-                    and record.xpath("field[@name='name'][1]")
-                    and "no_reset_password" not in (record.get("context") or "")
-                ):
-                    # if exists field="name" then is a new record
-                    # then should be context
-                    self.checks_errors["xml_create_user_wo_reset_password"].append(
-                        f'{manifest_data["filename"]}:{record.sourceline} '
-                        "record res.users without "
-                        "context=\"{'no_reset_password': True}\""
-                    )
-
-                # xml_dangerous_filter_wo_user
-                if record.get("model") == "ir.filters":
-                    ir_filter_fields = record.xpath(
-                        "field[@name='name' or @name='user_id']"
-                    )
-                    # if exists field="name" then is a new record
-                    # then should be field="user_id" too
-                    if ir_filter_fields and len(ir_filter_fields) == 1:
-                        self.checks_errors["xml_dangerous_filter_wo_user"].append(
-                            f'{manifest_data["filename"]}:{record.sourceline} '
-                            "Dangerous filter without explicit `user_id`"
-                        )
+                self._check_xml_record(manifest_data, record)
+                self._check_xml_record_view(manifest_data, record)
+                self._check_xml_record_user(manifest_data, record)
+                self._check_xml_record_filter(manifest_data, record)
 
         # xmlids_duplicated
         for xmlid_key, records in xmlids_section.items():
@@ -192,9 +126,7 @@ class ChecksOdooModuleXML:
             self.checks_errors["xml_duplicate_record_id"].append(
                 f"{records[0][0]}:{records[0][1].sourceline} "
                 f'Duplicate xml record id "{xmlid_key}" in '
-                ", ".join(
-                    f"{record[1].base}:{record[1].sourceline}" for record in records[1:]
-                )
+                ", ".join(f"{record[1].base}:{record[1].sourceline}" for record in records[1:])
             )
 
         # fields_duplicated
@@ -207,6 +139,70 @@ class ChecksOdooModuleXML:
                 f'{", ".join(f"{field[1].sourceline}" for field in fields[1:])}'
             )
 
+    def _check_xml_record(self, manifest_data, record):
+        # redundant_module_name
+        record_id = record.get("id")
+        xmlid_module, xmlid_name = record_id.split(".") if "." in record_id else ["", record_id]
+        if xmlid_module == self.module_name:
+            # TODO: Add autofix option
+            self.checks_errors["xml_redundant_module_name"].append(
+                f'{manifest_data["filename"]}:{record.sourceline} Redundant module'
+                f' name <record id="{record_id}" '
+                f'better using only <record id="{xmlid_name}"'
+            )
+
+    def _check_xml_record_view(self, manifest_data, record):
+        if record.get("model") != "ir.ui.view":
+            return
+        # view_dangerous_replace_low_priority
+        priority = self._get_priority(record)
+        is_replaced_field = self._is_replaced_field(record)
+        # TODO: Add self.config.min_priority instead of DFTL_MIN_PRIORITY
+        if is_replaced_field and priority < DFTL_MIN_PRIORITY:
+            self.checks_errors["xml_view_dangerous_replace_low_priority"].append(
+                f'{manifest_data["filename"]}:{record.sourceline} '
+                'Dangerous use of "replace" from view '
+                f"with priority {priority} < {DFTL_MIN_PRIORITY}"
+            )
+
+        # deprecated_tree_attribute
+        deprecate_attrs = {"string", "colors", "fonts"}
+        xpath = f".//tree[{'|'.join(f'@{a}' for a in deprecate_attrs)}]"
+        for deprecate_attr_node in record.xpath(xpath):
+            deprecate_attr_str = ",".join(set(deprecate_attr_node.attrib.keys()) & deprecate_attrs)
+            self.checks_errors["xml_deprecated_tree_attribute"].append(
+                f'{manifest_data["filename"]}:{deprecate_attr_node.sourceline} '
+                f'Deprecated "<tree {deprecate_attr_str}=..."'
+            )
+
+    def _check_xml_record_user(self, manifest_data, record):
+        # xml_create_user_wo_reset_password
+        if not (
+            record.get("model") == "res.users"
+            and record.xpath("field[@name='name'][1]")
+            and "no_reset_password" not in (record.get("context") or "")
+        ):
+            return
+        # if exists field="name" then is a new record
+        # then should be context
+        self.checks_errors["xml_create_user_wo_reset_password"].append(
+            f'{manifest_data["filename"]}:{record.sourceline} '
+            "record res.users without "
+            "context=\"{'no_reset_password': True}\""
+        )
+
+    def _check_xml_record_filter(self, manifest_data, record):
+        # xml_dangerous_filter_wo_user
+        if record.get("model") != "ir.filters":
+            return
+        ir_filter_fields = record.xpath("field[@name='name' or @name='user_id']")
+        # if exists field="name" then is a new record
+        # then should be field="user_id" too
+        if ir_filter_fields and len(ir_filter_fields) == 1:
+            self.checks_errors["xml_dangerous_filter_wo_user"].append(
+                f'{manifest_data["filename"]}:{record.sourceline} ' "Dangerous filter without explicit `user_id`"
+            )
+
     def check_xml_not_valid_char_link(self):
         """The resource in in src/href contains a not valid character"""
         for manifest_data in self.manifest_datas:
@@ -215,9 +211,7 @@ class ChecksOdooModuleXML:
                 for node in nodes:
                     resource = node.get(attr, "")
                     ext = os.path.splitext(os.path.basename(resource))[1]
-                    if resource.startswith("/") and not re.search(
-                        "^[.][a-zA-Z]+$", ext
-                    ):
+                    if resource.startswith("/") and not re.search("^[.][a-zA-Z]+$", ext):
                         self.checks_errors["xml_not_valid_char_link"].append(
                             f'{manifest_data["filename"]}:{node.sourceline} '
                             f"The resource in in src/href contains a not valid character"
@@ -226,22 +220,15 @@ class ChecksOdooModuleXML:
     def check_xml_dangerous_qweb_replace_low_priority(self):
         """Check dangerous qweb view defined with low priority"""
         for manifest_data in self.manifest_datas:
-            for template in manifest_data["node"].xpath(
-                "/odoo//template|/openerp//template"
-            ):
+            for template in manifest_data["node"].xpath("/odoo//template|/openerp//template"):
                 try:
                     priority = int(template.get("priority"))
                 except (ValueError, TypeError):
                     priority = 0
                 for child in template.iterchildren():
                     # TODO: Add self.config.min_priority instead of DFTL_MIN_PRIORITY
-                    if (
-                        child.get("position") == "replace"
-                        and priority < DFTL_MIN_PRIORITY
-                    ):
-                        self.checks_errors[
-                            "xml_dangerous_qweb_replace_low_priority"
-                        ].append(
+                    if child.get("position") == "replace" and priority < DFTL_MIN_PRIORITY:
+                        self.checks_errors["xml_dangerous_qweb_replace_low_priority"].append(
                             f'{manifest_data["filename"]}:{template.sourceline} '
                             'Dangerous use of "replace" from view '
                             f"with priority {priority} < {DFTL_MIN_PRIORITY}"
@@ -267,8 +254,7 @@ class ChecksOdooModuleXML:
             for openerp_node in manifest_data["node"].xpath("/openerp"):
                 # TODO: Add autofix option
                 self.checks_errors["xml_deprecated_openerp_xml_node"].append(
-                    f'{manifest_data["filename"]}:{openerp_node.sourceline} '
-                    "Deprecated <openerp> xml node"
+                    f'{manifest_data["filename"]}:{openerp_node.sourceline} ' "Deprecated <openerp> xml node"
                 )
 
     def check_xml_deprecated_qweb_directive(self):
@@ -279,10 +265,7 @@ class ChecksOdooModuleXML:
             "t-raw-options",
         }
         deprecated_attrs = "|".join(f"@{d}" for d in deprecated_directives)
-        xpath = (
-            f"/odoo//template//*[{deprecated_attrs}] | "
-            f"/openerp//template//*[{deprecated_attrs}]"
-        )
+        xpath = f"/odoo//template//*[{deprecated_attrs}] | " f"/openerp//template//*[{deprecated_attrs}]"
 
         for manifest_data in self.manifest_datas:
             for node in manifest_data["node"].xpath(xpath):

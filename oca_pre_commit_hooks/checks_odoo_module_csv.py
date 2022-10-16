@@ -10,9 +10,7 @@ class ChecksOdooModuleCSV:
         for manifest_data in manifest_datas:
             manifest_data.update(
                 {
-                    "model": os.path.splitext(
-                        os.path.basename(manifest_data["filename"])
-                    )[0],
+                    "model": os.path.splitext(os.path.basename(manifest_data["filename"]))[0],
                 }
             )
         self.checks_errors = defaultdict(list)
@@ -37,9 +35,7 @@ class ChecksOdooModuleCSV:
                             )
                         )
             except (FileNotFoundError, csv.Error) as csv_err:
-                self.checks_errors["csv_syntax_error"].append(
-                    f'{manifest_data["filename"]} {csv_err}'
-                )
+                self.checks_errors["csv_syntax_error"].append(f'{manifest_data["filename"]} {csv_err}')
         for csvid, records in csvids.items():
             if len(records) < 2:
                 continue

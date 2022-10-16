@@ -60,9 +60,7 @@ class ChecksOdooModule:
         return original_manifest_path
 
     def _manifest2dict(self):
-        if os.path.basename(
-            self.manifest_path
-        ) not in MANIFEST_NAMES or not os.path.isfile(self.manifest_path):
+        if os.path.basename(self.manifest_path) not in MANIFEST_NAMES or not os.path.isfile(self.manifest_path):
             self.print(f"The path {self.manifest_path} is not {MANIFEST_NAMES} file")
             return {}
         if not os.path.isfile(os.path.join(self.odoo_addon_path, "__init__.py")):
@@ -85,23 +83,19 @@ class ChecksOdooModule:
             for fname in self.manifest_dict.get(data_section) or []:
                 ext_referenced_files[os.path.splitext(fname)[1].lower()].append(
                     {
-                        "filename": os.path.realpath(
-                            os.path.join(self.odoo_addon_path, os.path.normpath(fname))
-                        ),
+                        "filename": os.path.realpath(os.path.join(self.odoo_addon_path, os.path.normpath(fname))),
                         "filename_short": os.path.normpath(fname),
                         "data_section": data_section,
                     }
                 )
         # The i18n[_extra]/*.po[t] files are not defined in the manifest
-        fnames = glob.glob(
-            os.path.join(self.odoo_addon_path, "i18n*", "*.po")
-        ) + glob.glob(os.path.join(self.odoo_addon_path, "i18n*", "*.pot"))
+        fnames = glob.glob(os.path.join(self.odoo_addon_path, "i18n*", "*.po")) + glob.glob(
+            os.path.join(self.odoo_addon_path, "i18n*", "*.pot")
+        )
         for fname in fnames:
             ext_referenced_files[os.path.splitext(fname)[1].lower()].append(
                 {
-                    "filename": os.path.realpath(
-                        os.path.join(self.odoo_addon_path, os.path.normpath(fname))
-                    ),
+                    "filename": os.path.realpath(os.path.join(self.odoo_addon_path, os.path.normpath(fname))),
                     "filename_short": os.path.normpath(fname),
                     "data_section": "default",
                 }
@@ -110,9 +104,7 @@ class ChecksOdooModule:
 
     def check_manifest(self):
         if not self.manifest_dict:
-            self.checks_errors["manifest_syntax_error"].append(
-                f"{self.manifest_path} could not be loaded"
-            )
+            self.checks_errors["manifest_syntax_error"].append(f"{self.manifest_path} could not be loaded")
 
     @installable
     def check_missing_readme(self):
@@ -129,9 +121,7 @@ class ChecksOdooModule:
         manifest_datas = self.manifest_referenced_files[".xml"]
         if not manifest_datas:
             return
-        checks_obj = checks_odoo_module_xml.ChecksOdooModuleXML(
-            manifest_datas, self.odoo_addon_name
-        )
+        checks_obj = checks_odoo_module_xml.ChecksOdooModuleXML(manifest_datas, self.odoo_addon_name)
         for check_meth in self.getattr_checks(checks_obj):
             check_meth()
         self.checks_errors.update(checks_obj.checks_errors)
@@ -141,24 +131,17 @@ class ChecksOdooModule:
         manifest_datas = self.manifest_referenced_files[".csv"]
         if not manifest_datas:
             return
-        checks_obj = checks_odoo_module_csv.ChecksOdooModuleCSV(
-            manifest_datas, self.odoo_addon_name
-        )
+        checks_obj = checks_odoo_module_csv.ChecksOdooModuleCSV(manifest_datas, self.odoo_addon_name)
         for check_meth in self.getattr_checks(checks_obj):
             check_meth()
         self.checks_errors.update(checks_obj.checks_errors)
 
     @installable
     def check_po(self):
-        manifest_datas = (
-            self.manifest_referenced_files[".po"]
-            + self.manifest_referenced_files[".pot"]
-        )
+        manifest_datas = self.manifest_referenced_files[".po"] + self.manifest_referenced_files[".pot"]
         if not manifest_datas:
             return
-        checks_obj = checks_odoo_module_po.ChecksOdooModulePO(
-            manifest_datas, self.odoo_addon_name
-        )
+        checks_obj = checks_odoo_module_po.ChecksOdooModulePO(manifest_datas, self.odoo_addon_name)
         for check_meth in self.getattr_checks(checks_obj):
             check_meth()
         self.checks_errors.update(checks_obj.checks_errors)
@@ -173,9 +156,7 @@ class ChecksOdooModule:
         if obj_or_class is None:
             obj_or_class = ChecksOdooModule
         for attr in dir(obj_or_class):
-            if not callable(getattr(obj_or_class, attr)) or not attr.startswith(
-                "check_"
-            ):
+            if not callable(getattr(obj_or_class, attr)) or not attr.startswith("check_"):
                 continue
             yield getattr(obj_or_class, attr)
 
