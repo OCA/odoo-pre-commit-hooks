@@ -162,7 +162,9 @@ class ChecksOdooModule:
         print(object2print)  # pylint: disable=print-used
 
 
-def run(manifest_paths, verbose=True, do_exit=True):
+def run(manifest_paths=None, verbose=True, do_exit=True):
+    if manifest_paths is None:
+        manifest_paths = sys.argv[1:]
     success = True
     checks = ChecksOdooModule.getattr_checks()
     for manifest_path in manifest_paths:
@@ -180,7 +182,7 @@ def run(manifest_paths, verbose=True, do_exit=True):
 
 
 def main(do_exit=True):
-    return run(sys.argv[1:], do_exit=do_exit)
+    return run(do_exit=do_exit)
 
 
 if __name__ == "__main__":
