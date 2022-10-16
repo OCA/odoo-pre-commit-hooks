@@ -25,9 +25,9 @@ setup(
     author="Odoo Community Association (OCA)",
     author_email="support@odoo-community.org",
     url="https://github.com/OCA/odoo-pre-commit-hooks",
-    packages=find_packages("oca_pre_commit_hooks"),
-    package_dir={"": "oca_pre_commit_hooks"},
-    py_modules=[splitext(basename(path))[0] for path in glob("oca_pre_commit_hooks/*.py")],
+    packages=find_packages("src"),
+    package_dir={"": "src"},
+    py_modules=[splitext(basename(path))[0] for path in glob("src/*.py")],
     include_package_data=True,
     zip_safe=False,
     classifiers=[
