@@ -18,9 +18,9 @@ def installable(method):
     def inner(self):
         msg_tmpl = f"Skipped check '{method.__name__}' for '{self.manifest_path}'"
         if self.error:
-            self.self.print(f"{msg_tmpl} with error: '{self.error}'")
+            self.print(f"{msg_tmpl} with error: '{self.error}'")
         elif not self.is_module_installable:
-            self.self.print(f"{msg_tmpl} is not installable")
+            self.print(f"{msg_tmpl} is not installable")
         else:
             return method(self)
 
