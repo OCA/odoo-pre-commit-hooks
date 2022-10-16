@@ -165,7 +165,6 @@ class ChecksOdooModule:
 def run(manifest_paths=None, verbose=True, do_exit=True):
     if manifest_paths is None:
         manifest_paths = sys.argv[1:]
-    success = True
     checks = ChecksOdooModule.getattr_checks()
     all_check_errors = []
     for manifest_path in manifest_paths:
@@ -179,7 +178,6 @@ def run(manifest_paths=None, verbose=True, do_exit=True):
                 checks_obj.print(f"{check_error}")
                 for msg in msgs:
                     checks_obj.print(f"{msg}")
-                success = False
     if do_exit:
         sys.exit(not all_check_errors)
     return all_check_errors
