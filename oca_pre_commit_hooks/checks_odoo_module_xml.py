@@ -272,7 +272,7 @@ class ChecksOdooModuleXML:
                 )
 
     def check_xml_deprecated_qweb_directive(self):
-        """Check for use of deprecated QWeb directives t-*-options."""
+        """Check for use of deprecated QWeb directives t-*-options"""
         deprecated_directives = {
             "t-esc-options",
             "t-field-options",

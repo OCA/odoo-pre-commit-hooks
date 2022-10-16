@@ -13,7 +13,6 @@ from oca_pre_commit_hooks import (
     checks_odoo_module_csv,
     checks_odoo_module_po,
     checks_odoo_module_xml,
-    tools,
 )
 
 DFTL_README_TMPL_URL = "https://github.com/OCA/maintainer-tools/blob/master/template/module/README.rst"  # noqa: B950
@@ -44,8 +43,9 @@ class ChecksOdooModule:
     # TODO: Add autofix option and autofix the files
     # TODO: ir.model.access.csv:5 Duplicate csv record ... in ir.model.access.csv:6
     #       Use ir.model.access.csv:5 Duplicate csv record ... in line 6
-    def __init__(self, manifest_path):
+    def __init__(self, manifest_path, verbose=True):
         self.manifest_path = self._get_manifest_file_path(manifest_path)
+        self.verbose = verbose
         self.odoo_addon_path = os.path.dirname(self.manifest_path)
         self.odoo_addon_name = os.path.basename(self.odoo_addon_path)
         self.error = ""
@@ -135,7 +135,7 @@ class ChecksOdooModule:
         checks_obj = checks_odoo_module_xml.ChecksOdooModuleXML(
             manifest_datas, self.odoo_addon_name
         )
-        for check_meth in tools.getattr_checks(checks_obj):
+        for check_meth in self.getattr_checks(checks_obj):
             check_meth()
         self.checks_errors.update(checks_obj.checks_errors)
 
@@ -147,7 +147,7 @@ class ChecksOdooModule:
         checks_obj = checks_odoo_module_csv.ChecksOdooModuleCSV(
             manifest_datas, self.odoo_addon_name
         )
-        for check_meth in tools.getattr_checks(checks_obj):
+        for check_meth in self.getattr_checks(checks_obj):
             check_meth()
         self.checks_errors.update(checks_obj.checks_errors)
 
@@ -162,13 +162,50 @@ class ChecksOdooModule:
         checks_obj = checks_odoo_module_po.ChecksOdooModulePO(
             manifest_datas, self.odoo_addon_name
         )
-        for check_meth in tools.getattr_checks(checks_obj):
+        for check_meth in self.getattr_checks(checks_obj):
             check_meth()
         self.checks_errors.update(checks_obj.checks_errors)
 
+    @staticmethod
+    def getattr_checks(obj_or_class=None):
+        """Get all the attributes callables (methods)
+        that start with word 'def check_*'
+        The class using this way needs to have the dict
+        attribute "checks_errors"
+        """
+        if obj_or_class is None:
+            obj_or_class = ChecksOdooModule
+        for attr in dir(obj_or_class):
+            if not callable(getattr(obj_or_class, attr)) or not attr.startswith(
+                "check_"
+            ):
+                continue
+            yield getattr(obj_or_class, attr)
+
+    def print(self, object2print):
+        if self.verbose:
+            print(object2print)
+
+
+def run(manifest_paths, verbose=True, do_exit=True):
+    success = True
+    checks = ChecksOdooModule.getattr_checks()
+    for manifest_path in manifest_paths:
+        checks_obj = ChecksOdooModule(os.path.realpath(manifest_path), verbose=verbose)
+        for check in checks:
+            check(checks_obj)
+            for check_error, msgs in checks_obj.checks_errors.items():
+                checks_obj.print(f"{check_error}")
+                for msg in msgs:
+                    checks_obj.print(f"{msg}")
+                success = False
+    if do_exit:
+        sys.exit(not success)
+    return checks_obj
+
 
 def main(do_exit=True):
-    tools.main(ChecksOdooModule, sys.argv[1:], do_exit=do_exit)
+    return run(sys.argv[1:], do_exit=do_exit)
 
 
 if __name__ == "__main__":
