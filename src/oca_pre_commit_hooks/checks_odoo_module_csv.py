@@ -15,8 +15,10 @@ class ChecksOdooModuleCSV:
             )
         self.checks_errors = defaultdict(list)
 
-    def check_csv_duplicate_id(self):
-        """Check duplicate CSV "id" AKA xmlid but for CSV files"""
+    def check_csv(self):
+        """*Check csv_duplicate_record_id
+            duplicate CSV "id" AKA xmlid but for CSV files
+        """
         csvids = defaultdict(list)
         for manifest_data in self.manifest_datas:
             try:
