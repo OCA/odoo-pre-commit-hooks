@@ -13,7 +13,7 @@ dynamic_context = test_function
 [report]
 show_missing = true
 precision = 2
-fail_under = 95
+fail_under = 93
 omit =
     *__init__.py
 
@@ -21,6 +21,8 @@ omit =
 exclude_lines =
     # Have to re-enable the standard pragma
     pragma: no cover
+    # tests do not exit to evaluate the returned value
+    if do_exit: 
 
 [html]
 show_contexts=True

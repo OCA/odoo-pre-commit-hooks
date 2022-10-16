@@ -168,14 +168,12 @@ def run(manifest_paths=None, verbose=True, do_exit=True):
     all_check_errors = []
     for manifest_path in manifest_paths:
         checks_obj = ChecksOdooModule(os.path.realpath(manifest_path), verbose=verbose)
-        checks_obj.print(f"manifest_path {manifest_path}")
         for check in checks_obj.getattr_checks():
             check(checks_obj)
         all_check_errors.append(checks_obj.checks_errors)
-        checks_obj.print(f"checks_obj.checks_errors {checks_obj.checks_errors}")
     for check_errors in all_check_errors if verbose else []:
         for check_error, msgs in check_errors.items():
-            checks_obj.print(f"{check_error}")
+            checks_obj.print(f"\n****{check_error}****")
             for msg in msgs:
                 checks_obj.print(f"{msg}")
     if do_exit:
