@@ -181,7 +181,7 @@ def run(manifest_paths=None, verbose=True, do_exit=True):
     return all_check_errors
 
 
-def main(do_exit=True):
+def main(do_exit=True):  # pragma: no cover
     return run(do_exit=do_exit)
 
 

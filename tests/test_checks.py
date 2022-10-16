@@ -1,4 +1,5 @@
 import glob
+import sys
 import unittest
 
 import oca_pre_commit_hooks
@@ -28,7 +29,15 @@ ALL_CODE_ERRORS = {
 
 class TestChecks(unittest.TestCase):
     # TODO: Test manifest, po, xml and csv syntax error
+    # TODO: Test manifest without init file
+    # TODO: Test folder without manifest
     # TODO: csv without ID
+    # TODO: Modules without CSV or XML or PO
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.manifest_paths = glob.glob("./test_repo/*/__openerp__.py") + glob.glob("./test_repo/*/__manifest__.py")
 
     @staticmethod
     def get_all_code_errors(all_check_errors):
@@ -38,8 +47,15 @@ class TestChecks(unittest.TestCase):
         return check_errors_keys
 
     def test_checks(self):
-        manifest_paths = glob.glob("./test_repo/*/__openerp__.py") + glob.glob("./test_repo/*/__manifest__.py")
-        all_check_errors = oca_pre_commit_hooks.checks_odoo_module.run(manifest_paths, do_exit=False, verbose=True)
+        all_check_errors = oca_pre_commit_hooks.checks_odoo_module.run(
+            self.manifest_paths, do_exit=False, verbose=True
+        )
+        all_code_errors = self.get_all_code_errors(all_check_errors)
+        self.assertEqual(ALL_CODE_ERRORS, all_code_errors)
+
+    def test_checks_with_sys_argv(self):
+        sys.argv = [""] + self.manifest_paths
+        all_check_errors = oca_pre_commit_hooks.checks_odoo_module.run(do_exit=False, verbose=False)
         all_code_errors = self.get_all_code_errors(all_check_errors)
         self.assertEqual(ALL_CODE_ERRORS, all_code_errors)
 
