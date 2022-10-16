@@ -4,14 +4,14 @@ from collections import defaultdict
 
 
 class ChecksOdooModuleCSV:
-    def __init__(self, manifest_csvs, module_name):
+    def __init__(self, manifest_datas, module_name):
         self.module_name = module_name
-        self.manifest_csvs = manifest_csvs
-        for manifest_csv in manifest_csvs:
-            manifest_csv.update(
+        self.manifest_datas = manifest_datas
+        for manifest_data in manifest_datas:
+            manifest_data.update(
                 {
                     "model": os.path.splitext(
-                        os.path.basename(manifest_csv["filename"])
+                        os.path.basename(manifest_data["filename"])
                     )[0],
                 }
             )
@@ -20,25 +20,25 @@ class ChecksOdooModuleCSV:
     def check_csv_duplicate_id(self):
         """Check duplicate CSV "id" AKA xmlid but for CSV files"""
         csvids = defaultdict(list)
-        for manifest_csv in self.manifest_csvs:
+        for manifest_data in self.manifest_datas:
             try:
-                with open(manifest_csv["filename"], "r", encoding="UTF-8") as f_csv:
+                with open(manifest_data["filename"], "r", encoding="UTF-8") as f_csv:
                     csv_r = csv.DictReader(f_csv)
                     if not csv_r or "id" not in csv_r.fieldnames:
                         continue
                     for record in csv_r:
                         record_id = record["id"]
-                        csvid = f"{manifest_csv['data_section']}/{record_id}"
+                        csvid = f"{manifest_data['data_section']}/{record_id}"
                         csvids[csvid].append(
                             (
-                                manifest_csv["filename"],
+                                manifest_data["filename"],
                                 csv_r.line_num,
-                                manifest_csv["model"],
+                                manifest_data["model"],
                             )
                         )
             except (FileNotFoundError, csv.Error) as csv_err:
                 self.checks_errors["csv_syntax_error"].append(
-                    f'{manifest_csv["filename"]} {csv_err}'
+                    f'{manifest_data["filename"]} {csv_err}'
                 )
         for csvid, records in csvids.items():
             if len(records) < 2:

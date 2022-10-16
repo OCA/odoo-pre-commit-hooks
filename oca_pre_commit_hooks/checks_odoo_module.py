@@ -129,11 +129,11 @@ class ChecksOdooModule:
 
     @installable
     def check_xml(self):
-        fnames = self.manifest_referenced_files[".xml"]
-        if not fnames:
+        manifest_datas = self.manifest_referenced_files[".xml"]
+        if not manifest_datas:
             return
         checks_obj = checks_odoo_module_xml.ChecksOdooModuleXML(
-            fnames, self.odoo_addon_name
+            manifest_datas, self.odoo_addon_name
         )
         for check_meth in tools.getattr_checks(checks_obj):
             check_meth()
@@ -141,11 +141,11 @@ class ChecksOdooModule:
 
     @installable
     def check_csv(self):
-        fnames = self.manifest_referenced_files[".csv"]
-        if not fnames:
+        manifest_datas = self.manifest_referenced_files[".csv"]
+        if not manifest_datas:
             return
         checks_obj = checks_odoo_module_csv.ChecksOdooModuleCSV(
-            fnames, self.odoo_addon_name
+            manifest_datas, self.odoo_addon_name
         )
         for check_meth in tools.getattr_checks(checks_obj):
             check_meth()
@@ -153,14 +153,14 @@ class ChecksOdooModule:
 
     @installable
     def check_po(self):
-        fnames = (
+        manifest_datas = (
             self.manifest_referenced_files[".po"]
             + self.manifest_referenced_files[".pot"]
         )
-        if not fnames:
+        if not manifest_datas:
             return
         checks_obj = checks_odoo_module_po.ChecksOdooModulePO(
-            fnames, self.odoo_addon_name
+            manifest_datas, self.odoo_addon_name
         )
         for check_meth in tools.getattr_checks(checks_obj):
             check_meth()

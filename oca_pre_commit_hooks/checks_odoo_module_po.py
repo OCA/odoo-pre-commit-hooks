@@ -36,14 +36,14 @@ class FormatStringParseError(StringParseError):
 
 
 class ChecksOdooModulePO:
-    def __init__(self, manifest_pos, module_name):
+    def __init__(self, manifest_datas, module_name):
         self.module_name = module_name
-        self.manifest_pos = manifest_pos
+        self.manifest_datas = manifest_datas
         self.checks_errors = defaultdict(list)
-        for manifest_po in manifest_pos:
+        for manifest_data in manifest_datas:
             try:
-                polib_file = polib.pofile(manifest_po["filename"])
-                manifest_po.update(
+                polib_file = polib.pofile(manifest_data["filename"])
+                manifest_data.update(
                     {
                         "po": polib_file,
                         "file_error": None,
@@ -51,15 +51,15 @@ class ChecksOdooModulePO:
                 )
             except OSError as po_err:
                 # TODO: Raises check_po_syntax_error
-                manifest_po.update(
+                manifest_data.update(
                     {
                         "po": None,
                         "file_error": po_err,
                     }
                 )
-                msg = str(po_err).replace(f'{manifest_po["filename"]} ', "").strip()
+                msg = str(po_err).replace(f'{manifest_data["filename"]} ', "").strip()
                 self.checks_errors["po_syntax_error"].append(
-                    f'{manifest_po["filename"]} {msg}'
+                    f'{manifest_data["filename"]} {msg}'
                 )
 
     @staticmethod
@@ -211,9 +211,9 @@ class ChecksOdooModulePO:
         Check if 'msgid' is using 'str' variables like '%s'
         So translation 'msgstr' must be the same number of variables too"
         """
-        for manifest_po in self.manifest_pos:
+        for manifest_data in self.manifest_datas:
             duplicated = defaultdict(list)
-            for entry in manifest_po["po"]:
+            for entry in manifest_data["po"]:
                 if entry.obsolete:
                     continue
 
@@ -225,7 +225,7 @@ class ChecksOdooModulePO:
                 match = re.match(r"(module[s]?): (\w+)", entry.comment)
                 if not match:
                     self.checks_errors["po_requires_module"].append(
-                        f'{manifest_po["filename"]}:{entry.linenum}'
+                        f'{manifest_data["filename"]}:{entry.linenum}'
                         "Translation entry requires comment '#. module: MODULE'"
                     )
 
@@ -242,14 +242,14 @@ class ChecksOdooModulePO:
                 except PrintfStringParseError as str_parse_exc:
                     linenum = self._get_po_line_number(entry)
                     self.checks_errors["po_python_parse_printf"].append(
-                        f'{manifest_po["filename"]}:{linenum} '
+                        f'{manifest_data["filename"]}:{linenum} '
                         "Translation string couldn't be parsed "
                         f"correctly using str%variables {str_parse_exc}"
                     )
                 except FormatStringParseError as str_parse_exc:
                     linenum = self._get_po_line_number(entry)
                     self.checks_errors["po_python_parse_format"].append(
-                        f'{manifest_po["filename"]}:{linenum} '
+                        f'{manifest_data["filename"]}:{linenum} '
                         "Translation string couldn't be parsed "
                         f"correctly using str.format {str_parse_exc}"
                     )
@@ -265,7 +265,7 @@ class ChecksOdooModulePO:
                 if len(entries[0].msgid) > 40:
                     msg_id_short = f"{msg_id_short}..."
                 self.checks_errors["po_duplicate_message_definition"].append(
-                    f'{manifest_po["filename"]}:{linenum} '
+                    f'{manifest_data["filename"]}:{linenum} '
                     f'Duplicate PO message definition "{msg_id_short}" '
                     f"in lines {duplicated_str}"
                 )
