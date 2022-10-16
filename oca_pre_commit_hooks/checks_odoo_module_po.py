@@ -181,6 +181,13 @@ class ChecksOdooModulePO:
         return linenum
 
     def visit_entry(self, manifest_data, entry):
+        """* Check po_requires_module
+        Translation entry requires comment '#. module: MODULE'
+
+        * Check po_python_parse_printf and po_python_parse_format
+        Check if 'msgid' is using 'str' variables like '%s' or '{}'
+        So translation 'msgstr' must be the same number of variables too
+        """
         # po_requires_module
         # Regex from https://github.com/odoo/odoo/blob/fa4f36bb631e82/odoo/tools/translate.py#L616  # noqa
         match = re.match(r"(module[s]?): (\w+)", entry.comment)
@@ -213,10 +220,7 @@ class ChecksOdooModulePO:
                 )
 
     def check_po(self):
-        """* Check po_requires_module
-        Translation entry requires comment '#. module: MODULE'
-
-        * Check po_duplicate_message_definition (message-id)
+        """* Check po_duplicate_message_definition (message-id)
         in all entries of PO files
 
         We are not using `check_for_duplicates` parameter of polib.pofile method
@@ -226,10 +230,6 @@ class ChecksOdooModulePO:
         It doesn't show the number of lines duplicated
         and it shows the entire string of the message_id without truncating it
         or replacing newlines
-
-        * Check po_msgstr_variables
-        Check if 'msgid' is using 'str' variables like '%s'
-        So translation 'msgstr' must be the same number of variables too"
         """
         for manifest_data in self.manifest_datas:
             duplicated = defaultdict(list)
