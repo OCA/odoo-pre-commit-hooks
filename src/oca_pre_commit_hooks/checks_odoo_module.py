@@ -127,7 +127,8 @@ class ChecksOdooModule:
     @installable
     def check_csv(self):
         manifest_datas = self.manifest_referenced_files[".csv"]
-        if not manifest_datas:
+        if not manifest_datas:  # pragma: no cover
+            # TODO: Add a module without csv files
             return
         checks_obj = checks_odoo_module_csv.ChecksOdooModuleCSV(manifest_datas, self.odoo_addon_name)
         for check_meth in self.getattr_checks(checks_obj):

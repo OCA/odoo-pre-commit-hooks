@@ -12,7 +12,7 @@ dynamic_context = test_function
 [report]
 show_missing = true
 precision = 2
-fail_under = 93
+fail_under = 98
 omit =
     *__init__.py
     */tests/*
