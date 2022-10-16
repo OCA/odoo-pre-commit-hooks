@@ -6,6 +6,7 @@ import oca_pre_commit_hooks
 
 ALL_CODE_ERRORS = {
     "csv_duplicate_record_id",
+    "manifest_syntax_error",
     "missing_readme",
     "po_duplicate_message_definition",
     "po_python_parse_format",
