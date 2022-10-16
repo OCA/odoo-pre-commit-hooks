@@ -97,7 +97,7 @@ class ChecksOdooModuleXML:
                     f"{manifest_data['data_section']}/{record_id}"
                     f"_noupdate_{record.getparent().get('noupdate', '0')}"
                 )
-                xmlids_section[xmlid_key].append((manifest_data["filename"], record))
+                xmlids_section[xmlid_key].append((manifest_data, record))
 
                 # fields_duplicated
                 if not record.xpath('field[@name="inherit_id"]'):
@@ -112,7 +112,7 @@ class ChecksOdooModuleXML:
                             field.get("filter_domain"),
                             field.getparent(),
                         )
-                        xml_fields[field_key].append((manifest_data["filename"], field))
+                        xml_fields[field_key].append((manifest_data, field))
 
                 self.visit_xml_record(manifest_data, record)
                 self.visit_xml_record_view(manifest_data, record)
@@ -123,20 +123,20 @@ class ChecksOdooModuleXML:
         for xmlid_key, records in xmlids_section.items():
             if len(records) < 2:
                 continue
+            lines_str = ", ".join(f"{record[0]['filename']}:{record[1].sourceline}" for record in records[1:])
             self.checks_errors["xml_duplicate_record_id"].append(
-                f"{records[0][0]}:{records[0][1].sourceline} "
-                f'Duplicate xml record id "{xmlid_key}" in '
-                ", ".join(f"{record[1].base}:{record[1].sourceline}" for record in records[1:])
+                f"{records[0][0]['filename']}:{records[0][1].sourceline} "
+                f'Duplicate xml record id "{xmlid_key}" in {lines_str}'
             )
 
         # fields_duplicated
         for field_key, fields in xml_fields.items():
             if len(fields) < 2:
                 continue
+            lines_str = ", ".join(f"{field[1].sourceline}" for field in fields[1:])
             self.checks_errors["xml_duplicate_fields"].append(
-                f"{fields[0][0]}:{fields[0][1].sourceline} "
-                f'Duplicate xml field "{field_key[0]}" in lines '
-                f'{", ".join(f"{field[1].sourceline}" for field in fields[1:])}'
+                f"{fields[0][0]['filename']}:{fields[0][1].sourceline} "
+                f'Duplicate xml field "{field_key[0]}" in lines {lines_str}'
             )
 
     def visit_xml_record(self, manifest_data, record):
