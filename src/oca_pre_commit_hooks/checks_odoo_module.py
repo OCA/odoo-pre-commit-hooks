@@ -100,7 +100,9 @@ class ChecksOdooModule:
 
     def check_manifest(self):
         if not self.manifest_dict:
-            self.checks_errors["manifest_syntax_error"].append(f"{self.manifest_path} could not be loaded")
+            self.checks_errors["manifest_syntax_error"].append(
+                f"{self.manifest_path} could not be loaded {self.error}"
+            )
 
     @installable
     def check_missing_readme(self):

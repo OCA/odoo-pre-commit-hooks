@@ -1,4 +1,5 @@
 import glob
+import os
 import sys
 import unittest
 
@@ -39,6 +40,7 @@ class TestChecks(unittest.TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.manifest_paths = glob.glob("./test_repo/*/__openerp__.py") + glob.glob("./test_repo/*/__manifest__.py")
+        cls.module_paths = [os.path.dirname(i) for i in cls.manifest_paths]
 
     @staticmethod
     def get_all_code_errors(all_check_errors):
@@ -54,8 +56,8 @@ class TestChecks(unittest.TestCase):
         all_code_errors = self.get_all_code_errors(all_check_errors)
         self.assertEqual(ALL_CODE_ERRORS, all_code_errors)
 
-    def test_checks_with_sys_argv(self):
-        sys.argv = [""] + self.manifest_paths
+    def test_checks_with_sys_argv_module_paths_verbose(self):
+        sys.argv = [""] + self.module_paths
         all_check_errors = oca_pre_commit_hooks.checks_odoo_module.run(do_exit=False, verbose=False)
         all_code_errors = self.get_all_code_errors(all_check_errors)
         self.assertEqual(ALL_CODE_ERRORS, all_code_errors)
