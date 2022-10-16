@@ -51,15 +51,7 @@ class ChecksOdooModuleXML:
         return bool(replaces)
 
     def check_xml_records(self):
-        """* Check xml_redundant_module_name
-
-        If the module is called "module_a" and the xmlid is
-        <record id="module_a.xmlid_name1" ...
-
-        The "module_a." is redundant it could be replaced to only
-        <record id="xmlid_name1" ...
-
-        * Check xml_duplicate_record_id
+        """* Check xml_duplicate_record_id
 
         If a module has duplicated record_id AKA xml_ids
         file1.xml
@@ -71,21 +63,6 @@ class ChecksOdooModuleXML:
             <record id="xmlid_name1"...
                 <field name="field_name1"...
                 <field name="field_name1"...
-
-        * Check xml_view_dangerous_replace_low_priority in ir.ui.view
-            <field name="priority" eval="10"/>
-            ...
-                <field name="name" position="replace"/>
-
-        * Check xml_create_user_wo_reset_password
-            records of user without context="{'no_reset_password': True}"
-            This context avoid send email and mail log warning
-
-        * Check xml_dangerous_filter_wo_user
-        Check dangerous filter without a user assigned.
-
-        * Check xml_deprecated_tree_attribute
-        The tree-view declaration is using a deprecated attribute.
         """
         xmlids_section = defaultdict(list)
         xml_fields = defaultdict(list)
@@ -140,6 +117,14 @@ class ChecksOdooModuleXML:
             )
 
     def visit_xml_record(self, manifest_data, record):
+        """* Check xml_redundant_module_name
+
+        If the module is called "module_a" and the xmlid is
+        <record id="module_a.xmlid_name1" ...
+
+        The "module_a." is redundant it could be replaced to only
+        <record id="xmlid_name1" ...
+        """
         # redundant_module_name
         record_id = record.get("id")
         xmlid_module, xmlid_name = record_id.split(".") if "." in record_id else ["", record_id]
@@ -152,6 +137,15 @@ class ChecksOdooModuleXML:
             )
 
     def visit_xml_record_view(self, manifest_data, record):
+        """* Check xml_view_dangerous_replace_low_priority in ir.ui.view
+
+            <field name="priority" eval="10"/>
+            ...
+                <field name="name" position="replace"/>
+
+        * Check xml_deprecated_tree_attribute
+          The tree-view declaration is using a deprecated attribute.
+        """
         if record.get("model") != "ir.ui.view":
             return
         # view_dangerous_replace_low_priority
@@ -176,6 +170,10 @@ class ChecksOdooModuleXML:
             )
 
     def visit_xml_record_user(self, manifest_data, record):
+        """* Check xml_create_user_wo_reset_password
+        records of user without context="{'no_reset_password': True}"
+        This context avoid send email and mail log warning
+        """
         # xml_create_user_wo_reset_password
         if record.get("model") != "res.users":
             return
@@ -189,6 +187,9 @@ class ChecksOdooModuleXML:
             )
 
     def visit_xml_record_filter(self, manifest_data, record):
+        """* Check xml_dangerous_filter_wo_user
+        Check dangerous filter without a user assigned.
+        """
         # xml_dangerous_filter_wo_user
         if record.get("model") != "ir.filters":
             return
