@@ -114,10 +114,10 @@ class ChecksOdooModuleXML:
                         )
                         xml_fields[field_key].append((manifest_data["filename"], field))
 
-                self._check_xml_record(manifest_data, record)
-                self._check_xml_record_view(manifest_data, record)
-                self._check_xml_record_user(manifest_data, record)
-                self._check_xml_record_filter(manifest_data, record)
+                self.visit_xml_record(manifest_data, record)
+                self.visit_xml_record_view(manifest_data, record)
+                self.visit_xml_record_user(manifest_data, record)
+                self.visit_xml_record_filter(manifest_data, record)
 
         # xmlids_duplicated
         for xmlid_key, records in xmlids_section.items():
@@ -139,7 +139,7 @@ class ChecksOdooModuleXML:
                 f'{", ".join(f"{field[1].sourceline}" for field in fields[1:])}'
             )
 
-    def _check_xml_record(self, manifest_data, record):
+    def visit_xml_record(self, manifest_data, record):
         # redundant_module_name
         record_id = record.get("id")
         xmlid_module, xmlid_name = record_id.split(".") if "." in record_id else ["", record_id]
@@ -151,7 +151,7 @@ class ChecksOdooModuleXML:
                 f'better using only <record id="{xmlid_name}"'
             )
 
-    def _check_xml_record_view(self, manifest_data, record):
+    def visit_xml_record_view(self, manifest_data, record):
         if record.get("model") != "ir.ui.view":
             return
         # view_dangerous_replace_low_priority
@@ -175,23 +175,20 @@ class ChecksOdooModuleXML:
                 f'Deprecated "<tree {deprecate_attr_str}=..."'
             )
 
-    def _check_xml_record_user(self, manifest_data, record):
+    def visit_xml_record_user(self, manifest_data, record):
         # xml_create_user_wo_reset_password
-        if not (
-            record.get("model") == "res.users"
-            and record.xpath("field[@name='name'][1]")
-            and "no_reset_password" not in (record.get("context") or "")
-        ):
+        if record.get("model") != "res.users":
             return
-        # if exists field="name" then is a new record
-        # then should be context
-        self.checks_errors["xml_create_user_wo_reset_password"].append(
-            f'{manifest_data["filename"]}:{record.sourceline} '
-            "record res.users without "
-            "context=\"{'no_reset_password': True}\""
-        )
+        if record.xpath("field[@name='name'][1]") and "no_reset_password" not in (record.get("context") or ""):
+            # if exists field="name" then is a new record
+            # then should be context
+            self.checks_errors["xml_create_user_wo_reset_password"].append(
+                f'{manifest_data["filename"]}:{record.sourceline} '
+                "record res.users without "
+                "context=\"{'no_reset_password': True}\""
+            )
 
-    def _check_xml_record_filter(self, manifest_data, record):
+    def visit_xml_record_filter(self, manifest_data, record):
         # xml_dangerous_filter_wo_user
         if record.get("model") != "ir.filters":
             return

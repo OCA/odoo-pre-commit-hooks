@@ -158,7 +158,7 @@ class ChecksOdooModule:
 
     def print(self, object2print):
         if self.verbose:
-            self.print(object2print)
+            print(object2print)
 
 
 def run(manifest_paths, verbose=True, do_exit=True):

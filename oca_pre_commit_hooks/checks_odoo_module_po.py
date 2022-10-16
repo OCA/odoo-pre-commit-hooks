@@ -180,6 +180,38 @@ class ChecksOdooModulePO:
             linenum += 1
         return linenum
 
+    def visit_entry(self, manifest_data, entry):
+        # po_requires_module
+        # Regex from https://github.com/odoo/odoo/blob/fa4f36bb631e82/odoo/tools/translate.py#L616  # noqa
+        match = re.match(r"(module[s]?): (\w+)", entry.comment)
+        if not match:
+            self.checks_errors["po_requires_module"].append(
+                f'{manifest_data["filename"]}:{entry.linenum}' "Translation entry requires comment '#. module: MODULE'"
+            )
+
+        # po_msgstr_variables
+        if entry.msgstr and "python-format" in entry.flags:
+            # skip untranslated entry
+            # skip if it is not a python format
+            # because "%s"%var won't be parsed
+            try:
+                self.parse_printf(entry.msgid, entry.msgstr)
+                self.parse_format(entry.msgid, entry.msgstr)
+            except PrintfStringParseError as str_parse_exc:
+                linenum = self._get_po_line_number(entry)
+                self.checks_errors["po_python_parse_printf"].append(
+                    f'{manifest_data["filename"]}:{linenum} '
+                    "Translation string couldn't be parsed "
+                    f"correctly using str%variables {str_parse_exc}"
+                )
+            except FormatStringParseError as str_parse_exc:
+                linenum = self._get_po_line_number(entry)
+                self.checks_errors["po_python_parse_format"].append(
+                    f'{manifest_data["filename"]}:{linenum} '
+                    "Translation string couldn't be parsed "
+                    f"correctly using str.format {str_parse_exc}"
+                )
+
     def check_po(self):
         """* Check po_requires_module
         Translation entry requires comment '#. module: MODULE'
@@ -207,40 +239,7 @@ class ChecksOdooModulePO:
 
                 # po_duplicate_message_definition
                 duplicated[hash(entry.msgid)].append(entry)
-
-                # po_requires_module
-                # Regex from https://github.com/odoo/odoo/blob/fa4f36bb631e82/odoo/tools/translate.py#L616  # noqa
-                match = re.match(r"(module[s]?): (\w+)", entry.comment)
-                if not match:
-                    self.checks_errors["po_requires_module"].append(
-                        f'{manifest_data["filename"]}:{entry.linenum}'
-                        "Translation entry requires comment '#. module: MODULE'"
-                    )
-
-                # po_msgstr_variables
-                if not entry.msgstr or "python-format" not in entry.flags:
-                    # skip untranslated entry
-                    # skip if it is not a python format
-                    # because "%s"%var won't be parsed
-                    continue
-
-                try:
-                    self.parse_printf(entry.msgid, entry.msgstr)
-                    self.parse_format(entry.msgid, entry.msgstr)
-                except PrintfStringParseError as str_parse_exc:
-                    linenum = self._get_po_line_number(entry)
-                    self.checks_errors["po_python_parse_printf"].append(
-                        f'{manifest_data["filename"]}:{linenum} '
-                        "Translation string couldn't be parsed "
-                        f"correctly using str%variables {str_parse_exc}"
-                    )
-                except FormatStringParseError as str_parse_exc:
-                    linenum = self._get_po_line_number(entry)
-                    self.checks_errors["po_python_parse_format"].append(
-                        f'{manifest_data["filename"]}:{linenum} '
-                        "Translation string couldn't be parsed "
-                        f"correctly using str.format {str_parse_exc}"
-                    )
+                self.visit_entry(manifest_data, entry)
 
             for entries in duplicated.values():
                 if len(entries) < 2:
