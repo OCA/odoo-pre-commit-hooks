@@ -159,7 +159,7 @@ class ChecksOdooModule:
     def print(self, object2print):
         if not self.verbose:
             return
-        print(object2print)
+        print(object2print)  # pylint: disable=print-used
 
 
 def run(manifest_paths, verbose=True, do_exit=True):
