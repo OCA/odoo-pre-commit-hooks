@@ -1,8 +1,5 @@
 #!/usr/bin/env python3
 
-# Hooks are using print directly
-# pylint: disable=print-used
-
 import ast
 import glob
 import os
@@ -25,9 +22,9 @@ def installable(method):
     def inner(self):
         msg_tmpl = f"Skipped check '{method.__name__}' for '{self.manifest_path}'"
         if self.error:
-            print(f"{msg_tmpl} with error: '{self.error}'")
+            self.self.print(f"{msg_tmpl} with error: '{self.error}'")
         elif not self.is_module_installable:
-            print(f"{msg_tmpl} is not installable")
+            self.self.print(f"{msg_tmpl} is not installable")
         else:
             return method(self)
 
@@ -66,10 +63,10 @@ class ChecksOdooModule:
         if os.path.basename(
             self.manifest_path
         ) not in MANIFEST_NAMES or not os.path.isfile(self.manifest_path):
-            print(f"The path {self.manifest_path} is not {MANIFEST_NAMES} file")
+            self.print(f"The path {self.manifest_path} is not {MANIFEST_NAMES} file")
             return {}
         if not os.path.isfile(os.path.join(self.odoo_addon_path, "__init__.py")):
-            print(f"The path {self.manifest_path} does not have __init__.py file")
+            self.print(f"The path {self.manifest_path} does not have __init__.py file")
             return {}
         with open(self.manifest_path, "r", encoding="UTF-8") as f_manifest:
             try:
@@ -184,7 +181,7 @@ class ChecksOdooModule:
 
     def print(self, object2print):
         if self.verbose:
-            print(object2print)
+            self.print(object2print)
 
 
 def run(manifest_paths, verbose=True, do_exit=True):
