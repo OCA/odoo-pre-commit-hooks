@@ -7,7 +7,20 @@ source =
     src
     tests
 parallel = true
+dynamic_context = test_function
+
 
 [report]
 show_missing = true
 precision = 2
+fail_under = 95
+omit =
+    *__init__.py
+
+# Regexes for lines to exclude from consideration
+exclude_lines =
+    # Have to re-enable the standard pragma
+    pragma: no cover
+
+[html]
+show_contexts=True
