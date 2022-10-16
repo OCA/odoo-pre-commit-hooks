@@ -157,8 +157,9 @@ class ChecksOdooModule:
             yield getattr(obj_or_class, attr)
 
     def print(self, object2print):
-        if self.verbose:
-            print(object2print)
+        if not self.verbose:
+            return
+        print(object2print)
 
 
 def run(manifest_paths, verbose=True, do_exit=True):
