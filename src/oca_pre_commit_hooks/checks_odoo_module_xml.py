@@ -235,16 +235,21 @@ class ChecksOdooModuleXML:
     def check_xml_deprecated_data_node(self):
         """Check deprecated <data> node inside <odoo> xml node"""
         for manifest_data in self.manifest_datas:
-            for odoo_node in manifest_data["node"].xpath("/odoo"):
+            for odoo_node in manifest_data["node"].xpath("/odoo|/openerp"):
+                children_count = 0
                 for children_count, _ in enumerate(odoo_node.iterchildren(), start=1):
-                    if children_count == 2 and len(odoo_node.xpath("/data")) == 1:
-                        # TODO: Add autofix option
-                        self.checks_errors["xml_deprecated_data_node"].append(
-                            f'{manifest_data["filename"]}:{odoo_node.sourceline} '
-                            'Use <odoo> instead of <odoo><data> or use <odoo noupdate="1"> '
-                            'instead of <odoo><data noupdate="1">'
-                        )
+                    if children_count == 2:
+                        # Only needs to know if there are more than one child
                         break
+                # if "broken_module/model_view_odoo2.xml" in manifest_data["filename"]:
+                #     import pdb;pdb.set_trace()
+                if children_count == 1 and len(odoo_node.xpath("./data")) == 1:
+                    # TODO: Add autofix option
+                    self.checks_errors["xml_deprecated_data_node"].append(
+                        f'{manifest_data["filename"]}:{odoo_node.sourceline} '
+                        'Use <odoo> instead of <odoo><data> or use <odoo noupdate="1"> '
+                        'instead of <odoo><data noupdate="1">'
+                    )
 
     def check_xml_deprecated_openerp_node(self):
         """Check deprecated <openerp> xml node"""

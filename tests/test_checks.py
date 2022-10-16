@@ -4,6 +4,7 @@ import unittest
 import oca_pre_commit_hooks
 
 ALL_CODE_ERRORS = {
+    "csv_duplicate_record_id",
     "missing_readme",
     "po_duplicate_message_definition",
     "po_python_parse_format",
@@ -12,6 +13,7 @@ ALL_CODE_ERRORS = {
     "xml_create_user_wo_reset_password",
     "xml_dangerous_filter_wo_user",
     "xml_dangerous_qweb_replace_low_priority",
+    "xml_deprecated_data_node",
     "xml_deprecated_openerp_xml_node",
     "xml_deprecated_qweb_directive",
     "xml_deprecated_tree_attribute",
@@ -27,8 +29,6 @@ ALL_CODE_ERRORS = {
 class TestChecks(unittest.TestCase):
     # TODO: Test manifest, po, xml and csv syntax error
     # TODO: csv without ID
-    # TODO: Force xml_deprecated_data_node
-    # TODO: Force csv_duplicate_record_id
 
     @staticmethod
     def get_all_code_errors(all_check_errors):
