@@ -16,6 +16,7 @@ precision = 2
 fail_under = 93
 omit =
     *__init__.py
+    */tests/*
 
 # Regexes for lines to exclude from consideration
 exclude_lines =
@@ -24,7 +25,7 @@ exclude_lines =
     # tests do not exit to evaluate the returned value
     if do_exit:
     # tests import the package instead
-    if __name__ == "__main__": 
+    if __name__ == "__main__":
 
 [html]
 show_contexts=True

@@ -49,7 +49,7 @@ class ChecksOdooModulePO:
                         "file_error": None,
                     }
                 )
-            except OSError as po_err:
+            except OSError as po_err:  # pragma: no cover
                 # TODO: Raises check_po_syntax_error
                 manifest_data.update(
                     {
