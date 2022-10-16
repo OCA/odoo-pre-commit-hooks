@@ -27,6 +27,8 @@ ALL_CODE_ERRORS = {
 class TestChecks(unittest.TestCase):
     # TODO: Test manifest, po, xml and csv syntax error
     # TODO: csv without ID
+    # TODO: Force xml_deprecated_data_node
+    # TODO: Force csv_duplicate_record_id
 
     @staticmethod
     def get_all_code_errors(all_check_errors):
