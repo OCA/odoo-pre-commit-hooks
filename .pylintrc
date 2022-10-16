@@ -1,7 +1,7 @@
 
 
 [MASTER]
-load-plugins=pylint_odoo
+load-plugins=pylint_odoo, pylint.extensions.docstyle, pylint.extensions.mccabe
 score=n
 
 [ODOOLINT]
