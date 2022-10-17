@@ -19,11 +19,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: 'check'
-            python: '3.10'
-            toxpython: 'python3.10'
-            tox_env: 'check'
-            os: 'ubuntu-latest'
           # ubuntu
           - name: 'py37-cover (ubuntu)'
             python: '3.7'
@@ -136,11 +131,7 @@ jobs:
     - name: Build a binary wheel and a source tarball
       if: runner.os == 'Linux' && startsWith(matrix.tox_env, 'py39-cover')
       run: >-
-        rm -rf dist_wo_pbr/ && rm -rf dist/ &&
-        python -m pip install build wheel twine &&
-        python -m build --sdist --wheel --outdir dist_wo_pbr/ &&
-        python -m build --no-isolation --sdist --wheel --outdir dist/ &&
-        python -m twine check --strict dist/*
+        tox -e check -v
     # TODO: Publish package only for signed tags
     - name: Publish package
       if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags') && runner.os == 'Linux' && startsWith(matrix.tox_env, 'py310-cover')
