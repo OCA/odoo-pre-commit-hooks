@@ -38,11 +38,11 @@ jobs:
             python_arch: 'x64'
             tox_env: 'py39-cover,codecov'
             os: 'ubuntu-latest'
-          - name: 'py310-cover (ubuntu) + build'
+          - name: 'py310-cover (ubuntu) + build + lint'
             python: '3.10'
             toxpython: 'python3.10'
             python_arch: 'x64'
-            tox_env: 'py310-cover,codecov,build'
+            tox_env: 'py310-cover,codecov,build,lint'
             os: 'ubuntu-latest'
 
           # windows
