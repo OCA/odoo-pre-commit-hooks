@@ -2,12 +2,15 @@ import csv
 import os
 from collections import defaultdict
 
+from oca_pre_commit_hooks import utils
+
 
 class ChecksOdooModuleCSV:
-    # TODO: Validate disable checks
-    def __init__(self, manifest_datas, module_name, disable):
-        self.module_name = module_name
+    def __init__(self, manifest_datas, module_name, enable, disable):
         self.manifest_datas = manifest_datas
+        self.module_name = module_name
+        self.enable = enable
+        self.enable = disable
         self.disable = disable
         for manifest_data in manifest_datas:
             manifest_data.update(
@@ -17,6 +20,7 @@ class ChecksOdooModuleCSV:
             )
         self.checks_errors = defaultdict(list)
 
+    @utils.only_required_for_checks("csv_syntax_error", "csv_duplicate_record_id")
     def check_csv(self):
         """*Check csv_duplicate_record_id
         duplicate CSV "id" AKA xmlid but for CSV files

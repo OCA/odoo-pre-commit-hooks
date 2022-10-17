@@ -120,6 +120,16 @@ class TestChecks(unittest.TestCase):
             self.expected_errors.pop(check_disabled, False)
         self.assertDictEqual(real_errors, self.expected_errors)
 
+    def test_checks_disable_one_by_one(self):
+        for check2disable in self.expected_errors:
+            expected_errors = self.expected_errors.copy()
+            all_check_errors = oca_pre_commit_hooks.checks_odoo_module.run(
+                self.manifest_paths, no_exit=True, no_verbose=True, disable={check2disable}
+            )
+            expected_errors.pop(check2disable)
+            real_errors = self.get_count_code_errors(all_check_errors)
+            self.assertDictEqual(real_errors, expected_errors)
+
     def test_checks_disable_with_cli(self):
         checks_disabled = {
             "xml_syntax_error",
@@ -134,3 +144,27 @@ class TestChecks(unittest.TestCase):
         for check_disabled in checks_disabled:
             self.expected_errors.pop(check_disabled, False)
         self.assertDictEqual(real_errors, self.expected_errors)
+
+    def test_checks_disable_one_by_one_with_cli(self):
+        for check2disable in self.expected_errors:
+            expected_errors = self.expected_errors.copy()
+            sys.argv = ["", "--no-exit", "--no-verbose", f"--disable={check2disable}"] + self.module_paths
+            all_check_errors = oca_pre_commit_hooks.cli.main()
+            expected_errors.pop(check2disable)
+            real_errors = self.get_count_code_errors(all_check_errors)
+            self.assertDictEqual(real_errors, expected_errors)
+
+    def test_checks_enable_one_by_one(self):
+        for check2enable in self.expected_errors:
+            all_check_errors = oca_pre_commit_hooks.checks_odoo_module.run(
+                self.manifest_paths, no_exit=True, no_verbose=True, enable={check2enable}
+            )
+            real_errors = self.get_count_code_errors(all_check_errors)
+            self.assertDictEqual(real_errors, {check2enable: self.expected_errors[check2enable]})
+
+    def test_checks_enable_one_by_one_with_cli(self):
+        for check2enable in self.expected_errors:
+            sys.argv = ["", "--no-exit", "--no-verbose", f"--enable={check2enable}"] + self.module_paths
+            all_check_errors = oca_pre_commit_hooks.cli.main()
+            real_errors = self.get_count_code_errors(all_check_errors)
+            self.assertDictEqual(real_errors, {check2enable: self.expected_errors[check2enable]})

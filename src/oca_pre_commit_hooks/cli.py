@@ -50,5 +50,15 @@ def main(argv=None):
         default=set(),
         help="Disable the checker with the given 'check_name' (snake_case), separated by commas.",
     )
+    parser.add_argument(
+        "--enable",
+        "-e",
+        type=parse_disable,
+        default=set(),
+        help=(
+            "Enable the checker with the given 'check_name' (snake_case), separated by commas."
+            "Default: All checks are enabled by default"
+        ),
+    )
     kwargs = vars(parser.parse_args(argv))
     return checks_odoo_module.main(**kwargs)
