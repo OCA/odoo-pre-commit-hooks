@@ -5,6 +5,24 @@ from os.path import basename, dirname, join, splitext
 
 from setuptools import find_packages, setup
 
+try:
+    from pbr import git
+except ImportError:
+    git = None
+
+def generate_changelog():
+    fname = "ChangeLog"
+    if not git:
+        changelog_str = '# ChangeLog was not generated. You need to install "pbr"'
+        with open(fname, "w") as fchg:
+            fchg.write(changelog_str)
+        return changelog_str
+    changelog = git._iter_log_oneline()
+    changelog = git._iter_changelog(changelog)
+    git.write_git_changelog(changelog=changelog)
+    # git.generate_authors()
+    return read(fname)
+
 
 def generate_dependencies():
     return read("requirements.txt").splitlines()
@@ -20,7 +38,7 @@ setup(
     version="0.0.1",
     license="LGPL-3.0-or-later",
     description="odoo-pre-commit-hooks to use in pre-commit-config.yml files",
-    long_description=read("README.md"),
+    long_description="{}\n{}".format(read("README.md"), generate_changelog()),
     long_description_content_type="text/markdown",
     author="Odoo Community Association (OCA)",
     author_email="support@odoo-community.org",

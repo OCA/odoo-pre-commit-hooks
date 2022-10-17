@@ -19,6 +19,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - name: 'check'
+            python: '3.10'
+            toxpython: 'python3.10'
+            tox_env: 'check'
+            os: 'ubuntu-latest'
           # ubuntu
           - name: 'py37-cover (ubuntu)'
             python: '3.7'
