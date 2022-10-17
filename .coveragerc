@@ -1,0 +1,30 @@
+[paths]
+source = src
+
+[run]
+source =
+    src
+    tests
+parallel = true
+dynamic_context = test_function
+
+
+[report]
+show_missing = true
+precision = 2
+fail_under = 98
+omit =
+    *__init__.py
+    */tests/*
+
+# Regexes for lines to exclude from consideration
+exclude_lines =
+    # Have to re-enable the standard pragma
+    pragma: no cover
+    # tests do not exit or main to evaluate the returned value
+    if do_exit:
+    # tests import the package instead
+    if __name__ == "__main__":
+
+[html]
+show_contexts=True
