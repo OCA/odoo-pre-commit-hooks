@@ -16,7 +16,7 @@ def read(*names, **kwargs):
 
 
 setup(
-    name="odoo-pre-commit-hooks",
+    name="oca-odoo-pre-commit-hooks",
     version="0.0.1",
     license="LGPL-3.0-or-later",
     description="odoo-pre-commit-hooks to use in pre-commit-config.yml files",
