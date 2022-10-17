@@ -4,9 +4,11 @@ from collections import defaultdict
 
 
 class ChecksOdooModuleCSV:
-    def __init__(self, manifest_datas, module_name):
+    # TODO: Validate disable checks
+    def __init__(self, manifest_datas, module_name, disable):
         self.module_name = module_name
         self.manifest_datas = manifest_datas
+        self.disable = disable
         for manifest_data in manifest_datas:
             manifest_data.update(
                 {

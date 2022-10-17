@@ -9,8 +9,10 @@ DFLT_DEPRECATED_TREE_ATTRS = ["colors", "fonts", "string"]
 
 
 class ChecksOdooModuleXML:
-    def __init__(self, manifest_datas, module_name):
+    # TODO: Validate disable checks
+    def __init__(self, manifest_datas, module_name, disable):
         self.module_name = module_name
+        self.disable = disable
         self.manifest_datas = manifest_datas
         self.checks_errors = defaultdict(list)
         for manifest_data in manifest_datas:
