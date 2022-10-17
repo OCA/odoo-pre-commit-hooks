@@ -33,8 +33,8 @@ class TestChecks(unittest.TestCase):
     # TODO: Test manifest, po, xml and csv syntax error
     # TODO: Test manifest without init file
     # TODO: Test folder without manifest
-    # TODO: csv without ID
-    # TODO: Modules without CSV or XML or PO
+    # TODO: Test CSV without ID
+    # TODO: Test modules without CSV or XML or PO
 
     @classmethod
     def setUpClass(cls):
