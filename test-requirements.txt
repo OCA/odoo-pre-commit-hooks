@@ -1,5 +1,10 @@
+build
+bump2version
 coverage
+pbr
 pytest
 pytest-cov
-pytest-xdist==2.5.*
+pytest-xdist
 tox
+twine
+wheel
