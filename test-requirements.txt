@@ -1,4 +1,5 @@
 coverage
 pytest
 pytest-cov
+pytest-xdist==2.5.*
 tox

@@ -63,6 +63,6 @@ class TestChecks(unittest.TestCase):
         self.assertEqual(ALL_CODE_ERRORS, all_code_errors)
 
     def test_non_exists_path(self):
-        all_check_errors = oca_pre_commit_hooks.checks_odoo_module.run("/tmp/no_exists", do_exit=False, verbose=True)
+        all_check_errors = oca_pre_commit_hooks.checks_odoo_module.run(["/tmp/no_exists"], do_exit=False, verbose=True)
         check_errors_keys = self.get_all_code_errors(all_check_errors)
         self.assertEqual({"manifest_syntax_error"}, check_errors_keys)

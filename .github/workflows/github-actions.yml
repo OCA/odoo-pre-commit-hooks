@@ -1,0 +1,266 @@
+name: build
+on:
+  # Trigger the workflow on push or pull request,
+  # but only for the main branch
+  push:
+    branches:
+      - main
+      - 'pypi*'
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
+jobs:
+  deployv:
+    runs-on: ubuntu-latest
+    container:
+      image: quay.io/vauxoo/dockerv:latest
+      options: --user root
+    name: docker vauxoo light image
+    env:
+      PIP_CACHE_DIR: "/root/.cache/pip"
+      PRE_COMMIT_HOME: "/root/.cache/pre-commit"
+    steps:
+      - uses: actions/checkout@v2
+      - name: Upgrade pre-commit-vauxoo to the latest version (w/o update dependencies if not needed)
+        run: >-
+          pip3 install -U . &&
+          pip3 install --force-reinstall --no-deps .
+      - name: Run pre-commit-vauxoo
+        run: pre-commit-vauxoo
+
+  mqt:
+    runs-on: ubuntu-latest
+    container:
+      image: vauxoo/odoo-80-image-shippable-auto
+      options: --user root
+    name: docker vauxoo big image
+    env:
+      LINT_CHECK: "1"
+      TESTS: "0"
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+      - name: Cache pre-commit packages
+        id: cache-pre-commit
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/pre-commit
+            ~/.cache/pip
+          key: big-image-pre-commit
+      - name: Install dependencies and run tests
+        shell: bash
+        run: |
+          git clone --depth=1 https://github.com/vauxoo/maintainer-quality-tools.git -b master ${HOME}/maintainer-quality-tools
+          export PATH=${HOME}/maintainer-quality-tools/travis:${HOME}/gitlab_tools:${PATH}
+          export TRAVIS_PYTHON_VERSION="3.6"
+          source ${REPO_REQUIREMENTS}/virtualenv/nodejs/bin/activate
+          source ${REPO_REQUIREMENTS}/virtualenv/python${TRAVIS_PYTHON_VERSION}/bin/activate
+          source /usr/local/rvm/scripts/rvm
+          pip install -U . && pip install --force-reinstall --no-deps .
+          travis_install_nightly
+          travis_run_tests
+
+          deactivate
+          # Autofixes are not compatible with 3.5 so only running mandatory and optional
+          export PRECOMMIT_HOOKS_TYPE="mandatory,optional"
+          export TRAVIS_PYTHON_VERSION="3.5"
+          source ${REPO_REQUIREMENTS}/virtualenv/nodejs/bin/activate
+          source ${REPO_REQUIREMENTS}/virtualenv/python${TRAVIS_PYTHON_VERSION}/bin/activate
+          source /usr/local/rvm/scripts/rvm
+          pip install -U . && pip install --force-reinstall --no-deps .
+          travis_install_nightly
+          travis_run_tests
+
+  test:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: 'check'
+            python: '3.9'
+            toxpython: 'python3.9'
+            tox_env: 'check'
+            os: 'ubuntu-latest'
+          - name: 'docs'
+            python: '3.9'
+            toxpython: 'python3.9'
+            tox_env: 'docs'
+            os: 'ubuntu-latest'
+
+          # ubuntu
+          - name: 'py36-cover (ubuntu)'
+            python: '3.6'
+            toxpython: 'python3.6'
+            python_arch: 'x64'
+            tox_env: 'py36-cover,codecov'
+            os: 'ubuntu-latest'
+          - name: 'py37-cover (ubuntu)'
+            python: '3.7'
+            toxpython: 'python3.7'
+            python_arch: 'x64'
+            tox_env: 'py37-cover,codecov'
+            os: 'ubuntu-latest'
+          - name: 'py38-cover (ubuntu)'
+            python: '3.8'
+            toxpython: 'python3.8'
+            python_arch: 'x64'
+            tox_env: 'py38-cover,codecov'
+            os: 'ubuntu-latest'
+          - name: 'py39-cover (ubuntu) + pypi release'
+            python: '3.9'
+            toxpython: 'python3.9'
+            python_arch: 'x64'
+            tox_env: 'py39-cover,codecov'
+            os: 'ubuntu-latest'
+          - name: 'py310-cover (ubuntu)'
+            python: '3.10'
+            toxpython: 'python3.10'
+            python_arch: 'x64'
+            tox_env: 'py310-cover,codecov'
+            os: 'ubuntu-latest'
+
+          # windows
+          - name: 'py36-cover (windows)'
+            python: '3.6'
+            toxpython: 'python3.6'
+            python_arch: 'x64'
+            tox_env: 'py36-cover,codecov'
+            os: 'windows-latest'
+          - name: 'py37-cover (windows)'
+            python: '3.7'
+            toxpython: 'python3.7'
+            python_arch: 'x64'
+            tox_env: 'py37-cover,codecov'
+            os: 'windows-latest'
+          - name: 'py38-cover (windows)'
+            python: '3.8'
+            toxpython: 'python3.8'
+            python_arch: 'x64'
+            tox_env: 'py38-cover,codecov'
+            os: 'windows-latest'
+          - name: 'py39-cover (windows)'
+            python: '3.9'
+            toxpython: 'python3.9'
+            python_arch: 'x64'
+            tox_env: 'py39-cover,codecov'
+            os: 'windows-latest'
+          - name: 'py310-cover (windows)'
+            python: '3.10'
+            toxpython: 'python3.10'
+            python_arch: 'x64'
+            tox_env: 'py310-cover,codecov'
+            os: 'windows-latest'
+
+          # macos
+          - name: 'py36-cover (macos)'
+            python: '3.6'
+            toxpython: 'python3.6'
+            python_arch: 'x64'
+            tox_env: 'py36-cover,codecov'
+            os: 'macos-latest'
+          - name: 'py37-cover (macos)'
+            python: '3.7'
+            toxpython: 'python3.7'
+            python_arch: 'x64'
+            tox_env: 'py37-cover,codecov'
+            os: 'macos-latest'
+          - name: 'py38-cover (macos)'
+            python: '3.8'
+            toxpython: 'python3.8'
+            python_arch: 'x64'
+            tox_env: 'py38-cover,codecov'
+            os: 'macos-latest'
+          - name: 'py39-cover (macos)'
+            python: '3.9'
+            toxpython: 'python3.9'
+            python_arch: 'x64'
+            tox_env: 'py39-cover,codecov'
+            os: 'macos-latest'
+          - name: 'py310-cover (macos)'
+            python: '3.10'
+            toxpython: 'python3.10'
+            python_arch: 'x64'
+            tox_env: 'py310-cover,codecov'
+            os: 'macos-latest'
+
+    steps:
+    - name: Set git to not change EoL
+      if: runner.os == 'Windows'
+      run: |
+        git config --global core.autocrlf false
+    - name: Cache pre-commit packages
+      id: cache-pre-commit
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pre-commit
+        key: ${{ runner.os }}-py${{ matrix.python }}-${{ matrix.python_arch }}-pre-commit
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python }}
+        architecture: ${{ matrix.python_arch }}
+        cache: 'pip'
+    - name: install dependencies
+      run: |
+        python -mpip install --progress-bar=off -r ci/requirements.txt
+        virtualenv --version
+        pip --version
+        tox --version
+        pip list --format=freeze
+    - name: install apk packages
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt update -qq
+        sudo apt install -y libecpg-dev  # Required for vx-check-deactivate hook
+    - name: Test == windows
+      if: runner.os == 'Windows'
+      env:
+        TOXPYTHON: '${{ matrix.toxpython }}'
+      run: |
+        [System.Environment]::SetEnvironmentVariable('PATH',$env:Path + ";" + $env:PGBIN)
+        ecpg --version
+        tox -e ${{ matrix.tox_env }} -v
+    - name: Test != Windows
+      if: runner.os != 'Windows'
+      env:
+        TOXPYTHON: '${{ matrix.toxpython }}'
+      run: |
+        ecpg --version
+        tox -e ${{ matrix.tox_env }} -v
+    - name: Build a binary wheel and a source tarball
+      if: runner.os == 'Linux' && startsWith(matrix.tox_env, 'py39-cover')
+      run: >-
+        rm -rf dist_wo_pbr/ && rm -rf dist/ &&
+        python3 -m pip install build wheel twine &&
+        python3 -m build --sdist --wheel --outdir dist_wo_pbr/ &&
+        python3 -m build --no-isolation --sdist --wheel --outdir dist/ &&
+        twine check dist/*
+    # TODO: Publish package only for signed tags
+    - name: Publish package
+      if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags') && runner.os == 'Linux' && startsWith(matrix.tox_env, 'py39-cover')
+      run: |
+        python3 -m twine upload --verbose -u __token__ -p ${{ secrets.PYPI_API_TOKEN }} --repository-url https://upload.pypi.org/legacy/ dist/*
+        sleep 300
+        curl -X POST -F token=${{ secrets.TRIGGER_TOKEN_DOCKERV }} -F ref=master https://git.vauxoo.com/api/v4/projects/443/trigger/pipeline
+    # TODO: Add GITHUB_RUN_ID.GITHUB_RUN_ATTEMPT.GITHUB_RUN_NUMBER to bumpversion to avoid duplicating upload versions or even the git sha
+    # For now, feel free to uncomment this line of code to test things related to upload to pypi (test)
+    # - name: TestPyPI publish package
+    #   if: runner.os == 'Linux' && startsWith(matrix.tox_env, 'py39-cover')
+    #   run: >-
+    #     python3 -m twine upload --verbose -u __token__ -p ${{ secrets.PYPI_TEST_API_TOKEN }} \
+    #       --repository-url https://test.pypi.org/legacy/ dist/* || true
+    - name: codecov
+      if: startsWith(matrix.tox_env, 'py')  # only coveralls in python tests
+      uses: codecov/codecov-action@v3
+      with:
+        fail_ci_if_error: false  # TODO: Set true after fix token for win&macosx
+        verbose: true
