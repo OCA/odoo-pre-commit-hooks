@@ -6,25 +6,12 @@ import os
 import sys
 from collections import defaultdict
 
-from oca_pre_commit_hooks import checks_odoo_module_csv, checks_odoo_module_po, checks_odoo_module_xml
+from oca_pre_commit_hooks import checks_odoo_module_csv, checks_odoo_module_po, checks_odoo_module_xml, utils
 
 DFTL_README_TMPL_URL = "https://github.com/OCA/maintainer-tools/blob/master/template/module/README.rst"  # noqa: B950
 DFTL_README_FILES = ["README.md", "README.txt", "README.rst"]
 DFTL_MANIFEST_DATA_KEYS = ["data", "demo", "demo_xml", "init_xml", "test", "update_xml"]
 MANIFEST_NAMES = ("__openerp__.py", "__manifest__.py")
-
-
-def installable(method):
-    def inner(self):
-        msg_tmpl = f"Skipped check '{method.__name__}' for '{self.manifest_path}'"
-        if self.error:
-            self.print(f"{msg_tmpl} with error: '{self.error}'")
-        elif not self.is_module_installable:
-            self.print(f"{msg_tmpl} is not installable")
-        else:
-            return method(self)
-
-    return inner
 
 
 class ChecksOdooModule:
@@ -36,8 +23,9 @@ class ChecksOdooModule:
     # TODO: Add autofix option and autofix the files
     # TODO: ir.model.access.csv:5 Duplicate csv record ... in ir.model.access.csv:6
     #       Use ir.model.access.csv:5 Duplicate csv record ... in line 6
-    def __init__(self, manifest_path, disable, verbose=True):
+    def __init__(self, manifest_path, enable, disable, verbose=True):
         self.manifest_path = self._get_manifest_file_path(manifest_path)
+        self.enable = enable
         self.disable = disable
         self.verbose = verbose
         self.odoo_addon_path = os.path.dirname(self.manifest_path)
@@ -99,13 +87,15 @@ class ChecksOdooModule:
             )
         return ext_referenced_files
 
+    @utils.only_required_for_checks("manifest_syntax_error")
     def check_manifest(self):
         if not self.manifest_dict:
             self.checks_errors["manifest_syntax_error"].append(
                 f"{self.manifest_path} could not be loaded {self.error}"
             )
 
-    @installable
+    @utils.only_required_for_installable()
+    @utils.only_required_for_checks("missing_readme")
     def check_missing_readme(self):
         for readme_name in DFTL_README_FILES:
             readme_path = os.path.join(self.odoo_addon_path, readme_name)
@@ -115,79 +105,74 @@ class ChecksOdooModule:
             f"{readme_path} missed file. Template here: {DFTL_README_TMPL_URL}"
         )
 
-    @installable
+    @utils.only_required_for_installable()
     def check_xml(self):
         manifest_datas = self.manifest_referenced_files[".xml"]
         if not manifest_datas:
             return
-        checks_obj = checks_odoo_module_xml.ChecksOdooModuleXML(manifest_datas, self.odoo_addon_name, self.disable)
-        for check_meth in self.getattr_checks(checks_obj, self.disable):
+        checks_obj = checks_odoo_module_xml.ChecksOdooModuleXML(
+            manifest_datas, self.odoo_addon_name, self.enable, self.disable
+        )
+        for check_meth in utils.getattr_checks(checks_obj, self.enable, self.disable):
             check_meth()
         self.checks_errors.update(checks_obj.checks_errors)
 
-    @installable
+    @utils.only_required_for_installable()
     def check_csv(self):
         manifest_datas = self.manifest_referenced_files[".csv"]
         if not manifest_datas:  # pragma: no cover
             # TODO: Add a module without csv files
             return
-        checks_obj = checks_odoo_module_csv.ChecksOdooModuleCSV(manifest_datas, self.odoo_addon_name, self.disable)
-        for check_meth in self.getattr_checks(checks_obj, self.disable):
+        checks_obj = checks_odoo_module_csv.ChecksOdooModuleCSV(
+            manifest_datas, self.odoo_addon_name, self.enable, self.disable
+        )
+        for check_meth in utils.getattr_checks(checks_obj, self.enable, self.disable):
             check_meth()
         self.checks_errors.update(checks_obj.checks_errors)
 
-    @installable
+    @utils.only_required_for_installable()
     def check_po(self):
         manifest_datas = self.manifest_referenced_files[".po"] + self.manifest_referenced_files[".pot"]
         if not manifest_datas:
             return
-        checks_obj = checks_odoo_module_po.ChecksOdooModulePO(manifest_datas, self.odoo_addon_name, self.disable)
-        for check_meth in self.getattr_checks(checks_obj, self.disable):
+        checks_obj = checks_odoo_module_po.ChecksOdooModulePO(
+            manifest_datas, self.odoo_addon_name, self.enable, self.disable
+        )
+        for check_meth in utils.getattr_checks(checks_obj, self.enable, self.disable):
             check_meth()
         self.checks_errors.update(checks_obj.checks_errors)
-
-    @staticmethod
-    def getattr_checks(obj_or_class=None, disable=None):
-        """Get all the attributes callables (methods)
-        that start with word 'def check_*'
-        The class using this way needs to have the dict
-        attribute "checks_errors"
-        """
-        if obj_or_class is None:
-            obj_or_class = ChecksOdooModule
-        for attr in dir(obj_or_class):
-            if not callable(getattr(obj_or_class, attr)) or not attr.startswith("check_"):
-                continue
-            check_name = attr.replace("check_", "", 1)
-            if disable and check_name in disable:
-                continue
-            yield getattr(obj_or_class, attr)
 
     def print(self, object2print):
         if not self.verbose:
             return
         print(object2print)  # pylint: disable=print-used
 
-    def remove_checks_disabled(self):
+    def filter_checks_enabled_disabled(self):
         """Remove disabled checks from "check_errors" dictionary
         It is needed since that there are checks called without option to disable them
         e.g. syntax error checks
+
+        Remove checks not enabled only if enabled was defined
         """
-        if not self.disable or not self.checks_errors:
+        if not self.checks_errors:
             return
-        for disable in self.disable:
+        for disable in self.disable or []:
             self.checks_errors.pop(disable, False)
+        if not self.enable:
+            return
+        checks_no_enable = set(self.checks_errors) - self.enable
+        for check_no_enable in checks_no_enable:
+            self.checks_errors.pop(check_no_enable, False)
 
 
-def run(filenames_or_modules, disable=None, no_verbose=False, no_exit=False):
+def run(filenames_or_modules, enable=None, disable=None, no_verbose=False, no_exit=False):
     all_check_errors = []
     for manifest_path in filenames_or_modules:
-        checks_obj = ChecksOdooModule(os.path.realpath(manifest_path), disable, verbose=not no_verbose)
-        for check in checks_obj.getattr_checks(disable=disable):
-            check(checks_obj)
-        checks_obj.remove_checks_disabled()
+        checks_obj = ChecksOdooModule(os.path.realpath(manifest_path), enable, disable, verbose=not no_verbose)
+        for check in utils.getattr_checks(checks_obj, enable=enable, disable=disable):
+            check()
+        checks_obj.filter_checks_enabled_disabled()
         all_check_errors.append(checks_obj.checks_errors)
-    checks_obj.remove_checks_disabled()
     for check_errors in all_check_errors if not no_verbose else []:
         for check_error, msgs in check_errors.items():
             checks_obj.print(f"\n****{check_error}****")

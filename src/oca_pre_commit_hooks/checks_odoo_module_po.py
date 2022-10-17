@@ -4,6 +4,8 @@ from collections import defaultdict
 
 import polib
 
+from oca_pre_commit_hooks import utils
+
 # Regex used from https://github.com/translate/translate/blob/9de0d72437/translate/filters/checks.py#L50-L62  # noqa
 PRINTF_PATTERN = re.compile(
     r"""
@@ -36,9 +38,9 @@ class FormatStringParseError(StringParseError):
 
 
 class ChecksOdooModulePO:
-    # TODO: Validate disable checks
-    def __init__(self, manifest_datas, module_name, disable):
+    def __init__(self, manifest_datas, module_name, enable, disable):
         self.module_name = module_name
+        self.enable = enable
         self.disable = disable
         self.manifest_datas = manifest_datas
         self.checks_errors = defaultdict(list)
@@ -182,6 +184,11 @@ class ChecksOdooModulePO:
             linenum += 1
         return linenum
 
+    @utils.only_required_for_checks(
+        "po_python_parse_format",
+        "po_python_parse_printf",
+        "po_requires_module",
+    )
     def visit_entry(self, manifest_data, entry):
         """* Check po_requires_module
         Translation entry requires comment '#. module: MODULE'
@@ -241,7 +248,8 @@ class ChecksOdooModulePO:
 
                 # po_duplicate_message_definition
                 duplicated[hash(entry.msgid)].append(entry)
-                self.visit_entry(manifest_data, entry)
+                for meth in utils.getattr_checks(self, self.enable, self.disable, "visit_entry"):
+                    meth(manifest_data, entry)
 
             for entries in duplicated.values():
                 if len(entries) < 2:

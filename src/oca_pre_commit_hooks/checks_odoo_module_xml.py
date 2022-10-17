@@ -4,14 +4,16 @@ from collections import defaultdict
 
 from lxml import etree
 
+from oca_pre_commit_hooks import utils
+
 DFTL_MIN_PRIORITY = 99
 DFLT_DEPRECATED_TREE_ATTRS = ["colors", "fonts", "string"]
 
 
 class ChecksOdooModuleXML:
-    # TODO: Validate disable checks
-    def __init__(self, manifest_datas, module_name, disable):
+    def __init__(self, manifest_datas, module_name, enable, disable):
         self.module_name = module_name
+        self.enable = enable
         self.disable = disable
         self.manifest_datas = manifest_datas
         self.checks_errors = defaultdict(list)
@@ -93,10 +95,8 @@ class ChecksOdooModuleXML:
                         )
                         xml_fields[field_key].append((manifest_data, field))
 
-                self.visit_xml_record(manifest_data, record)
-                self.visit_xml_record_view(manifest_data, record)
-                self.visit_xml_record_user(manifest_data, record)
-                self.visit_xml_record_filter(manifest_data, record)
+                for meth in utils.getattr_checks(self, self.enable, self.disable, "visit_xml_record"):
+                    meth(manifest_data, record)
 
         # xmlids_duplicated
         for xmlid_key, records in xmlids_section.items():
@@ -118,6 +118,7 @@ class ChecksOdooModuleXML:
                 f'Duplicate xml field "{field_key[0]}" in lines {lines_str}'
             )
 
+    @utils.only_required_for_checks("xml_redundant_module_name")
     def visit_xml_record(self, manifest_data, record):
         """* Check xml_redundant_module_name
 
@@ -138,6 +139,7 @@ class ChecksOdooModuleXML:
                 f'better using only <record id="{xmlid_name}"'
             )
 
+    @utils.only_required_for_checks("xml_view_dangerous_replace_low_priority", "xml_deprecated_tree_attribute")
     def visit_xml_record_view(self, manifest_data, record):
         """* Check xml_view_dangerous_replace_low_priority in ir.ui.view
 
@@ -171,6 +173,7 @@ class ChecksOdooModuleXML:
                 f'Deprecated "<tree {deprecate_attr_str}=..."'
             )
 
+    @utils.only_required_for_checks("xml_create_user_wo_reset_password")
     def visit_xml_record_user(self, manifest_data, record):
         """* Check xml_create_user_wo_reset_password
         records of user without context="{'no_reset_password': True}"
@@ -188,6 +191,7 @@ class ChecksOdooModuleXML:
                 "context=\"{'no_reset_password': True}\""
             )
 
+    @utils.only_required_for_checks("xml_dangerous_filter_wo_user")
     def visit_xml_record_filter(self, manifest_data, record):
         """* Check xml_dangerous_filter_wo_user
         Check dangerous filter without a user assigned.
@@ -203,6 +207,7 @@ class ChecksOdooModuleXML:
                 f'{manifest_data["filename"]}:{record.sourceline} ' "Dangerous filter without explicit `user_id`"
             )
 
+    @utils.only_required_for_checks("xml_not_valid_char_link")
     def check_xml_not_valid_char_link(self):
         """The resource in in src/href contains a not valid character"""
         for manifest_data in self.manifest_datas:
@@ -217,6 +222,7 @@ class ChecksOdooModuleXML:
                             f"The resource in in src/href contains a not valid character"
                         )
 
+    @utils.only_required_for_checks("xml_dangerous_qweb_replace_low_priority")
     def check_xml_dangerous_qweb_replace_low_priority(self):
         """Check dangerous qweb view defined with low priority"""
         for manifest_data in self.manifest_datas:
@@ -234,6 +240,7 @@ class ChecksOdooModuleXML:
                             f"with priority {priority} < {DFTL_MIN_PRIORITY}"
                         )
 
+    @utils.only_required_for_checks("xml_deprecated_data_node")
     def check_xml_deprecated_data_node(self):
         """Check deprecated <data> node inside <odoo> xml node"""
         for manifest_data in self.manifest_datas:
@@ -253,6 +260,7 @@ class ChecksOdooModuleXML:
                         'instead of <odoo><data noupdate="1">'
                     )
 
+    @utils.only_required_for_checks("xml_deprecated_openerp_xml_node")
     def check_xml_deprecated_openerp_node(self):
         """Check deprecated <openerp> xml node"""
         for manifest_data in self.manifest_datas:
@@ -262,6 +270,7 @@ class ChecksOdooModuleXML:
                     f'{manifest_data["filename"]}:{openerp_node.sourceline} ' "Deprecated <openerp> xml node"
                 )
 
+    @utils.only_required_for_checks("xml_deprecated_qweb_directive")
     def check_xml_deprecated_qweb_directive(self):
         """Check for use of deprecated QWeb directives t-*-options"""
         deprecated_directives = {
