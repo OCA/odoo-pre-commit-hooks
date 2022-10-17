@@ -20,12 +20,6 @@ jobs:
       matrix:
         include:
           # ubuntu
-          - name: 'py36-cover (ubuntu)'
-            python: '3.6'
-            toxpython: 'python3.6'
-            python_arch: 'x64'
-            tox_env: 'py36-cover,codecov'
-            os: 'ubuntu-latest'
           - name: 'py37-cover (ubuntu)'
             python: '3.7'
             toxpython: 'python3.7'
@@ -52,12 +46,6 @@ jobs:
             os: 'ubuntu-latest'
 
           # windows
-          - name: 'py36-cover (windows)'
-            python: '3.6'
-            toxpython: 'python3.6'
-            python_arch: 'x64'
-            tox_env: 'py36-cover,codecov'
-            os: 'windows-latest'
           - name: 'py37-cover (windows)'
             python: '3.7'
             toxpython: 'python3.7'
@@ -84,12 +72,6 @@ jobs:
             os: 'windows-latest'
 
           # macos
-          - name: 'py36-cover (macos)'
-            python: '3.6'
-            toxpython: 'python3.6'
-            python_arch: 'x64'
-            tox_env: 'py36-cover,codecov'
-            os: 'macos-latest'
           - name: 'py37-cover (macos)'
             python: '3.7'
             toxpython: 'python3.7'
