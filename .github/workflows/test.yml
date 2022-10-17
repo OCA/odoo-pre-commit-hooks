@@ -38,11 +38,11 @@ jobs:
             python_arch: 'x64'
             tox_env: 'py39-cover,codecov'
             os: 'ubuntu-latest'
-          - name: 'py310-cover (ubuntu) + pypi release'
+          - name: 'py310-cover (ubuntu) + build'
             python: '3.10'
             toxpython: 'python3.10'
             python_arch: 'x64'
-            tox_env: 'py310-cover,codecov'
+            tox_env: 'py310-cover,codecov,build'
             os: 'ubuntu-latest'
 
           # windows
@@ -128,13 +128,9 @@ jobs:
         TOXPYTHON: '${{ matrix.toxpython }}'
       run: |
         tox -e ${{ matrix.tox_env }} -v
-    - name: Build a binary wheel and a source tarball
-      if: runner.os == 'Linux' && startsWith(matrix.tox_env, 'py39-cover')
-      run: >-
-        tox -e check -v
     # TODO: Publish package only for signed tags
     - name: Publish package
-      if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags') && runner.os == 'Linux' && startsWith(matrix.tox_env, 'py310-cover')
+      if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags') && contains(matrix.tox_env, 'build')
       run: |
         python -m twine upload --verbose -u __token__ -p ${{ secrets.PYPI_API_TOKEN }} --repository-url https://upload.pypi.org/legacy/ dist/*
     # TODO: Add GITHUB_RUN_ID.GITHUB_RUN_ATTEMPT.GITHUB_RUN_NUMBER to bumpversion to avoid duplicating upload versions or even the git sha
