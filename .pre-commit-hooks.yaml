@@ -1,0 +1,8 @@
+- id: oca-checks-odoo-module
+  name: Checks for Odoo modules
+  description: Multiple checks for Odoo modules
+  entry: oca-checks-odoo-module
+  args: []
+  language: python
+  types: [python]
+  files: /\_\_(manifest|openerp)\_\_\.py$

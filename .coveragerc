@@ -21,8 +21,6 @@ omit =
 exclude_lines =
     # Have to re-enable the standard pragma
     pragma: no cover
-    # tests do not exit or main to evaluate the returned value
-    if do_exit:
     # tests import the package instead
     if __name__ == "__main__":
 
