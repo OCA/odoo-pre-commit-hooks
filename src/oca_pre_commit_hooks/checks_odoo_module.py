@@ -178,13 +178,13 @@ def run(manifest_paths=None, verbose=True, do_exit=True):
         for check_error, msgs in check_errors.items():
             checks_obj.print(f"\n****{check_error}****")
             for msg in msgs:
-                checks_obj.print(f"{msg}")
+                checks_obj.print(f"{msg} - [{check_error}]")
     if do_exit:
         sys.exit(not all_check_errors)
     return all_check_errors
 
 
-def main(do_exit=True):  # pragma: no cover
+def main(do_exit=True):
     return run(do_exit=do_exit)
 
 

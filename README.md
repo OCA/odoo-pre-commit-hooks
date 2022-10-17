@@ -35,7 +35,7 @@ Add to your ".pre-commit-config.yaml" configuration file the following input
     - repo: https://github.com/OCA/odoo-pre-commit-hooks
         rev: main  # Change to last version or git sha
         hooks:
-        - id: HOOK-NAME
+        - id: oca-checks-odoo-module-local
 
 ```
 
