@@ -140,7 +140,7 @@ jobs:
         python -m pip install build wheel twine &&
         python -m build --sdist --wheel --outdir dist_wo_pbr/ &&
         python -m build --no-isolation --sdist --wheel --outdir dist/ &&
-        python -m twine check dist/*
+        python -m twine check --strict dist/*
     # TODO: Publish package only for signed tags
     - name: Publish package
       if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags') && runner.os == 'Linux' && startsWith(matrix.tox_env, 'py310-cover')

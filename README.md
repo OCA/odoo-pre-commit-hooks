@@ -1,3 +1,5 @@
+[//]: # (start-badges)
+
 [![Pre-commit Status](https://github.com/OCA/odoo-pre-commit-hooks/actions/workflows/pre-commit.yml/badge.svg?branch=main)](https://github.com/OCA/odoo-pre-commit-hooks/actions/workflows/pre-commit.yml?query=branch%3Amain)
 [![Build Status](https://github.com/OCA/odoo-pre-commit-hooks/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/OCA/odoo-pre-commit-hooks/actions/workflows/test.yml?query=branch%3Amain)
 [![codecov](https://codecov.io/gh/OCA/odoo-pre-commit-hooks/branch/main/graph/badge.svg)](https://codecov.io/gh/OCA/odoo-pre-commit-hooks)
@@ -6,6 +8,7 @@
 [![supported-versions](https://img.shields.io/pypi/pyversions/pre-commit-vauxoo.svg)](https://pypi.org/project/pre-commit-vauxoo)
 [![commits-since](https://img.shields.io/github/commits-since/Vauxoo/pre-commit-vauxoo/v0.0.1.svg)](https://github.com/Vauxoo/pre-commit-vauxoo/compare/v0.0.1...main)
 
+[//]: # (end-badges)
 
 # odoo-pre-commit-hooks
 

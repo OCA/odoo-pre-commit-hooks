@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import re
 from glob import glob
 from os.path import basename, dirname, join, splitext
 
@@ -10,13 +11,15 @@ try:
 except ImportError:
     git = None
 
+
 def generate_changelog():
     fname = "ChangeLog"
     if not git:
         changelog_str = '# ChangeLog was not generated. You need to install "pbr"'
-        with open(fname, "w") as fchg:
+        with open(fname, "w", encoding="UTF-8") as fchg:
             fchg.write(changelog_str)
         return changelog_str
+    # pylint: disable=protected-access
     changelog = git._iter_log_oneline()
     changelog = git._iter_changelog(changelog)
     git.write_git_changelog(changelog=changelog)
@@ -38,7 +41,10 @@ setup(
     version="0.0.1",
     license="LGPL-3.0-or-later",
     description="odoo-pre-commit-hooks to use in pre-commit-config.yml files",
-    long_description="{}\n{}".format(read("README.md"), generate_changelog()),
+    long_description="{}\n{}".format(
+        re.compile("^.*start-badges.*^.*end-badges", re.M | re.S).sub("", read("README.md")),
+        re.sub(":[a-z]+:`~?(.*?)`", r"``\1``", generate_changelog()),
+    ),
     long_description_content_type="text/markdown",
     author="Odoo Community Association (OCA)",
     author_email="support@odoo-community.org",
