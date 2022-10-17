@@ -5,8 +5,16 @@ import subprocess
 import sys
 import unittest
 from collections import Counter, defaultdict
+from itertools import chain
 
 import oca_pre_commit_hooks
+
+ALL_CHECK_CLASS = [
+    oca_pre_commit_hooks.checks_odoo_module.ChecksOdooModule,
+    oca_pre_commit_hooks.checks_odoo_module_csv.ChecksOdooModuleCSV,
+    oca_pre_commit_hooks.checks_odoo_module_po.ChecksOdooModulePO,
+    oca_pre_commit_hooks.checks_odoo_module_xml.ChecksOdooModuleXML,
+]
 
 EXPECTED_ERRORS = {
     "csv_duplicate_record_id": 1,
@@ -42,7 +50,10 @@ class TestChecks(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.manifest_paths = glob.glob("./test_repo/*/__openerp__.py") + glob.glob("./test_repo/*/__manifest__.py")
+        test_repo_path = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "test_repo")
+        cls.manifest_paths = glob.glob(os.path.join(test_repo_path, "*", "__openerp__.py")) + glob.glob(
+            os.path.join(test_repo_path, "*", "__manifest__.py")
+        )
         cls.module_paths = [os.path.dirname(i) for i in cls.manifest_paths]
         cls.maxDiff = None
 
@@ -168,3 +179,29 @@ class TestChecks(unittest.TestCase):
             all_check_errors = oca_pre_commit_hooks.cli.main()
             real_errors = self.get_count_code_errors(all_check_errors)
             self.assertDictEqual(real_errors, {check2enable: self.expected_errors[check2enable]})
+
+    def test_build_docstring(self):
+        checks_docstring = ""
+        checks_found = set()
+        for check_class in ALL_CHECK_CLASS:
+            for check_meth in chain(
+                oca_pre_commit_hooks.utils.getattr_checks(check_class, prefix="visit"),
+                oca_pre_commit_hooks.utils.getattr_checks(check_class, prefix="check"),
+            ):
+                if not check_meth or not check_meth.__doc__ or "* Check" not in check_meth.__doc__:
+                    continue
+                checks_docstring += "\n" + check_meth.__doc__.strip(" \n") + "\n"
+                re_check = r"\* Check (?P<check>\w+)"
+                checks_found |= set(re.findall(re_check, checks_docstring))
+                checks_docstring = re.sub(r"( )+\*", "*", checks_docstring)
+        if os.environ.get("BUILD_README"):
+            checks_docstring = f"[//]: # (start-checks)\n# Checks\n{checks_docstring}\n[//]: # (end-checks)"
+            readme_path = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "README.md")
+            with open(readme_path, "r+", encoding="UTF-8") as f_readme:
+                readme_content = f_readme.read()
+                f_readme.seek(0)
+                readme_with_checks_docstring = re.compile(
+                    r"\[//\]:\ \#\ \(start\-checks\).*^.*\(end\-checks\)", re.M | re.S
+                ).sub(checks_docstring, readme_content)
+                f_readme.write(readme_with_checks_docstring)
+        self.assertFalse(set(self.expected_errors) - checks_found, "Missing docstring of checks tested")

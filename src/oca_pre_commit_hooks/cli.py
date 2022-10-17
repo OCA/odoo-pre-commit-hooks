@@ -56,7 +56,7 @@ def main(argv=None):
         type=parse_disable,
         default=set(),
         help=(
-            "Enable the checker with the given 'check_name' (snake_case), separated by commas."
+            "Enable the checker with the given 'check_name' (snake_case), separated by commas. "
             "Default: All checks are enabled by default"
         ),
     )

@@ -89,6 +89,9 @@ class ChecksOdooModule:
 
     @utils.only_required_for_checks("manifest_syntax_error")
     def check_manifest(self):
+        """* Check manifest_syntax_error
+        Check if the manifest file has syntax error
+        """
         if not self.manifest_dict:
             self.checks_errors["manifest_syntax_error"].append(
                 f"{self.manifest_path} could not be loaded {self.error}"
@@ -97,6 +100,8 @@ class ChecksOdooModule:
     @utils.only_required_for_installable()
     @utils.only_required_for_checks("missing_readme")
     def check_missing_readme(self):
+        """* Check missing_readme
+        Check if a README file is missing"""
         for readme_name in DFTL_README_FILES:
             readme_path = os.path.join(self.odoo_addon_path, readme_name)
             if os.path.isfile(readme_path):
@@ -121,7 +126,6 @@ class ChecksOdooModule:
     def check_csv(self):
         manifest_datas = self.manifest_referenced_files[".csv"]
         if not manifest_datas:  # pragma: no cover
-            # TODO: Add a module without csv files
             return
         checks_obj = checks_odoo_module_csv.ChecksOdooModuleCSV(
             manifest_datas, self.odoo_addon_name, self.enable, self.disable

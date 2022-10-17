@@ -54,15 +54,22 @@ class ChecksOdooModulePO:
                     }
                 )
             except OSError as po_err:  # pragma: no cover
-                # TODO: Raises check_po_syntax_error
                 manifest_data.update(
                     {
                         "po": None,
                         "file_error": po_err,
                     }
                 )
-                msg = str(po_err).replace(f'{manifest_data["filename"]} ', "").strip()
-                self.checks_errors["po_syntax_error"].append(f'{manifest_data["filename"]} {msg}')
+
+    @utils.only_required_for_checks("po_syntax_error")
+    def check_po_syntax_error(self):
+        """* Check po_syntax_error
+        Check syntax of PO files from i18n* folders"""
+        for manifest_data in self.manifest_datas:
+            if not manifest_data["file_error"]:
+                continue
+            msg = str(manifest_data["file_error"]).replace(f'{manifest_data["filename"]} ', "").strip()
+            self.checks_errors["po_syntax_error"].append(f'{manifest_data["filename"]} {msg}')
 
     @staticmethod
     def parse_printf(main_str, secondary_str):
@@ -193,8 +200,12 @@ class ChecksOdooModulePO:
         """* Check po_requires_module
         Translation entry requires comment '#. module: MODULE'
 
-        * Check po_python_parse_printf and po_python_parse_format
-        Check if 'msgid' is using 'str' variables like '%s' or '{}'
+        * Check po_python_parse_printf
+        Check if 'msgid' is using 'str' variables like '%s'
+        So translation 'msgstr' must be the same number of variables too
+
+        * Check po_python_parse_format
+        Check if 'msgid' is using 'str' variables like '{}'
         So translation 'msgstr' must be the same number of variables too
         """
         # po_requires_module
