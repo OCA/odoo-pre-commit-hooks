@@ -91,7 +91,7 @@ setup(
     extras_require={},
     entry_points={
         "console_scripts": [
-            "oca-checks-odoo-module = oca_pre_commit_hooks.checks_odoo_module:main",
+            "oca-checks-odoo-module = oca_pre_commit_hooks.cli:main",
         ]
     },
 )

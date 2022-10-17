@@ -16,6 +16,7 @@ fail_under = 98
 omit =
     *__init__.py
     */tests/*
+    *__main__.py
 
 # Regexes for lines to exclude from consideration
 exclude_lines =

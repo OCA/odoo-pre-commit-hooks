@@ -67,21 +67,23 @@ class TestChecks(unittest.TestCase):
 
     def test_checks(self):
         all_check_errors = oca_pre_commit_hooks.checks_odoo_module.run(
-            self.manifest_paths, do_exit=False, verbose=True
+            self.manifest_paths, no_exit=True, no_verbose=True
         )
         real_errors = self.get_count_code_errors(all_check_errors)
         # Uncommet to get sorted values to update EXPECTED_ERRORS dict
         # print('\n'.join(f"'{key}':{count_code_errors[key]}," for key in sorted(count_code_errors)))
         self.assertDictEqual(real_errors, self.expected_errors)
 
-    def test_checks_with_sys_argv_module_paths_verbose(self):
-        sys.argv = [""] + self.module_paths
-        all_check_errors = oca_pre_commit_hooks.checks_odoo_module.run(do_exit=False, verbose=False)
+    def test_checks_with_cli(self):
+        sys.argv = ["", "--no-exit", "--no-verbose"] + self.module_paths
+        all_check_errors = oca_pre_commit_hooks.cli.main()
         real_errors = self.get_count_code_errors(all_check_errors)
         self.assertDictEqual(real_errors, self.expected_errors)
 
     def test_non_exists_path(self):
-        all_check_errors = oca_pre_commit_hooks.checks_odoo_module.run(["/tmp/no_exists"], do_exit=False, verbose=True)
+        all_check_errors = oca_pre_commit_hooks.checks_odoo_module.run(
+            ["/tmp/no_exists"], no_exit=True, no_verbose=True
+        )
         check_errors_keys = self.get_all_code_errors(all_check_errors)
         self.assertEqual({"manifest_syntax_error"}, check_errors_keys)
 
@@ -91,12 +93,44 @@ class TestChecks(unittest.TestCase):
         cmd = ["pre-commit", "run", "--config=.pre-commit-config-local.yaml", "-v", "--all", "--color=never"]
         try:
             returncode = 0
-            output = subprocess.check_output(cmd, stderr=subprocess.STDOUT).decode(sys.stdout.encoding)
+            output = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError as process_error:
             returncode = process_error.returncode
             output = process_error.output
-        self.assertFalse(returncode, f"The process exited with code differet to zero {returncode} {output}")
+        output = output.decode(sys.stdout.encoding)
+        self.assertTrue(returncode, f"The process exited with code zero {returncode} {output}")
         checks_found = re.findall(r"\- \[(?P<check>\w+)\]", output)
 
         real_errors = dict(Counter(checks_found))
+        self.assertDictEqual(real_errors, self.expected_errors)
+
+    def test_checks_disable(self):
+        checks_disabled = {
+            "xml_syntax_error",
+            "xml_redundant_module_name",
+            "csv_duplicate_record_id",
+            "po_duplicate_message_definition",
+            "missing_readme",
+        }
+        all_check_errors = oca_pre_commit_hooks.checks_odoo_module.run(
+            self.manifest_paths, no_exit=True, no_verbose=True, disable=checks_disabled
+        )
+        real_errors = self.get_count_code_errors(all_check_errors)
+        for check_disabled in checks_disabled:
+            self.expected_errors.pop(check_disabled, False)
+        self.assertDictEqual(real_errors, self.expected_errors)
+
+    def test_checks_disable_with_cli(self):
+        checks_disabled = {
+            "xml_syntax_error",
+            "xml_redundant_module_name",
+            "csv_duplicate_record_id",
+            "po_duplicate_message_definition",
+            "missing_readme",
+        }
+        sys.argv = ["", "--no-exit", "--no-verbose", f"--disable={','.join(checks_disabled)}"] + self.module_paths
+        all_check_errors = oca_pre_commit_hooks.cli.main()
+        real_errors = self.get_count_code_errors(all_check_errors)
+        for check_disabled in checks_disabled:
+            self.expected_errors.pop(check_disabled, False)
         self.assertDictEqual(real_errors, self.expected_errors)
