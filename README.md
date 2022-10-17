@@ -7,6 +7,7 @@
 [![wheel](https://img.shields.io/pypi/wheel/pre-commit-vauxoo.svg)](https://pypi.org/project/pre-commit-vauxoo)
 [![supported-versions](https://img.shields.io/pypi/pyversions/pre-commit-vauxoo.svg)](https://pypi.org/project/pre-commit-vauxoo)
 [![commits-since](https://img.shields.io/github/commits-since/Vauxoo/pre-commit-vauxoo/v0.0.1.svg)](https://github.com/Vauxoo/pre-commit-vauxoo/compare/v0.0.1...main)
+[![code-style-black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 [//]: # (end-badges)
 
