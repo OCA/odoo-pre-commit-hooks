@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
-
 import ast
 import glob
 import os
+import subprocess
 import sys
 from collections import defaultdict
+from contextlib import contextmanager
+from functools import lru_cache
+from pathlib import Path
 
 from oca_pre_commit_hooks import checks_odoo_module_csv, checks_odoo_module_po, checks_odoo_module_xml, utils
 
@@ -23,8 +26,14 @@ class ChecksOdooModule:
     # TODO: Add autofix option and autofix the files
     # TODO: ir.model.access.csv:5 Duplicate csv record ... in ir.model.access.csv:6
     #       Use ir.model.access.csv:5 Duplicate csv record ... in line 6
-    def __init__(self, manifest_path, enable, disable, verbose=True):
-        self.manifest_path = self._get_manifest_file_path(manifest_path)
+    # TODO: Process only the changed if it is defined: set(changed) & set(manifest_data + README + po)
+    def __init__(self, manifest_path, enable, disable, changed=None, verbose=True):
+        if not os.path.isfile(manifest_path) or os.path.basename(manifest_path) not in MANIFEST_NAMES:
+            raise UserWarning(  # pragma: no cover
+                f"Not valid manifest file name {manifest_path} file expected {MANIFEST_NAMES}"
+            )
+        self.manifest_path = manifest_path
+        self.changed = changed if changed is not None else []
         self.enable = enable
         self.disable = disable
         self.verbose = verbose
@@ -36,18 +45,7 @@ class ChecksOdooModule:
         self.manifest_referenced_files = self._referenced_files_by_extension()
         self.checks_errors = defaultdict(list)
 
-    @staticmethod
-    def _get_manifest_file_path(original_manifest_path):
-        for manifest_name in MANIFEST_NAMES:
-            manifest_path = os.path.join(original_manifest_path, manifest_name)
-            if os.path.isfile(manifest_path):
-                return manifest_path
-        return original_manifest_path
-
     def _manifest2dict(self):
-        if os.path.basename(self.manifest_path) not in MANIFEST_NAMES or not os.path.isfile(self.manifest_path):
-            self.print(f"The path {self.manifest_path} is not {MANIFEST_NAMES} file")
-            return {}
         if not os.path.isfile(os.path.join(self.odoo_addon_path, "__init__.py")):
             self.print(f"The path {self.manifest_path} does not have __init__.py file")
             return {}
@@ -169,10 +167,82 @@ class ChecksOdooModule:
             self.checks_errors.pop(check_no_enable, False)
 
 
+def full_norm_path(path):
+    """Expand paths in all possible ways"""
+    return os.path.normpath(os.path.realpath(os.path.abspath(os.path.expanduser(os.path.expandvars(path.strip())))))
+
+
+@lru_cache(maxsize=256)
+def walk_up(path, filenames, top):
+    """Look for "filenames" walking up in parent paths of "path"
+    but limited only to "top" path
+    """
+    if full_norm_path(path) == full_norm_path(top):
+        return None
+    for filename in filenames:
+        path_filename = os.path.join(path, filename)
+        if os.path.isfile(full_norm_path(path_filename)):
+            return path_filename
+    return walk_up(os.path.dirname(path), filenames, top)
+
+
+@lru_cache(maxsize=256)
+def top_path(path):
+    """Get the top level path based on git
+    But if it is not a git repository so the top is the drive name
+    e.g. / or C:\\
+
+    It is using lru_cache in order to re-use top level path values
+    if multiple files are sharing the same path
+    """
+    try:
+        with chdir(path):
+            return subprocess.check_output(["git", "rev-parse", "--show-toplevel"]).decode(sys.stdout.encoding).strip()
+    except (FileNotFoundError, subprocess.CalledProcessError):
+        path = Path(path)
+        return path.root or path.drive
+
+
+@contextmanager
+def chdir(directory):
+    """Change the current directory similar to command 'cd directory'
+    but remembering the previous value to be revert at final
+    Similar to run 'original_dir=$(pwd) && cd odoo && cd ${original_dir}'
+    """
+    original_dir = os.getcwd()
+    os.chdir(directory)
+    try:
+        yield
+    finally:
+        os.chdir(original_dir)
+
+
+def lookup_manifest_paths(filenames_or_modules):
+    """Look for manifest path for "filenames_or_modules" paths
+    walking up in parent paths
+    Return a dictionary with {manifest_path: filename_or_module} items
+    """
+    odoo_module_files_changed = defaultdict(set)
+    # Sorted in order to re-use the LRU cached values as possible before to fill maxsize
+    # Ordered paths will have common ascentors closed to next item
+    for filename_or_module in sorted(filenames_or_modules):
+        filename_or_module = full_norm_path(filename_or_module)
+        directory_path = (
+            os.path.dirname(filename_or_module) if os.path.isfile(filename_or_module) else filename_or_module
+        )
+        manifest_path = walk_up(directory_path, MANIFEST_NAMES, top_path(directory_path))
+        odoo_module_files_changed[manifest_path].add(filename_or_module)
+    return odoo_module_files_changed
+
+
 def run(filenames_or_modules, enable=None, disable=None, no_verbose=False, no_exit=False):
     all_check_errors = []
-    for manifest_path in filenames_or_modules:
-        checks_obj = ChecksOdooModule(os.path.realpath(manifest_path), enable, disable, verbose=not no_verbose)
+    for manifest_path, changed in lookup_manifest_paths(filenames_or_modules).items():
+        if not manifest_path:
+            continue
+        checks_obj = ChecksOdooModule(
+            os.path.realpath(manifest_path), enable, disable, changed=changed, verbose=not no_verbose
+        )
         for check in utils.getattr_checks(checks_obj, enable=enable, disable=disable):
             check()
         checks_obj.filter_checks_enabled_disabled()

@@ -98,15 +98,14 @@ class TestChecks(unittest.TestCase):
 
     def test_non_exists_path(self):
         all_check_errors = oca_pre_commit_hooks.checks_odoo_module.run(
-            ["/tmp/no_exists"], no_exit=True, no_verbose=True
+            ["/tmp/no_exists"], no_exit=True, no_verbose=False
         )
-        check_errors_keys = self.get_all_code_errors(all_check_errors)
-        self.assertEqual({"manifest_syntax_error"}, check_errors_keys)
+        self.assertFalse(all_check_errors)
 
     def test_checks_hook(self):
         # TODO: Autogenerate .pre-commit-config-local.yaml from .pre-commit-config.yaml
         # TODO: Run subprocess compatible with dynamic_context of coverage
-        cmd = ["pre-commit", "run", "--config=.pre-commit-config-local.yaml", "-v", "--all", "--color=never"]
+        cmd = ["pre-commit", "run", "-avc", ".pre-commit-config-local.yaml", "--color=never"]
         try:
             returncode = 0
             output = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
@@ -118,7 +117,7 @@ class TestChecks(unittest.TestCase):
         checks_found = re.findall(r"\- \[(?P<check>\w+)\]", output)
 
         real_errors = dict(Counter(checks_found))
-        self.assertDictEqual(real_errors, self.expected_errors)
+        self.assertDictEqual(real_errors, self.expected_errors, output)
 
     def test_checks_disable(self):
         checks_disabled = {
