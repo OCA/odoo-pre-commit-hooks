@@ -32,8 +32,7 @@ def getattr_checks(obj_or_class, enable=None, disable=None, prefix="check_"):
     """Get all the attributes callables (methods)
     that start with word 'def check_*'
     Skip the methods with attribute "checks" defined if
-    the check is not enable or if it is disabled
-    """
+    the check is not enable or if it is disabled"""
     for attr in dir(obj_or_class):
         if not callable(getattr(obj_or_class, attr)) or not attr.startswith(prefix):
             continue

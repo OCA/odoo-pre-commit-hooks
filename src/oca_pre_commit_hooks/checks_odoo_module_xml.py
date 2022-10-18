@@ -26,7 +26,7 @@ class ChecksOdooModuleXML:
                             "file_error": None,
                         }
                     )
-            except (FileNotFoundError, etree.XMLSyntaxError) as xml_err:  # pragma: no cover
+            except (FileNotFoundError, etree.XMLSyntaxError, UnicodeDecodeError) as xml_err:
                 manifest_data.update(
                     {
                         "node": etree.Element("__empty__"),

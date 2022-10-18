@@ -46,17 +46,25 @@ class ChecksOdooModulePO:
         self.checks_errors = defaultdict(list)
         for manifest_data in manifest_datas:
             try:
-                polib_file = polib.pofile(manifest_data["filename"])
+                with open(manifest_data["filename"], "rt", encoding="UTF-8") as filename_obj:
+                    # Do not use polib.pofile(manifest_data["filename"])
+                    # because raise the following error for PO files with syntax error:
+                    # pytest.PytestUnraisableExceptionWarning: Exception ignored in: <_io.FileIO [closed]>
+                    # Traceback (most recent call last):
+                    #     File "../polib.py", line 1474, in add
+                    #     action = getattr(self, 'handle_%s' % next_state)
+                    # ResourceWarning: unclosed file <_io.FileIO name='..' mode='rb' closefd=True>
+                    polib_entries = polib.pofile(filename_obj.read())
                 manifest_data.update(
                     {
-                        "po": polib_file,
+                        "po": polib_entries,
                         "file_error": None,
                     }
                 )
-            except OSError as po_err:  # pragma: no cover
+            except (OSError, UnicodeDecodeError) as po_err:
                 manifest_data.update(
                     {
-                        "po": None,
+                        "po": [],
                         "file_error": po_err,
                     }
                 )
