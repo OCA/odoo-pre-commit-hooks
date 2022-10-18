@@ -18,12 +18,14 @@ ALL_CHECK_CLASS = [
 
 EXPECTED_ERRORS = {
     "csv_duplicate_record_id": 1,
+    "csv_syntax_error": 1,
     "manifest_syntax_error": 2,
-    "missing_readme": 1,
+    "missing_readme": 2,
     "po_duplicate_message_definition": 3,
     "po_python_parse_format": 4,
     "po_python_parse_printf": 2,
     "po_requires_module": 1,
+    "po_syntax_error": 1,
     "xml_create_user_wo_reset_password": 1,
     "xml_dangerous_filter_wo_user": 1,
     "xml_dangerous_qweb_replace_low_priority": 3,
@@ -76,9 +78,16 @@ class TestChecks(unittest.TestCase):
                 check_errors_count[check] += len(errors)
         return check_errors_count
 
+    def assertDictEqual(self, d1, d2, msg=None):
+        """Original method does not show the correct item diff
+        Using ordered list it is showing the diff better"""
+        real_dict2list = [(i, d1[i]) for i in sorted(d1)]
+        expected_dict2list = [(i, d2[i]) for i in sorted(d2)]
+        self.assertEqual(real_dict2list, expected_dict2list, msg)
+
     def test_checks(self):
         all_check_errors = oca_pre_commit_hooks.checks_odoo_module.run(
-            self.manifest_paths, no_exit=True, no_verbose=True
+            self.manifest_paths, no_exit=True, no_verbose=False
         )
         real_errors = self.get_count_code_errors(all_check_errors)
         # Uncommet to get sorted values to update EXPECTED_ERRORS dict

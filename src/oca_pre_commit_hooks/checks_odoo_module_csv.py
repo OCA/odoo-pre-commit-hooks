@@ -45,7 +45,7 @@ class ChecksOdooModuleCSV:
                                 manifest_data["model"],
                             )
                         )
-            except (FileNotFoundError, csv.Error) as csv_err:  # pragma: no cover
+            except (FileNotFoundError, csv.Error, UnicodeDecodeError) as csv_err:
                 self.checks_errors["csv_syntax_error"].append(f'{manifest_data["filename"]} {csv_err}')
         for csvid, records in csvids.items():
             if len(records) < 2:
