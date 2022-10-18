@@ -43,10 +43,6 @@ EXPECTED_ERRORS = {
 
 
 class TestChecks(unittest.TestCase):
-    # TODO: Test manifest, po, xml and csv syntax error
-    # TODO: Test manifest without init file
-    # TODO: Test folder without manifest
-    # TODO: Test CSV without ID
     # TODO: Test modules without CSV or XML or PO
 
     @classmethod
