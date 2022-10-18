@@ -33,7 +33,6 @@ class ChecksOdooModuleXML:
                         "file_error": xml_err,
                     }
                 )
-                self.checks_errors["xml_syntax_error"].append(f'{manifest_data["filename"]} {xml_err}')
 
     @staticmethod
     def _get_priority(view):
@@ -117,6 +116,15 @@ class ChecksOdooModuleXML:
                 f"{fields[0][0]['filename']}:{fields[0][1].sourceline} "
                 f'Duplicate xml field "{field_key[0]}" in lines {lines_str}'
             )
+
+    @utils.only_required_for_checks("xml_syntax_error")
+    def check_xml_syntax_error(self):
+        """* Check xml_syntax_error
+        Check syntax of XML files declared in the Odoo manifest"""
+        for manifest_data in self.manifest_datas:
+            if not manifest_data["file_error"]:
+                continue
+            self.checks_errors["xml_syntax_error"].append(f'{manifest_data["filename"]} {manifest_data["file_error"]}')
 
     @utils.only_required_for_checks("xml_redundant_module_name")
     def visit_xml_record(self, manifest_data, record):
@@ -209,7 +217,8 @@ class ChecksOdooModuleXML:
 
     @utils.only_required_for_checks("xml_not_valid_char_link")
     def check_xml_not_valid_char_link(self):
-        """The resource in in src/href contains a not valid character"""
+        """* Check xml_not_valid_char_link
+        The resource in in src/href contains a not valid character."""
         for manifest_data in self.manifest_datas:
             for name, attr in (("link", "href"), ("script", "src")):
                 nodes = manifest_data["node"].xpath(f".//{name}[@{attr}]")
@@ -224,7 +233,8 @@ class ChecksOdooModuleXML:
 
     @utils.only_required_for_checks("xml_dangerous_qweb_replace_low_priority")
     def check_xml_dangerous_qweb_replace_low_priority(self):
-        """Check dangerous qweb view defined with low priority"""
+        """* Check xml_dangerous_qweb_replace_low_priority
+        Dangerous qweb view defined with low priority"""
         for manifest_data in self.manifest_datas:
             for template in manifest_data["node"].xpath("/odoo//template|/openerp//template"):
                 try:
@@ -242,7 +252,8 @@ class ChecksOdooModuleXML:
 
     @utils.only_required_for_checks("xml_deprecated_data_node")
     def check_xml_deprecated_data_node(self):
-        """Check deprecated <data> node inside <odoo> xml node"""
+        """* Check xml_deprecated_data_node
+        Deprecated <data> node inside <odoo> xml node"""
         for manifest_data in self.manifest_datas:
             for odoo_node in manifest_data["node"].xpath("/odoo|/openerp"):
                 children_count = 0
@@ -262,7 +273,8 @@ class ChecksOdooModuleXML:
 
     @utils.only_required_for_checks("xml_deprecated_openerp_xml_node")
     def check_xml_deprecated_openerp_node(self):
-        """Check deprecated <openerp> xml node"""
+        """* Check xml_deprecated_openerp_xml_node
+        deprecated <openerp> xml node"""
         for manifest_data in self.manifest_datas:
             for openerp_node in manifest_data["node"].xpath("/openerp"):
                 # TODO: Add autofix option
@@ -272,7 +284,8 @@ class ChecksOdooModuleXML:
 
     @utils.only_required_for_checks("xml_deprecated_qweb_directive")
     def check_xml_deprecated_qweb_directive(self):
-        """Check for use of deprecated QWeb directives t-*-options"""
+        """* Check xml_deprecated_qweb_directive
+        for use of deprecated QWeb directives t-*-options"""
         deprecated_directives = {
             "t-esc-options",
             "t-field-options",

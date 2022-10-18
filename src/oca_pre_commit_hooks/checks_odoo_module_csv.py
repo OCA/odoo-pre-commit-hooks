@@ -22,8 +22,11 @@ class ChecksOdooModuleCSV:
 
     @utils.only_required_for_checks("csv_syntax_error", "csv_duplicate_record_id")
     def check_csv(self):
-        """*Check csv_duplicate_record_id
+        """* Check csv_duplicate_record_id
         duplicate CSV "id" AKA xmlid but for CSV files
+
+        * Check csv_syntax_error
+        Check syntax error for CSV files declared in the manifest
         """
         csvids = defaultdict(list)
         for manifest_data in self.manifest_datas:
