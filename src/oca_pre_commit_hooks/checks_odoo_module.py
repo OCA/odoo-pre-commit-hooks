@@ -66,13 +66,17 @@ class ChecksOdooModule:
         for data_section in DFTL_MANIFEST_DATA_KEYS:
             for fname in self.manifest_dict.get(data_section) or []:
                 fname_path = os.path.join(self.odoo_addon_path, fname)
-                ext_referenced_files[os.path.splitext(fname)[1].lower()].append(
-                    {
-                        "filename": fname_path,
-                        "filename_short": os.path.relpath(fname_path, self.manifest_top_path),
-                        "data_section": data_section,
-                    }
-                )
+                value = {
+                    "filename": fname_path,
+                    "filename_short": os.path.relpath(fname_path, self.manifest_top_path),
+                    "data_section": data_section,
+                }
+                ext = os.path.splitext(fname)[1].lower()
+                if value in ext_referenced_files[ext]:
+                    # Duplicated files will be skipped in order to avoid detecting duplicated xmlids
+                    # pylint will take care about this check error
+                    continue
+                ext_referenced_files[ext].append(value)
         # The i18n[_extra]/*.po[t] files are not defined in the manifest
         fnames = glob.glob(os.path.join(self.odoo_addon_path, "i18n*", "*.po")) + glob.glob(
             os.path.join(self.odoo_addon_path, "i18n*", "*.pot")
