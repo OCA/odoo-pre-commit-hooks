@@ -187,6 +187,12 @@ class TestChecks(unittest.TestCase):
             real_errors = self.get_count_code_errors(all_check_errors)
             self.assertDictEqual(real_errors, {check2enable: self.expected_errors[check2enable]})
 
+    @staticmethod
+    def re_replace(sub_start, sub_end, substitution, content):
+        re_sub = re.compile(rf"${re.escape(sub_start)}^.*${re.escape(sub_end)}^", re.M | re.S)
+        new_content = re_sub.sub(f"{sub_start}\n{substitution}\n{sub_end}", content)
+        return new_content
+
     def test_build_docstring(self):
         checks_docstring = ""
         checks_found = set()
@@ -208,23 +214,23 @@ class TestChecks(unittest.TestCase):
             # already installed in the OS (without latest dev changes)
             # and we do not have way to evaluate all checks are evaluated and documented from another side
             # Feel free to migrate to better place this non-standard section of the code
-            checks_docstring = f"[//]: # (start-checks)\n# Checks\n{checks_docstring}\n[//]: # (end-checks)"
+
+            # checks_docstring = f"[//]: # (start-checks)\n# Checks\n{checks_docstring}\n[//]: # (end-checks)"
+            checks_docstring = f"# Checks\n{checks_docstring}"
             readme_path = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "README.md")
             with open(readme_path, "r+", encoding="UTF-8") as f_readme:
                 readme_content = f_readme.read()
-                f_readme.seek(0)
-                new_readme = re.compile(r"\[//\]:\ \#\ \(start\-checks\).*^.*\(end\-checks\)", re.M | re.S).sub(
-                    checks_docstring, readme_content
+
+                new_readme = self.re_replace(
+                    "[//]: # (start-checks)", "[//]: # (end-checks)", checks_docstring, readme_content
                 )
 
                 # Find a better way to get the --help string
                 help_content = subprocess.check_output(
                     ["oca-checks-odoo-module", "--help"], stderr=subprocess.STDOUT
                 ).decode(sys.stdout.encoding)
-                help_content = f"[//]: # (start-help)\n# Help\n```bash\n{help_content}\n```\n[//]: # (end-help)"
-                new_readme = re.compile(r"\[//\]:\ \#\ \(start\-help\).*^.*\(end\-help\)", re.M | re.S).sub(
-                    help_content, new_readme
-                )
+                help_content = f"# Help\n```bash\n{help_content}\n```"
+                new_readme = self.re_replace("[//]: # (start-help)", "[//]: # (end-help)", help_content, new_readme)
 
                 all_check_errors = oca_pre_commit_hooks.checks_odoo_module.run(
                     self.manifest_paths, no_exit=True, no_verbose=False
@@ -240,13 +246,12 @@ class TestChecks(unittest.TestCase):
                             check_example_content += (
                                 f"\n    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v{version}/{msg}"
                             )
-                check_example_content = (
-                    f"[//]: # (start-example)\n# Examples\n{check_example_content}\n\n[//]: # (end-example)"
-                )
-                new_readme = re.compile(r"\[//\]:\ \#\ \(start\-example\).*^.*\(end\-example\)", re.M | re.S).sub(
-                    check_example_content, new_readme
-                )
 
+                check_example_content = f"# Examples\n{check_example_content}"
+                new_readme = self.re_replace("[//]: # (start-help)", "[//]: # (end-help)", help_content, new_readme)
+
+                f_readme.seek(0)
                 f_readme.write(new_readme)
+            self.assertEqual(readme_content, new_readme)
 
         self.assertFalse(set(self.expected_errors) - checks_found, "Missing docstring of checks tested")

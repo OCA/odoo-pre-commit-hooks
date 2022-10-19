@@ -53,8 +53,9 @@ class ChecksOdooModule:
             try:
                 return ast.literal_eval(f_manifest.read())
             # Using same way than odoo
-            except BaseException as err:  # pylint: disable=broad-except
-                self.error = f"Manifest {self.manifest_path} with error {err}"
+            except BaseException:  # pylint: disable=broad-except
+                # Not use "exception error" string because it return mutable memory numbers
+                self.error = "manifest malformed"
         return {}
 
     def _is_installable(self):
