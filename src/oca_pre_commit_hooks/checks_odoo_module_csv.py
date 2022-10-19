@@ -40,13 +40,13 @@ class ChecksOdooModuleCSV:
                         csvid = f"{manifest_data['data_section']}/{record_id}"
                         csvids[csvid].append(
                             (
-                                manifest_data["filename"],
+                                manifest_data["filename_short"],
                                 csv_r.line_num,
                                 manifest_data["model"],
                             )
                         )
             except (FileNotFoundError, csv.Error, UnicodeDecodeError) as csv_err:
-                self.checks_errors["csv_syntax_error"].append(f'{manifest_data["filename"]} {csv_err}')
+                self.checks_errors["csv_syntax_error"].append(f'{manifest_data["filename_short"]} {csv_err}')
         for csvid, records in csvids.items():
             if len(records) < 2:
                 continue

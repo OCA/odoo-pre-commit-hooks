@@ -76,8 +76,8 @@ class ChecksOdooModulePO:
         for manifest_data in self.manifest_datas:
             if not manifest_data["file_error"]:
                 continue
-            msg = str(manifest_data["file_error"]).replace(f'{manifest_data["filename"]} ', "").strip()
-            self.checks_errors["po_syntax_error"].append(f'{manifest_data["filename"]} {msg}')
+            msg = str(manifest_data["file_error"]).replace(f'{manifest_data["filename_short"]} ', "").strip()
+            self.checks_errors["po_syntax_error"].append(f'{manifest_data["filename_short"]} {msg}')
 
     @staticmethod
     def parse_printf(main_str, secondary_str):
@@ -221,7 +221,8 @@ class ChecksOdooModulePO:
         match = re.match(r"(module[s]?): (\w+)", entry.comment)
         if not match:
             self.checks_errors["po_requires_module"].append(
-                f'{manifest_data["filename"]}:{entry.linenum}' "Translation entry requires comment '#. module: MODULE'"
+                f'{manifest_data["filename_short"]}:{entry.linenum}'
+                "Translation entry requires comment '#. module: MODULE'"
             )
 
         # po_msgstr_variables
@@ -235,14 +236,14 @@ class ChecksOdooModulePO:
             except PrintfStringParseError as str_parse_exc:
                 linenum = self._get_po_line_number(entry)
                 self.checks_errors["po_python_parse_printf"].append(
-                    f'{manifest_data["filename"]}:{linenum} '
+                    f'{manifest_data["filename_short"]}:{linenum} '
                     "Translation string couldn't be parsed "
                     f"correctly using str%variables {str_parse_exc}"
                 )
             except FormatStringParseError as str_parse_exc:
                 linenum = self._get_po_line_number(entry)
                 self.checks_errors["po_python_parse_format"].append(
-                    f'{manifest_data["filename"]}:{linenum} '
+                    f'{manifest_data["filename_short"]}:{linenum} '
                     "Translation string couldn't be parsed "
                     f"correctly using str.format {str_parse_exc}"
                 )
@@ -279,7 +280,7 @@ class ChecksOdooModulePO:
                 if len(entries[0].msgid) > 40:
                     msg_id_short = f"{msg_id_short}..."
                 self.checks_errors["po_duplicate_message_definition"].append(
-                    f'{manifest_data["filename"]}:{linenum} '
+                    f'{manifest_data["filename_short"]}:{linenum} '
                     f'Duplicate PO message definition "{msg_id_short}" '
                     f"in lines {duplicated_str}"
                 )

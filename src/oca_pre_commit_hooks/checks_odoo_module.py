@@ -21,12 +21,11 @@ class ChecksOdooModule:
     # TODO: Support check by version
     # TODO: skip_files_ext skip check based on comment XML
     # TODO: Support configuration file to set custom value for DFTL_ global variables
-    # TODO: Use relative path for name of files in msg check
-    #       e.g. os.path.relpath(record.base, pwd)
     # TODO: Add autofix option and autofix the files
     # TODO: ir.model.access.csv:5 Duplicate csv record ... in ir.model.access.csv:6
     #       Use ir.model.access.csv:5 Duplicate csv record ... in line 6
     # TODO: Process only the changed if it is defined: set(changed) & set(manifest_data + README + po)
+    # TODO: Use current directory for filename_short if it is not related with the repo
     def __init__(self, manifest_path, enable, disable, changed=None, verbose=True):
         if not os.path.isfile(manifest_path) or os.path.basename(manifest_path) not in MANIFEST_NAMES:
             raise UserWarning(  # pragma: no cover
@@ -38,6 +37,7 @@ class ChecksOdooModule:
         self.disable = disable
         self.verbose = verbose
         self.odoo_addon_path = os.path.dirname(self.manifest_path)
+        self.manifest_top_path = top_path(self.odoo_addon_path)
         self.odoo_addon_name = os.path.basename(self.odoo_addon_path)
         self.error = ""
         self.manifest_dict = self._manifest2dict()
@@ -64,10 +64,11 @@ class ChecksOdooModule:
         ext_referenced_files = defaultdict(list)
         for data_section in DFTL_MANIFEST_DATA_KEYS:
             for fname in self.manifest_dict.get(data_section) or []:
+                fname_path = os.path.join(self.odoo_addon_path, fname)
                 ext_referenced_files[os.path.splitext(fname)[1].lower()].append(
                     {
-                        "filename": os.path.realpath(os.path.join(self.odoo_addon_path, os.path.normpath(fname))),
-                        "filename_short": os.path.normpath(fname),
+                        "filename": fname_path,
+                        "filename_short": os.path.relpath(fname_path, self.manifest_top_path),
                         "data_section": data_section,
                     }
                 )
@@ -76,10 +77,11 @@ class ChecksOdooModule:
             os.path.join(self.odoo_addon_path, "i18n*", "*.pot")
         )
         for fname in fnames:
+            fname_path = os.path.join(self.odoo_addon_path, fname)
             ext_referenced_files[os.path.splitext(fname)[1].lower()].append(
                 {
-                    "filename": os.path.realpath(os.path.join(self.odoo_addon_path, os.path.normpath(fname))),
-                    "filename_short": os.path.normpath(fname),
+                    "filename": fname_path,
+                    "filename_short": os.path.relpath(fname_path, self.manifest_top_path),
                     "data_section": "default",
                 }
             )
@@ -91,8 +93,9 @@ class ChecksOdooModule:
         Check if the manifest file has syntax error
         """
         if not self.manifest_dict:
+            manifest_path_short = os.path.relpath(self.manifest_path, self.manifest_top_path)
             self.checks_errors["manifest_syntax_error"].append(
-                f"{self.manifest_path} could not be loaded {self.error}"
+                f"{manifest_path_short} could not be loaded {self.error}"
             )
 
     @utils.only_required_for_installable()
@@ -104,8 +107,9 @@ class ChecksOdooModule:
             readme_path = os.path.join(self.odoo_addon_path, readme_name)
             if os.path.isfile(readme_path):
                 return
+        readme_path_short = os.path.relpath(readme_path, self.manifest_top_path)
         self.checks_errors["missing_readme"].append(
-            f"{readme_path} missed file. Template here: {DFTL_README_TMPL_URL}"
+            f"{readme_path_short} missed file. Template here: {DFTL_README_TMPL_URL}"
         )
 
     @utils.only_required_for_installable()
