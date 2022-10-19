@@ -30,7 +30,7 @@ class ChecksOdooModuleXML:
                 manifest_data.update(
                     {
                         "node": etree.Element("__empty__"),
-                        "file_error": xml_err,
+                        "file_error": str(xml_err).replace(manifest_data["filename"], ""),
                     }
                 )
 
@@ -133,10 +133,10 @@ class ChecksOdooModuleXML:
         """* Check xml-redundant-module-name
 
         If the module is called "module_a" and the xmlid is
-        <record id="module_a.xmlid_name1" ...
+        `<record id="module_a.xmlid_name1" ...`
 
         The "module_a." is redundant it could be replaced to only
-        <record id="xmlid_name1" ...
+        `<record id="xmlid_name1" ...`
         """
         # redundant_module_name
         record_id = record.get("id")
@@ -145,8 +145,8 @@ class ChecksOdooModuleXML:
             # TODO: Add autofix option
             self.checks_errors["xml-redundant-module-name"].append(
                 f'{manifest_data["filename_short"]}:{record.sourceline} Redundant module'
-                f' name <record id="{record_id}" '
-                f'better using only <record id="{xmlid_name}"'
+                f' name `<record id="{record_id}"` '
+                f'better using only `<record id="{xmlid_name}"`'
             )
 
     @utils.only_required_for_checks("xml-view-dangerous-replace-low-priority", "xml-deprecated-tree-attribute")
@@ -186,7 +186,7 @@ class ChecksOdooModuleXML:
     @utils.only_required_for_checks("xml-create-user-wo-reset-password")
     def visit_xml_record_user(self, manifest_data, record):
         """* Check xml-create-user-wo-reset-password
-        records of user without context="{'no_reset_password': True}"
+        records of user without `context="{'no_reset_password': True}"`
         This context avoid send email and mail log warning
         """
         # xml_create_user_wo_reset_password
@@ -198,7 +198,7 @@ class ChecksOdooModuleXML:
             self.checks_errors["xml-create-user-wo-reset-password"].append(
                 f'{manifest_data["filename_short"]}:{record.sourceline} '
                 "record res.users without "
-                "context=\"{'no_reset_password': True}\""
+                "`context=\"{'no_reset_password': True}\"`"
             )
 
     @utils.only_required_for_checks("xml-dangerous-filter-wo-user")
@@ -247,9 +247,9 @@ class ChecksOdooModuleXML:
                     # TODO: Add self.config.min_priority instead of DFTL_MIN_PRIORITY
                     if child.get("position") == "replace" and priority < DFTL_MIN_PRIORITY:
                         self.checks_errors["xml-dangerous-qweb-replace-low-priority"].append(
-                            f'{manifest_data["filename_short"]}:{template.sourceline} '
+                            f'{manifest_data["filename_short"]}:{child.sourceline} '
                             'Dangerous use of "replace" from view '
-                            f"with priority {priority} < {DFTL_MIN_PRIORITY}"
+                            f"with priority `{priority} < {DFTL_MIN_PRIORITY}`"
                         )
 
     @utils.only_required_for_checks("xml-deprecated-data-node")
@@ -301,5 +301,5 @@ class ChecksOdooModuleXML:
                 directive_str = ", ".join(set(node.attrib) & deprecated_directives)
                 self.checks_errors["xml-deprecated-qweb-directive"].append(
                     f'{manifest_data["filename_short"]}:{node.sourceline} '
-                    f'Deprecated QWeb directive "{directive_str}". Use "t-options" instead'
+                    f'Deprecated QWeb directive `"{directive_str}"`. Use `"t-options"` instead'
                 )

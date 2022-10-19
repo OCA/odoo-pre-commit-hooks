@@ -212,15 +212,15 @@ class ChecksOdooModulePO:
     )
     def visit_entry(self, entry):
         """* Check po-requires-module
-        Translation entry requires comment '#. module: MODULE'
+        Translation entry requires comment `#. module: MODULE`
 
         * Check po-python-parse-printf
-        Check if 'msgid' is using 'str' variables like '%s'
-        So translation 'msgstr' must be the same number of variables too
+        Check if `msgid` is using `str` variables like `%s`
+        So translation `msgstr` must be the same number of variables too
 
         * Check po-python-parse-format
-        Check if 'msgid' is using 'str' variables like '{}'
-        So translation 'msgstr' must be the same number of variables too
+        Check if `msgid` is using `str` variables like `{}`
+        So translation `msgstr` must be the same number of variables too
         """
         # po_requires_module
         # Regex from https://github.com/odoo/odoo/blob/fa4f36bb631e82/odoo/tools/translate.py#L616  # noqa
@@ -228,7 +228,7 @@ class ChecksOdooModulePO:
         if not match:
             self.checks_errors["po-requires-module"].append(
                 f'{self.po_data["filename_short"]}:{entry.linenum} '
-                "Translation entry requires comment '#. module: MODULE'"
+                "Translation entry requires comment `#. module: MODULE`"
             )
 
         # po_msgstr_variables
@@ -259,9 +259,9 @@ class ChecksOdooModulePO:
         in all entries of PO files
 
         We are not using `check_for_duplicates` parameter of polib.pofile method
-            e.g. polib.pofile(..., check_for_duplicates=True)
+            e.g. `polib.pofile(..., check_for_duplicates=True)`
         Because the output is:
-            raise ValueError('Entry "%s" already exists' % entry.msgid)
+            `raise ValueError('Entry "%s" already exists' % entry.msgid)`
         It doesn't show the number of lines duplicated
         and it shows the entire string of the message_id without truncating it
         or replacing newlines

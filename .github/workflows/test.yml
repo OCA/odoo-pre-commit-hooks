@@ -38,12 +38,11 @@ jobs:
             python_arch: 'x64'
             tox_env: 'py39-cover,codecov'
             os: 'ubuntu-latest'
-          - name: 'py310-cover (ubuntu) + build + lint'
+          - name: 'py310-cover (ubuntu) + lint + build'
             python: '3.10'
             toxpython: 'python3.10'
             python_arch: 'x64'
-            # FIXME: CI mutable content update-readme
-            tox_env: 'py310-cover,codecov,lint,build'
+            tox_env: 'py310-cover,codecov,update-readme,lint,build'
             os: 'ubuntu-latest'
 
           # windows
