@@ -69,15 +69,15 @@ class ChecksOdooModulePO:
                     }
                 )
 
-    @utils.only_required_for_checks("po_syntax_error")
+    @utils.only_required_for_checks("po-syntax-error")
     def check_po_syntax_error(self):
-        """* Check po_syntax_error
+        """* Check po-syntax-error
         Check syntax of PO files from i18n* folders"""
         for manifest_data in self.manifest_datas:
             if not manifest_data["file_error"]:
                 continue
             msg = str(manifest_data["file_error"]).replace(f'{manifest_data["filename_short"]} ', "").strip()
-            self.checks_errors["po_syntax_error"].append(f'{manifest_data["filename_short"]} {msg}')
+            self.checks_errors["po-syntax-error"].append(f'{manifest_data["filename_short"]} {msg}')
 
     @staticmethod
     def parse_printf(main_str, secondary_str):
@@ -200,19 +200,19 @@ class ChecksOdooModulePO:
         return linenum
 
     @utils.only_required_for_checks(
-        "po_python_parse_format",
-        "po_python_parse_printf",
-        "po_requires_module",
+        "po-python-parse-format",
+        "po-python-parse-printf",
+        "po-requires-module",
     )
     def visit_entry(self, manifest_data, entry):
-        """* Check po_requires_module
+        """* Check po-requires-module
         Translation entry requires comment '#. module: MODULE'
 
-        * Check po_python_parse_printf
+        * Check po-python-parse-printf
         Check if 'msgid' is using 'str' variables like '%s'
         So translation 'msgstr' must be the same number of variables too
 
-        * Check po_python_parse_format
+        * Check po-python-parse-format
         Check if 'msgid' is using 'str' variables like '{}'
         So translation 'msgstr' must be the same number of variables too
         """
@@ -220,7 +220,7 @@ class ChecksOdooModulePO:
         # Regex from https://github.com/odoo/odoo/blob/fa4f36bb631e82/odoo/tools/translate.py#L616  # noqa
         match = re.match(r"(module[s]?): (\w+)", entry.comment)
         if not match:
-            self.checks_errors["po_requires_module"].append(
+            self.checks_errors["po-requires-module"].append(
                 f'{manifest_data["filename_short"]}:{entry.linenum}'
                 "Translation entry requires comment '#. module: MODULE'"
             )
@@ -235,21 +235,21 @@ class ChecksOdooModulePO:
                 self.parse_format(entry.msgid, entry.msgstr)
             except PrintfStringParseError as str_parse_exc:
                 linenum = self._get_po_line_number(entry)
-                self.checks_errors["po_python_parse_printf"].append(
+                self.checks_errors["po-python-parse-printf"].append(
                     f'{manifest_data["filename_short"]}:{linenum} '
                     "Translation string couldn't be parsed "
                     f"correctly using str%variables {str_parse_exc}"
                 )
             except FormatStringParseError as str_parse_exc:
                 linenum = self._get_po_line_number(entry)
-                self.checks_errors["po_python_parse_format"].append(
+                self.checks_errors["po-python-parse-format"].append(
                     f'{manifest_data["filename_short"]}:{linenum} '
                     "Translation string couldn't be parsed "
                     f"correctly using str.format {str_parse_exc}"
                 )
 
     def check_po(self):
-        """* Check po_duplicate_message_definition (message-id)
+        """* Check po-duplicate-message-definition (message-id)
         in all entries of PO files
 
         We are not using `check_for_duplicates` parameter of polib.pofile method
@@ -279,7 +279,7 @@ class ChecksOdooModulePO:
                 msg_id_short = re.sub(r"[\n\t]*", "", entries[0].msgid[:40]).strip()
                 if len(entries[0].msgid) > 40:
                     msg_id_short = f"{msg_id_short}..."
-                self.checks_errors["po_duplicate_message_definition"].append(
+                self.checks_errors["po-duplicate-message-definition"].append(
                     f'{manifest_data["filename_short"]}:{linenum} '
                     f'Duplicate PO message definition "{msg_id_short}" '
                     f"in lines {duplicated_str}"

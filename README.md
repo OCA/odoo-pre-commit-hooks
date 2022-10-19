@@ -48,30 +48,30 @@ If you install directly the package use the entry point:
 [//]: # (start-checks)
 # Checks
 
-* Check manifest_syntax_error
+* Check manifest-syntax-error
         Check if the manifest file has syntax error
 
-* Check missing_readme
+* Check missing-readme
         Check if a README file is missing
 
-* Check csv_duplicate_record_id
+* Check csv-duplicate-record-id
         duplicate CSV "id" AKA xmlid but for CSV files
 
-* Check csv_syntax_error
+* Check csv-syntax-error
         Check syntax error for CSV files declared in the manifest
 
-* Check po_requires_module
+* Check po-requires-module
         Translation entry requires comment '#. module: MODULE'
 
-* Check po_python_parse_printf
+* Check po-python-parse-printf
         Check if 'msgid' is using 'str' variables like '%s'
         So translation 'msgstr' must be the same number of variables too
 
-* Check po_python_parse_format
+* Check po-python-parse-format
         Check if 'msgid' is using 'str' variables like '{}'
         So translation 'msgstr' must be the same number of variables too
 
-* Check po_duplicate_message_definition (message-id)
+* Check po-duplicate-message-definition (message-id)
         in all entries of PO files
 
         We are not using `check_for_duplicates` parameter of polib.pofile method
@@ -82,10 +82,10 @@ If you install directly the package use the entry point:
         and it shows the entire string of the message_id without truncating it
         or replacing newlines
 
-* Check po_syntax_error
+* Check po-syntax-error
         Check syntax of PO files from i18n* folders
 
-* Check xml_redundant_module_name
+* Check xml-redundant-module-name
 
         If the module is called "module_a" and the xmlid is
         <record id="module_a.xmlid_name1" ...
@@ -93,38 +93,38 @@ If you install directly the package use the entry point:
         The "module_a." is redundant it could be replaced to only
         <record id="xmlid_name1" ...
 
-* Check xml_dangerous_filter_wo_user
+* Check xml-dangerous-filter-wo-user
         Check dangerous filter without a user assigned.
 
-* Check xml_create_user_wo_reset_password
+* Check xml-create-user-wo-reset-password
         records of user without context="{'no_reset_password': True}"
         This context avoid send email and mail log warning
 
-* Check xml_view_dangerous_replace_low_priority in ir.ui.view
+* Check xml-view-dangerous-replace-low-priority in ir.ui.view
 
             <field name="priority" eval="10"/>
             ...
                 <field name="name" position="replace"/>
 
-* Check xml_deprecated_tree_attribute
+* Check xml-deprecated-tree-attribute
           The tree-view declaration is using a deprecated attribute.
 
-* Check xml_dangerous_qweb_replace_low_priority
+* Check xml-dangerous-qweb-replace-low-priority
         Dangerous qweb view defined with low priority
 
-* Check xml_deprecated_data_node
+* Check xml-deprecated-data-node
         Deprecated <data> node inside <odoo> xml node
 
-* Check xml_deprecated_openerp_xml_node
+* Check xml-deprecated-openerp-xml-node
         deprecated <openerp> xml node
 
-* Check xml_deprecated_qweb_directive
+* Check xml-deprecated-qweb-directive
         for use of deprecated QWeb directives t-*-options
 
-* Check xml_not_valid_char_link
+* Check xml-not-valid-char-link
         The resource in in src/href contains a not valid character.
 
-* Check xml_duplicate_record_id
+* Check xml-duplicate-record-id
 
         If a module has duplicated record_id AKA xml_ids
         file1.xml
@@ -132,12 +132,12 @@ If you install directly the package use the entry point:
         file2.xml
             <record id="xmlid_name1"
 
-* Check xml_duplicate_fields in all record nodes
+* Check xml-duplicate-fields in all record nodes
             <record id="xmlid_name1"...
                 <field name="field_name1"...
                 <field name="field_name1"...
 
-* Check xml_syntax_error
+* Check xml-syntax-error
         Check syntax of XML files declared in the Odoo manifest
 
 [//]: # (end-checks)

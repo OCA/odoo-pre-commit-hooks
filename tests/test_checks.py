@@ -9,6 +9,9 @@ from itertools import chain
 
 import oca_pre_commit_hooks
 
+RE_CHECK_DOCSTRING = r"\* Check (?P<check>[\w|\-]+)"
+RE_CHECK_OUTPUT = r"\- \[(?P<check>[\w|-]+)\]"
+
 ALL_CHECK_CLASS = [
     oca_pre_commit_hooks.checks_odoo_module.ChecksOdooModule,
     oca_pre_commit_hooks.checks_odoo_module_csv.ChecksOdooModuleCSV,
@@ -17,28 +20,28 @@ ALL_CHECK_CLASS = [
 ]
 
 EXPECTED_ERRORS = {
-    "csv_duplicate_record_id": 1,
-    "csv_syntax_error": 1,
-    "manifest_syntax_error": 2,
-    "missing_readme": 2,
-    "po_duplicate_message_definition": 3,
-    "po_python_parse_format": 4,
-    "po_python_parse_printf": 2,
-    "po_requires_module": 1,
-    "po_syntax_error": 1,
-    "xml_create_user_wo_reset_password": 1,
-    "xml_dangerous_filter_wo_user": 1,
-    "xml_dangerous_qweb_replace_low_priority": 3,
-    "xml_deprecated_data_node": 8,
-    "xml_deprecated_openerp_xml_node": 5,
-    "xml_deprecated_qweb_directive": 2,
-    "xml_deprecated_tree_attribute": 3,
-    "xml_duplicate_fields": 9,
-    "xml_duplicate_record_id": 3,
-    "xml_not_valid_char_link": 2,
-    "xml_redundant_module_name": 1,
-    "xml_syntax_error": 2,
-    "xml_view_dangerous_replace_low_priority": 6,
+    "csv-duplicate-record-id": 1,
+    "csv-syntax-error": 1,
+    "manifest-syntax-error": 2,
+    "missing-readme": 2,
+    "po-duplicate-message-definition": 3,
+    "po-python-parse-format": 4,
+    "po-python-parse-printf": 2,
+    "po-requires-module": 1,
+    "po-syntax-error": 1,
+    "xml-create-user-wo-reset-password": 1,
+    "xml-dangerous-filter-wo-user": 1,
+    "xml-dangerous-qweb-replace-low-priority": 3,
+    "xml-deprecated-data-node": 8,
+    "xml-deprecated-openerp-xml-node": 5,
+    "xml-deprecated-qweb-directive": 2,
+    "xml-deprecated-tree-attribute": 3,
+    "xml-duplicate-fields": 9,
+    "xml-duplicate-record-id": 3,
+    "xml-not-valid-char-link": 2,
+    "xml-redundant-module-name": 1,
+    "xml-syntax-error": 2,
+    "xml-view-dangerous-replace-low-priority": 6,
 }
 
 
@@ -114,18 +117,18 @@ class TestChecks(unittest.TestCase):
             output = process_error.output
         output = output.decode(sys.stdout.encoding)
         self.assertTrue(returncode, f"The process exited with code zero {returncode} {output}")
-        checks_found = re.findall(r"\- \[(?P<check>\w+)\]", output)
+        checks_found = re.findall(RE_CHECK_OUTPUT, output)
 
         real_errors = dict(Counter(checks_found))
         self.assertDictEqual(real_errors, self.expected_errors, output)
 
     def test_checks_disable(self):
         checks_disabled = {
-            "xml_syntax_error",
-            "xml_redundant_module_name",
-            "csv_duplicate_record_id",
-            "po_duplicate_message_definition",
-            "missing_readme",
+            "xml-syntax-error",
+            "xml-redundant-module-name",
+            "csv-duplicate-record-id",
+            "po-duplicate-message-definition",
+            "missing-readme",
         }
         all_check_errors = oca_pre_commit_hooks.checks_odoo_module.run(
             self.manifest_paths, no_exit=True, no_verbose=True, disable=checks_disabled
@@ -147,11 +150,11 @@ class TestChecks(unittest.TestCase):
 
     def test_checks_disable_with_cli(self):
         checks_disabled = {
-            "xml_syntax_error",
-            "xml_redundant_module_name",
-            "csv_duplicate_record_id",
-            "po_duplicate_message_definition",
-            "missing_readme",
+            "xml-syntax-error",
+            "xml-redundant-module-name",
+            "csv-duplicate-record-id",
+            "po-duplicate-message-definition",
+            "missing-readme",
         }
         sys.argv = ["", "--no-exit", "--no-verbose", f"--disable={','.join(checks_disabled)}"] + self.module_paths
         all_check_errors = oca_pre_commit_hooks.cli.main()
@@ -195,8 +198,7 @@ class TestChecks(unittest.TestCase):
                 if not check_meth or not check_meth.__doc__ or "* Check" not in check_meth.__doc__:
                     continue
                 checks_docstring += "\n" + check_meth.__doc__.strip(" \n") + "\n"
-                re_check = r"\* Check (?P<check>\w+)"
-                checks_found |= set(re.findall(re_check, checks_docstring))
+                checks_found |= set(re.findall(RE_CHECK_DOCSTRING, checks_docstring))
                 checks_docstring = re.sub(r"( )+\*", "*", checks_docstring)
         if os.environ.get("BUILD_README"):
             checks_docstring = f"[//]: # (start-checks)\n# Checks\n{checks_docstring}\n[//]: # (end-checks)"

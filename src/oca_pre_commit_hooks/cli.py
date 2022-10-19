@@ -25,7 +25,6 @@ def main(argv=None):
         argv = sys.argv[1:]
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        # TODO: Parse path exists and is valid
         "filenames_or_modules",
         nargs="*",
         help="Odoo __manifest__.py paths or Odoo module paths.",
@@ -48,7 +47,7 @@ def main(argv=None):
         "-d",
         type=parse_disable,
         default=set(),
-        help="Disable the checker with the given 'check_name' (snake_case), separated by commas.",
+        help="Disable the checker with the given 'check-name', separated by commas.",
     )
     parser.add_argument(
         "--enable",
@@ -56,7 +55,7 @@ def main(argv=None):
         type=parse_disable,
         default=set(),
         help=(
-            "Enable the checker with the given 'check_name' (snake_case), separated by commas. "
+            "Enable the checker with the given 'check-name', separated by commas. "
             "Default: All checks are enabled by default"
         ),
     )
