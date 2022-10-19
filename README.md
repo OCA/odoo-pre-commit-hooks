@@ -5,7 +5,7 @@
 [![version](https://img.shields.io/pypi/v/oca-odoo-pre-commit-hooks.svg)](https://pypi.org/project/oca-odoo-pre-commit-hooks)
 [![wheel](https://img.shields.io/pypi/wheel/oca-odoo-pre-commit-hooks.svg)](https://pypi.org/project/oca-odoo-pre-commit-hooks)
 [![supported-versions](https://img.shields.io/pypi/pyversions/oca-odoo-pre-commit-hooks.svg)](https://pypi.org/project/oca-odoo-pre-commit-hooks)
-[![commits-since](https://img.shields.io/github/commits-since/OCA/odoo-pre-commit-hooks/v0.0.6.svg)](https://github.com/OCA/odoo-pre-commit-hooks/compare/v0.0.6...main)
+[![commits-since](https://img.shields.io/github/commits-since/OCA/odoo-pre-commit-hooks/v0.0.7.svg)](https://github.com/OCA/odoo-pre-commit-hooks/compare/v0.0.7...main)
 [![code-style-black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 [//]: # (end-badges)
@@ -33,7 +33,7 @@ Add to your ".pre-commit-config.yaml" configuration file the following input
 
 ```yaml
     - repo: https://github.com/OCA/odoo-pre-commit-hooks
-        rev: v0.0.6
+        rev: v0.0.7
         hooks:
         - id: oca-checks-odoo-module
 ```
