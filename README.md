@@ -151,10 +151,10 @@ If you install directly the package use the entry point:
 ```bash
 usage: oca-checks-odoo-module [-h] [--no-verbose] [--no-exit]
                               [--disable DISABLE] [--enable ENABLE]
-                              [filenames_or_modules [filenames_or_modules ...]]
+                              [files_or_modules [files_or_modules ...]]
 
 positional arguments:
-  filenames_or_modules  Odoo __manifest__.py paths or Odoo module paths.
+  files_or_modules      Odoo __manifest__.py paths or Odoo module paths.
 
 optional arguments:
   -h, --help            show this help message and exit

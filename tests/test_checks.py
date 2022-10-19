@@ -3,19 +3,16 @@ import os
 import re
 import subprocess
 import sys
-import unittest
-from collections import Counter, defaultdict
 from itertools import chain
 
 import oca_pre_commit_hooks
+from . import common
 
 RE_CHECK_DOCSTRING = r"\* Check (?P<check>[\w|\-]+)"
-RE_CHECK_OUTPUT = r"\- \[(?P<check>[\w|-]+)\]"
 
 ALL_CHECK_CLASS = [
     oca_pre_commit_hooks.checks_odoo_module.ChecksOdooModule,
     oca_pre_commit_hooks.checks_odoo_module_csv.ChecksOdooModuleCSV,
-    oca_pre_commit_hooks.checks_odoo_module_po.ChecksOdooModulePO,
     oca_pre_commit_hooks.checks_odoo_module_xml.ChecksOdooModuleXML,
 ]
 
@@ -24,11 +21,6 @@ EXPECTED_ERRORS = {
     "csv-syntax-error": 1,
     "manifest-syntax-error": 2,
     "missing-readme": 2,
-    "po-duplicate-message-definition": 3,
-    "po-python-parse-format": 4,
-    "po-python-parse-printf": 2,
-    "po-requires-module": 1,
-    "po-syntax-error": 1,
     "xml-create-user-wo-reset-password": 1,
     "xml-dangerous-filter-wo-user": 1,
     "xml-dangerous-qweb-replace-low-priority": 3,
@@ -45,155 +37,37 @@ EXPECTED_ERRORS = {
 }
 
 
-class TestChecks(unittest.TestCase):
-    # TODO: Test modules without CSV or XML or PO
-
+class TestChecksWithDirectories(common.ChecksCommon):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
         test_repo_path = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "test_repo")
-        cls.manifest_paths = glob.glob(os.path.join(test_repo_path, "*", "__openerp__.py")) + glob.glob(
+        cls.file_paths = glob.glob(os.path.join(test_repo_path, "*", "__openerp__.py")) + glob.glob(
             os.path.join(test_repo_path, "*", "__manifest__.py")
         )
-        cls.module_paths = [os.path.dirname(i) for i in cls.manifest_paths]
-        cls.maxDiff = None
+        cls.file_paths = [os.path.dirname(i) for i in cls.file_paths]
 
     def setUp(self):
         super().setUp()
+        self.checks_run = oca_pre_commit_hooks.checks_odoo_module.run
+        self.checks_cli_main = oca_pre_commit_hooks.cli.main
         self.expected_errors = EXPECTED_ERRORS.copy()
 
-    @staticmethod
-    def get_all_code_errors(all_check_errors):
-        check_errors_keys = set()
-        for check_errors in all_check_errors:
-            check_errors_keys |= set(check_errors.keys())
-        return check_errors_keys
 
-    @staticmethod
-    def get_count_code_errors(all_check_errors):
-        check_errors_count = defaultdict(int)
-        for check_errors in all_check_errors:
-            for check, errors in check_errors.items():
-                check_errors_count[check] += len(errors)
-        return check_errors_count
-
-    def assertDictEqual(self, d1, d2, msg=None):
-        """Original method does not show the correct item diff
-        Using ordered list it is showing the diff better"""
-        real_dict2list = [(i, d1[i]) for i in sorted(d1)]
-        expected_dict2list = [(i, d2[i]) for i in sorted(d2)]
-        self.assertEqual(real_dict2list, expected_dict2list, msg)
-
-    def test_checks(self):
-        all_check_errors = oca_pre_commit_hooks.checks_odoo_module.run(
-            self.manifest_paths, no_exit=True, no_verbose=False
+class TestChecksWithFiles(common.ChecksCommon):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        test_repo_path = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "test_repo")
+        cls.file_paths = glob.glob(os.path.join(test_repo_path, "*", "__openerp__.py")) + glob.glob(
+            os.path.join(test_repo_path, "*", "__manifest__.py")
         )
-        real_errors = self.get_count_code_errors(all_check_errors)
-        # Uncommet to get sorted values to update EXPECTED_ERRORS dict
-        # print('\n'.join(f"'{key}':{count_code_errors[key]}," for key in sorted(count_code_errors)))
-        self.assertDictEqual(real_errors, self.expected_errors)
 
-    def test_checks_with_cli(self):
-        sys.argv = ["", "--no-exit", "--no-verbose"] + self.module_paths
-        all_check_errors = oca_pre_commit_hooks.cli.main()
-        real_errors = self.get_count_code_errors(all_check_errors)
-        self.assertDictEqual(real_errors, self.expected_errors)
-
-    def test_non_exists_path(self):
-        all_check_errors = oca_pre_commit_hooks.checks_odoo_module.run(
-            ["/tmp/no_exists"], no_exit=True, no_verbose=False
-        )
-        self.assertFalse(all_check_errors)
-
-    def test_checks_hook(self):
-        # TODO: Autogenerate .pre-commit-config-local.yaml from .pre-commit-config.yaml
-        # TODO: Run subprocess compatible with dynamic_context of coverage
-        cmd = ["pre-commit", "run", "-avc", ".pre-commit-config-local.yaml", "--color=never"]
-        try:
-            returncode = 0
-            output = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
-        except subprocess.CalledProcessError as process_error:
-            returncode = process_error.returncode
-            output = process_error.output
-        output = output.decode(sys.stdout.encoding)
-        self.assertTrue(returncode, f"The process exited with code zero {returncode} {output}")
-        checks_found = re.findall(RE_CHECK_OUTPUT, output)
-
-        real_errors = dict(Counter(checks_found))
-        self.assertDictEqual(real_errors, self.expected_errors, output)
-
-    def test_checks_disable(self):
-        checks_disabled = {
-            "xml-syntax-error",
-            "xml-redundant-module-name",
-            "csv-duplicate-record-id",
-            "po-duplicate-message-definition",
-            "missing-readme",
-        }
-        all_check_errors = oca_pre_commit_hooks.checks_odoo_module.run(
-            self.manifest_paths, no_exit=True, no_verbose=True, disable=checks_disabled
-        )
-        real_errors = self.get_count_code_errors(all_check_errors)
-        for check_disabled in checks_disabled:
-            self.expected_errors.pop(check_disabled, False)
-        self.assertDictEqual(real_errors, self.expected_errors)
-
-    def test_checks_disable_one_by_one(self):
-        for check2disable in self.expected_errors:
-            expected_errors = self.expected_errors.copy()
-            all_check_errors = oca_pre_commit_hooks.checks_odoo_module.run(
-                self.manifest_paths, no_exit=True, no_verbose=True, disable={check2disable}
-            )
-            expected_errors.pop(check2disable)
-            real_errors = self.get_count_code_errors(all_check_errors)
-            self.assertDictEqual(real_errors, expected_errors)
-
-    def test_checks_disable_with_cli(self):
-        checks_disabled = {
-            "xml-syntax-error",
-            "xml-redundant-module-name",
-            "csv-duplicate-record-id",
-            "po-duplicate-message-definition",
-            "missing-readme",
-        }
-        sys.argv = ["", "--no-exit", "--no-verbose", f"--disable={','.join(checks_disabled)}"] + self.module_paths
-        all_check_errors = oca_pre_commit_hooks.cli.main()
-        real_errors = self.get_count_code_errors(all_check_errors)
-        for check_disabled in checks_disabled:
-            self.expected_errors.pop(check_disabled, False)
-        self.assertDictEqual(real_errors, self.expected_errors)
-
-    def test_checks_disable_one_by_one_with_cli(self):
-        for check2disable in self.expected_errors:
-            expected_errors = self.expected_errors.copy()
-            sys.argv = ["", "--no-exit", "--no-verbose", f"--disable={check2disable}"] + self.module_paths
-            all_check_errors = oca_pre_commit_hooks.cli.main()
-            expected_errors.pop(check2disable)
-            real_errors = self.get_count_code_errors(all_check_errors)
-            self.assertDictEqual(real_errors, expected_errors)
-
-    def test_checks_enable_one_by_one(self):
-        for check2enable in self.expected_errors:
-            all_check_errors = oca_pre_commit_hooks.checks_odoo_module.run(
-                self.manifest_paths, no_exit=True, no_verbose=True, enable={check2enable}
-            )
-            real_errors = self.get_count_code_errors(all_check_errors)
-            self.assertDictEqual(real_errors, {check2enable: self.expected_errors[check2enable]})
-
-    def test_checks_enable_one_by_one_with_cli(self):
-        for check2enable in self.expected_errors:
-            sys.argv = ["", "--no-exit", "--no-verbose", f"--enable={check2enable}"] + self.module_paths
-            all_check_errors = oca_pre_commit_hooks.cli.main()
-            real_errors = self.get_count_code_errors(all_check_errors)
-            self.assertDictEqual(real_errors, {check2enable: self.expected_errors[check2enable]})
-
-    @staticmethod
-    def re_replace(sub_start, sub_end, substitution, content):
-        re_sub = re.compile(rf"^{re.escape(sub_start)}$.*^{re.escape(sub_end)}$", re.M | re.S)
-        if not re_sub.findall(content):
-            raise UserWarning("No matched content")
-        new_content = re_sub.sub(f"{sub_start}\n\n{substitution}\n\n{sub_end}", content)
-        return new_content
+    def setUp(self):
+        super().setUp()
+        self.checks_run = oca_pre_commit_hooks.checks_odoo_module.run
+        self.checks_cli_main = oca_pre_commit_hooks.cli.main
+        self.expected_errors = EXPECTED_ERRORS.copy()
 
     def test_build_docstring(self):
         checks_docstring = ""
@@ -234,9 +108,7 @@ class TestChecks(unittest.TestCase):
                 help_content = f"# Help\n```bash\n{help_content}\n```"
                 new_readme = self.re_replace("[//]: # (start-help)", "[//]: # (end-help)", help_content, new_readme)
 
-                all_check_errors = oca_pre_commit_hooks.checks_odoo_module.run(
-                    self.manifest_paths, no_exit=True, no_verbose=False
-                )
+                all_check_errors = self.checks_run(self.file_paths, no_exit=True, no_verbose=False)
 
                 version = oca_pre_commit_hooks.__version__
                 check_example_content = ""
@@ -260,3 +132,7 @@ class TestChecks(unittest.TestCase):
             )
 
         self.assertFalse(set(self.expected_errors) - checks_found, "Missing docstring of checks tested")
+
+    def test_non_exists_path(self):
+        all_check_errors = self.checks_run(["/tmp/no_exists"], no_exit=True, no_verbose=False)
+        self.assertFalse(all_check_errors)

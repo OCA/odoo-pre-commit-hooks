@@ -13,22 +13,15 @@ Why does this file exist, and why not put this in __main__?
 import argparse
 import sys
 
-from oca_pre_commit_hooks import checks_odoo_module
+from oca_pre_commit_hooks import checks_odoo_module, checks_odoo_module_po
 
 
 def parse_disable(value):
     return set(value.split(","))
 
 
-def main(argv=None):
-    if argv is None:
-        argv = sys.argv[1:]
+def global_parser():
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "filenames_or_modules",
-        nargs="*",
-        help="Odoo __manifest__.py paths or Odoo module paths.",
-    )
     parser.add_argument(
         "--no-verbose",
         action="store_true",
@@ -42,7 +35,6 @@ def main(argv=None):
         help="If enabled so it will not call exit.",
     )
     parser.add_argument(
-        # TODO: Show current checks
         "--disable",
         "-d",
         type=parse_disable,
@@ -59,5 +51,31 @@ def main(argv=None):
             "Default: All checks are enabled by default"
         ),
     )
+    # TODO: Add argument to show current checks
+    return parser
+
+
+def main(argv=None):
+    parser = global_parser()
+    parser.add_argument(
+        "files_or_modules",
+        nargs="*",
+        help="Odoo __manifest__.py paths or Odoo module paths.",
+    )
+    if argv is None:
+        argv = sys.argv[1:]
     kwargs = vars(parser.parse_args(argv))
     return checks_odoo_module.main(**kwargs)
+
+
+def main_po(argv=None):
+    parser = global_parser()
+    parser.add_argument(
+        "po_files",
+        nargs="*",
+        help="PO files.",
+    )
+    if argv is None:
+        argv = sys.argv[1:]
+    kwargs = vars(parser.parse_args(argv))
+    return checks_odoo_module_po.main(**kwargs)
