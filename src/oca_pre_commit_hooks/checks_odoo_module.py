@@ -63,16 +63,20 @@ class ChecksOdooModule:
 
     def _referenced_files_by_extension(self):
         ext_referenced_files = defaultdict(list)
+        self.manifest_duplicated_data_files = []
         for data_section in DFTL_MANIFEST_DATA_KEYS:
             for fname in self.manifest_dict.get(data_section) or []:
                 fname_path = os.path.join(self.odoo_addon_path, fname)
-                ext_referenced_files[os.path.splitext(fname)[1].lower()].append(
-                    {
-                        "filename": fname_path,
-                        "filename_short": os.path.relpath(fname_path, self.manifest_top_path),
-                        "data_section": data_section,
-                    }
-                )
+                value = {
+                    "filename": fname_path,
+                    "filename_short": os.path.relpath(fname_path, self.manifest_top_path),
+                    "data_section": data_section,
+                }
+                ext = os.path.splitext(fname)[1].lower()
+                if value in ext_referenced_files[ext]:
+                    self.manifest_duplicated_data_files.append(value)
+                    continue
+                ext_referenced_files[ext].append(value)
         # The i18n[_extra]/*.po[t] files are not defined in the manifest
         fnames = glob.glob(os.path.join(self.odoo_addon_path, "i18n*", "*.po")) + glob.glob(
             os.path.join(self.odoo_addon_path, "i18n*", "*.pot")
@@ -87,6 +91,18 @@ class ChecksOdooModule:
                 }
             )
         return ext_referenced_files
+
+    @utils.only_required_for_installable()
+    @utils.only_required_for_checks("manifest-duplicated-data-file")
+    def check_manifest_duplicated_data_file(self):
+        """* Check manifest-duplicated-data-file
+        Check if the manifest has duplicated files in datas sections
+        """
+        if not self.manifest_dict:
+            manifest_path_short = os.path.relpath(self.manifest_path, self.manifest_top_path)
+            self.checks_errors["manifest-duplicated-data-file"].append(
+                f"{manifest_path_short}:1 could not be loaded {self.error}".strip()
+            )
 
     @utils.only_required_for_checks("manifest-syntax-error")
     def check_manifest(self):
