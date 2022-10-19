@@ -101,9 +101,9 @@ class ChecksOdooModuleXML:
         for xmlid_key, records in xmlids_section.items():
             if len(records) < 2:
                 continue
-            lines_str = ", ".join(f"{record[0]['filename']}:{record[1].sourceline}" for record in records[1:])
+            lines_str = ", ".join(f"{record[0]['filename_short']}:{record[1].sourceline}" for record in records[1:])
             self.checks_errors["xml_duplicate_record_id"].append(
-                f"{records[0][0]['filename']}:{records[0][1].sourceline} "
+                f"{records[0][0]['filename_short']}:{records[0][1].sourceline} "
                 f'Duplicate xml record id "{xmlid_key}" in {lines_str}'
             )
 
@@ -113,7 +113,7 @@ class ChecksOdooModuleXML:
                 continue
             lines_str = ", ".join(f"{field[1].sourceline}" for field in fields[1:])
             self.checks_errors["xml_duplicate_fields"].append(
-                f"{fields[0][0]['filename']}:{fields[0][1].sourceline} "
+                f"{fields[0][0]['filename_short']}:{fields[0][1].sourceline} "
                 f'Duplicate xml field "{field_key[0]}" in lines {lines_str}'
             )
 
@@ -124,7 +124,9 @@ class ChecksOdooModuleXML:
         for manifest_data in self.manifest_datas:
             if not manifest_data["file_error"]:
                 continue
-            self.checks_errors["xml_syntax_error"].append(f'{manifest_data["filename"]} {manifest_data["file_error"]}')
+            self.checks_errors["xml_syntax_error"].append(
+                f'{manifest_data["filename_short"]} {manifest_data["file_error"]}'
+            )
 
     @utils.only_required_for_checks("xml_redundant_module_name")
     def visit_xml_record(self, manifest_data, record):
@@ -142,7 +144,7 @@ class ChecksOdooModuleXML:
         if xmlid_module == self.module_name:
             # TODO: Add autofix option
             self.checks_errors["xml_redundant_module_name"].append(
-                f'{manifest_data["filename"]}:{record.sourceline} Redundant module'
+                f'{manifest_data["filename_short"]}:{record.sourceline} Redundant module'
                 f' name <record id="{record_id}" '
                 f'better using only <record id="{xmlid_name}"'
             )
@@ -166,7 +168,7 @@ class ChecksOdooModuleXML:
         # TODO: Add self.config.min_priority instead of DFTL_MIN_PRIORITY
         if is_replaced_field and priority < DFTL_MIN_PRIORITY:
             self.checks_errors["xml_view_dangerous_replace_low_priority"].append(
-                f'{manifest_data["filename"]}:{record.sourceline} '
+                f'{manifest_data["filename_short"]}:{record.sourceline} '
                 'Dangerous use of "replace" from view '
                 f"with priority {priority} < {DFTL_MIN_PRIORITY}"
             )
@@ -177,7 +179,7 @@ class ChecksOdooModuleXML:
         for deprecate_attr_node in record.xpath(xpath):
             deprecate_attr_str = ",".join(set(deprecate_attr_node.attrib.keys()) & deprecate_attrs)
             self.checks_errors["xml_deprecated_tree_attribute"].append(
-                f'{manifest_data["filename"]}:{deprecate_attr_node.sourceline} '
+                f'{manifest_data["filename_short"]}:{deprecate_attr_node.sourceline} '
                 f'Deprecated "<tree {deprecate_attr_str}=..."'
             )
 
@@ -194,7 +196,7 @@ class ChecksOdooModuleXML:
             # if exists field="name" then is a new record
             # then should be context
             self.checks_errors["xml_create_user_wo_reset_password"].append(
-                f'{manifest_data["filename"]}:{record.sourceline} '
+                f'{manifest_data["filename_short"]}:{record.sourceline} '
                 "record res.users without "
                 "context=\"{'no_reset_password': True}\""
             )
@@ -212,7 +214,7 @@ class ChecksOdooModuleXML:
         # then should be field="user_id" too
         if ir_filter_fields and len(ir_filter_fields) == 1:
             self.checks_errors["xml_dangerous_filter_wo_user"].append(
-                f'{manifest_data["filename"]}:{record.sourceline} ' "Dangerous filter without explicit `user_id`"
+                f'{manifest_data["filename_short"]}:{record.sourceline} ' "Dangerous filter without explicit `user_id`"
             )
 
     @utils.only_required_for_checks("xml_not_valid_char_link")
@@ -227,7 +229,7 @@ class ChecksOdooModuleXML:
                     ext = os.path.splitext(os.path.basename(resource))[1]
                     if resource.startswith("/") and not re.search("^[.][a-zA-Z]+$", ext):
                         self.checks_errors["xml_not_valid_char_link"].append(
-                            f'{manifest_data["filename"]}:{node.sourceline} '
+                            f'{manifest_data["filename_short"]}:{node.sourceline} '
                             f"The resource in in src/href contains a not valid character"
                         )
 
@@ -245,7 +247,7 @@ class ChecksOdooModuleXML:
                     # TODO: Add self.config.min_priority instead of DFTL_MIN_PRIORITY
                     if child.get("position") == "replace" and priority < DFTL_MIN_PRIORITY:
                         self.checks_errors["xml_dangerous_qweb_replace_low_priority"].append(
-                            f'{manifest_data["filename"]}:{template.sourceline} '
+                            f'{manifest_data["filename_short"]}:{template.sourceline} '
                             'Dangerous use of "replace" from view '
                             f"with priority {priority} < {DFTL_MIN_PRIORITY}"
                         )
@@ -266,7 +268,7 @@ class ChecksOdooModuleXML:
                 if children_count == 1 and len(odoo_node.xpath("./data")) == 1:
                     # TODO: Add autofix option
                     self.checks_errors["xml_deprecated_data_node"].append(
-                        f'{manifest_data["filename"]}:{odoo_node.sourceline} '
+                        f'{manifest_data["filename_short"]}:{odoo_node.sourceline} '
                         'Use <odoo> instead of <odoo><data> or use <odoo noupdate="1"> '
                         'instead of <odoo><data noupdate="1">'
                     )
@@ -279,7 +281,7 @@ class ChecksOdooModuleXML:
             for openerp_node in manifest_data["node"].xpath("/openerp"):
                 # TODO: Add autofix option
                 self.checks_errors["xml_deprecated_openerp_xml_node"].append(
-                    f'{manifest_data["filename"]}:{openerp_node.sourceline} ' "Deprecated <openerp> xml node"
+                    f'{manifest_data["filename_short"]}:{openerp_node.sourceline} ' "Deprecated <openerp> xml node"
                 )
 
     @utils.only_required_for_checks("xml_deprecated_qweb_directive")
@@ -298,6 +300,6 @@ class ChecksOdooModuleXML:
             for node in manifest_data["node"].xpath(xpath):
                 directive_str = ", ".join(set(node.attrib) & deprecated_directives)
                 self.checks_errors["xml_deprecated_qweb_directive"].append(
-                    f'{manifest_data["filename"]}:{node.sourceline} '
+                    f'{manifest_data["filename_short"]}:{node.sourceline} '
                     f'Deprecated QWeb directive "{directive_str}". Use "t-options" instead'
                 )
