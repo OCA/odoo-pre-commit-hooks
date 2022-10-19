@@ -1,5 +1,7 @@
+import os
 import re
 import string
+import sys
 from collections import defaultdict
 
 import polib
@@ -38,46 +40,50 @@ class FormatStringParseError(StringParseError):
 
 
 class ChecksOdooModulePO:
-    def __init__(self, manifest_datas, module_name, enable, disable):
-        self.module_name = module_name
+    def __init__(self, po_filename, enable, disable):
         self.enable = enable
         self.disable = disable
-        self.manifest_datas = manifest_datas
         self.checks_errors = defaultdict(list)
-        for manifest_data in manifest_datas:
-            try:
-                with open(manifest_data["filename"], "rt", encoding="UTF-8") as filename_obj:
-                    # Do not use polib.pofile(manifest_data["filename"])
-                    # because raise the following error for PO files with syntax error:
-                    # pytest.PytestUnraisableExceptionWarning: Exception ignored in: <_io.FileIO [closed]>
-                    # Traceback (most recent call last):
-                    #     File "../polib.py", line 1474, in add
-                    #     action = getattr(self, 'handle_%s' % next_state)
-                    # ResourceWarning: unclosed file <_io.FileIO name='..' mode='rb' closefd=True>
-                    polib_entries = polib.pofile(filename_obj.read())
-                manifest_data.update(
-                    {
-                        "po": polib_entries,
-                        "file_error": None,
-                    }
-                )
-            except (OSError, UnicodeDecodeError) as po_err:
-                manifest_data.update(
-                    {
-                        "po": [],
-                        "file_error": po_err,
-                    }
-                )
+        po_filename = utils.full_norm_path(po_filename)
+        top_path = utils.top_path(os.path.dirname(po_filename))
+        self.po_data = {
+            "filename": po_filename,
+            "filename_short": os.path.relpath(po_filename, top_path),
+            "data_section": os.path.basename(os.path.dirname(po_filename)),  # i18n or i18n_extra
+            "top_path": top_path,
+        }
+        try:
+            with open(po_filename, "rt", encoding="UTF-8") as filename_obj:
+                # Do not use polib.pofile(self.po_data["filename"])
+                # because raise the following error for PO files with syntax error:
+                # pytest.PytestUnraisableExceptionWarning: Exception ignored in: <_io.FileIO [closed]>
+                # Traceback (most recent call last):
+                #     File "../polib.py", line 1474, in add
+                #     action = getattr(self, 'handle_%s' % next_state)
+                # ResourceWarning: unclosed file <_io.FileIO name='..' mode='rb' closefd=True>
+                polib_entries = polib.pofile(filename_obj.read())
+            self.po_data.update(
+                {
+                    "po": polib_entries,
+                    "file_error": None,
+                }
+            )
+        except (OSError, UnicodeDecodeError) as po_err:
+            self.po_data.update(
+                {
+                    "po": [],
+                    "file_error": po_err,
+                }
+            )
 
     @utils.only_required_for_checks("po-syntax-error")
     def check_po_syntax_error(self):
         """* Check po-syntax-error
         Check syntax of PO files from i18n* folders"""
-        for manifest_data in self.manifest_datas:
-            if not manifest_data["file_error"]:
-                continue
-            msg = str(manifest_data["file_error"]).replace(f'{manifest_data["filename"]} ', "").strip()
-            self.checks_errors["po-syntax-error"].append(f'{manifest_data["filename_short"]}:1 {msg}')
+        if not self.po_data["file_error"]:
+            return
+        msg = str(self.po_data["file_error"]).replace(f'{self.po_data["filename"]} ', "").strip()
+        self.checks_errors["po-syntax-error"].append(f'{self.po_data["filename_short"]}:1 {msg}')
 
     @staticmethod
     def parse_printf(main_str, secondary_str):
@@ -204,7 +210,7 @@ class ChecksOdooModulePO:
         "po-python-parse-printf",
         "po-requires-module",
     )
-    def visit_entry(self, manifest_data, entry):
+    def visit_entry(self, entry):
         """* Check po-requires-module
         Translation entry requires comment '#. module: MODULE'
 
@@ -221,7 +227,7 @@ class ChecksOdooModulePO:
         match = re.match(r"(module[s]?): (\w+)", entry.comment)
         if not match:
             self.checks_errors["po-requires-module"].append(
-                f'{manifest_data["filename_short"]}:{entry.linenum} '
+                f'{self.po_data["filename_short"]}:{entry.linenum} '
                 "Translation entry requires comment '#. module: MODULE'"
             )
 
@@ -236,14 +242,14 @@ class ChecksOdooModulePO:
             except PrintfStringParseError as str_parse_exc:
                 linenum = self._get_po_line_number(entry)
                 self.checks_errors["po-python-parse-printf"].append(
-                    f'{manifest_data["filename_short"]}:{linenum} '
+                    f'{self.po_data["filename_short"]}:{linenum} '
                     "Translation string couldn't be parsed "
                     f"correctly using str%variables {str_parse_exc}"
                 )
             except FormatStringParseError as str_parse_exc:
                 linenum = self._get_po_line_number(entry)
                 self.checks_errors["po-python-parse-format"].append(
-                    f'{manifest_data["filename_short"]}:{linenum} '
+                    f'{self.po_data["filename_short"]}:{linenum} '
                     "Translation string couldn't be parsed "
                     f"correctly using str.format {str_parse_exc}"
                 )
@@ -260,27 +266,58 @@ class ChecksOdooModulePO:
         and it shows the entire string of the message_id without truncating it
         or replacing newlines
         """
-        for manifest_data in self.manifest_datas:
-            duplicated = defaultdict(list)
-            for entry in manifest_data["po"]:
-                if entry.obsolete:
-                    continue
+        duplicated = defaultdict(list)
+        for entry in self.po_data["po"]:
+            if entry.obsolete:
+                continue
 
-                # po_duplicate_message_definition
-                duplicated[hash(entry.msgid)].append(entry)
-                for meth in utils.getattr_checks(self, self.enable, self.disable, "visit_entry"):
-                    meth(manifest_data, entry)
+            # po_duplicate_message_definition
+            duplicated[hash(entry.msgid)].append(entry)
+            for meth in utils.getattr_checks(self, self.enable, self.disable, "visit_entry"):
+                meth(entry)
 
-            for entries in duplicated.values():
-                if len(entries) < 2:
-                    continue
-                linenum = self._get_po_line_number(entries[0])
-                duplicated_str = ", ".join(map(str, map(self._get_po_line_number, entries[1:])))
-                msg_id_short = re.sub(r"[\n\t]*", "", entries[0].msgid[:40]).strip()
-                if len(entries[0].msgid) > 40:
-                    msg_id_short = f"{msg_id_short}..."
-                self.checks_errors["po-duplicate-message-definition"].append(
-                    f'{manifest_data["filename_short"]}:{linenum} '
-                    f'Duplicate PO message definition "{msg_id_short}" '
-                    f"in lines {duplicated_str}"
-                )
+        for entries in duplicated.values():
+            if len(entries) < 2:
+                continue
+            linenum = self._get_po_line_number(entries[0])
+            duplicated_str = ", ".join(map(str, map(self._get_po_line_number, entries[1:])))
+            msg_id_short = re.sub(r"[\n\t]*", "", entries[0].msgid[:40]).strip()
+            if len(entries[0].msgid) > 40:
+                msg_id_short = f"{msg_id_short}..."
+            self.checks_errors["po-duplicate-message-definition"].append(
+                f'{self.po_data["filename_short"]}:{linenum} '
+                f'Duplicate PO message definition "{msg_id_short}" '
+                f"in lines {duplicated_str}"
+            )
+
+    def run_checks(self, no_verbose):
+        # pylint: disable=print-used
+        all_check_errors = []
+        for check in utils.getattr_checks(self, enable=self.enable, disable=self.disable):
+            check()
+        utils.filter_checks_enabled_disabled(self.checks_errors, self.enable, self.disable)
+        all_check_errors.append(self.checks_errors)
+        for check_errors in all_check_errors if not no_verbose else []:
+            for check_error, msgs in check_errors.items():
+                print(f"\n****{check_error}****")
+                for msg in msgs:
+                    print(f"{msg} - [{check_error}]")
+        return all_check_errors
+
+
+def run(po_files, enable=None, disable=None, no_verbose=False, no_exit=False):
+    all_check_errors = []
+    for po_file in po_files:
+        # Use file by file in order release memory reading file early
+        checks_po_obj = ChecksOdooModulePO(po_file, enable, disable)
+        try:
+            all_check_errors.extend(checks_po_obj.run_checks(no_verbose))
+        finally:
+            del checks_po_obj
+    if no_exit:
+        return all_check_errors
+    sys.exit(bool(all_check_errors))
+
+
+def main(**kwargs):
+    return run(**kwargs)

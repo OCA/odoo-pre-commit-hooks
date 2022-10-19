@@ -48,3 +48,8 @@ disable=c-extension-no-member,
 msg-template={path}:{line}: [{msg_id}({symbol}), {obj}] {msg}
 output-format=colorized
 reports=no
+
+[SIMILARITIES]
+min-similarity-lines=14
+ignore-comments=yes
+ignore-docstrings=yes

@@ -1,9 +1,23 @@
+# Do not use this file as example
+# Check the README
 - id: oca-checks-odoo-module
   name: Checks for Odoo modules
   description: Multiple checks for Odoo modules
   entry: oca-checks-odoo-module
   args: []
   language: python
-  types_or: ["csv", "markdown", "pofile", "python", "rst", "xml"]
+  types_or: ["csv", "markdown", "python", "rst", "xml"]
   # require_serial to evaluate the whole module in-one-shot to have full context about other xmlids and so on
   require_serial: true
+- id: oca-checks-po
+  name: Checks for .po[t] files
+  description: Multiple checks for PO files
+  entry: oca-checks-po
+  args: []
+  language: python
+  # Notice the "pofile" type does not consider "pot" files
+  # The command "identify-cli file.pot"
+  # returns "text"
+  types_or: ["text"]
+  files: \.(po|pot)$
+  require_serial: false
