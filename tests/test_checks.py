@@ -226,6 +226,27 @@ class TestChecks(unittest.TestCase):
                     help_content, new_readme
                 )
 
+                all_check_errors = oca_pre_commit_hooks.checks_odoo_module.run(
+                    self.manifest_paths, no_exit=True, no_verbose=False
+                )
+
+                version = oca_pre_commit_hooks.__version__
+                check_example_content = ""
+                for check_errors in all_check_errors:
+                    for check_error, msgs in check_errors.items():
+                        check_example_content += f"\n\n * {check_error}\n"
+                        for msg in msgs:
+                            msg = msg.replace(":", "#L", 1)
+                            check_example_content += (
+                                f"\n    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v{version}/{msg}"
+                            )
+                check_example_content = (
+                    f"[//]: # (start-example)\n# Examples\n{check_example_content}\n\n[//]: # (end-example)"
+                )
+                new_readme = re.compile(r"\[//\]:\ \#\ \(start\-example\).*^.*\(end\-example\)", re.M | re.S).sub(
+                    check_example_content, new_readme
+                )
+
                 f_readme.write(new_readme)
 
         self.assertFalse(set(self.expected_errors) - checks_found, "Missing docstring of checks tested")

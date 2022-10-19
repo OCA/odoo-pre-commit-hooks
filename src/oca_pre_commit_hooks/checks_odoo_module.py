@@ -95,7 +95,7 @@ class ChecksOdooModule:
         if not self.manifest_dict:
             manifest_path_short = os.path.relpath(self.manifest_path, self.manifest_top_path)
             self.checks_errors["manifest-syntax-error"].append(
-                f"{manifest_path_short} could not be loaded {self.error}"
+                f"{manifest_path_short}:1 could not be loaded {self.error}".strip()
             )
 
     @utils.only_required_for_installable()
@@ -109,7 +109,7 @@ class ChecksOdooModule:
                 return
         readme_path_short = os.path.relpath(readme_path, self.manifest_top_path)
         self.checks_errors["missing-readme"].append(
-            f"{readme_path_short} missed file. Template here: {DFTL_README_TMPL_URL}"
+            f"{readme_path_short}:1 missed file. Template here: {DFTL_README_TMPL_URL}"
         )
 
     @utils.only_required_for_installable()
