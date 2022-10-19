@@ -125,7 +125,7 @@ class ChecksOdooModuleXML:
             if not manifest_data["file_error"]:
                 continue
             self.checks_errors["xml-syntax-error"].append(
-                f'{manifest_data["filename_short"]} {manifest_data["file_error"]}'
+                f'{manifest_data["filename_short"]}:1 {manifest_data["file_error"]}'
             )
 
     @utils.only_required_for_checks("xml-redundant-module-name")
@@ -269,8 +269,8 @@ class ChecksOdooModuleXML:
                     # TODO: Add autofix option
                     self.checks_errors["xml-deprecated-data-node"].append(
                         f'{manifest_data["filename_short"]}:{odoo_node.sourceline} '
-                        'Use <odoo> instead of <odoo><data> or use <odoo noupdate="1"> '
-                        'instead of <odoo><data noupdate="1">'
+                        'Use `<odoo>` instead of `<odoo><data>` or use `<odoo noupdate="1">` '
+                        'instead of `<odoo><data noupdate="1">`'
                     )
 
     @utils.only_required_for_checks("xml-deprecated-openerp-xml-node")

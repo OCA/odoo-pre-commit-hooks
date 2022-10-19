@@ -76,8 +76,8 @@ class ChecksOdooModulePO:
         for manifest_data in self.manifest_datas:
             if not manifest_data["file_error"]:
                 continue
-            msg = str(manifest_data["file_error"]).replace(f'{manifest_data["filename_short"]} ', "").strip()
-            self.checks_errors["po-syntax-error"].append(f'{manifest_data["filename_short"]} {msg}')
+            msg = str(manifest_data["file_error"]).replace(f'{manifest_data["filename"]} ', "").strip()
+            self.checks_errors["po-syntax-error"].append(f'{manifest_data["filename_short"]}:1 {msg}')
 
     @staticmethod
     def parse_printf(main_str, secondary_str):
@@ -221,7 +221,7 @@ class ChecksOdooModulePO:
         match = re.match(r"(module[s]?): (\w+)", entry.comment)
         if not match:
             self.checks_errors["po-requires-module"].append(
-                f'{manifest_data["filename_short"]}:{entry.linenum}'
+                f'{manifest_data["filename_short"]}:{entry.linenum} '
                 "Translation entry requires comment '#. module: MODULE'"
             )
 
