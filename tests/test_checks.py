@@ -201,13 +201,31 @@ class TestChecks(unittest.TestCase):
                 checks_found |= set(re.findall(RE_CHECK_DOCSTRING, checks_docstring))
                 checks_docstring = re.sub(r"( )+\*", "*", checks_docstring)
         if os.environ.get("BUILD_README"):
+            # Run "tox -e update-readme"
+            # Why this here?
+            # The unittest are isolated using "tox" virtualenv with all test-requirements installed
+            # and latest dev version of the package instead of using the
+            # already installed in the OS (without latest dev changes)
+            # and we do not have way to evaluate all checks are evaluated and documented from another side
+            # Feel free to migrate to better place this non-standard section of the code
             checks_docstring = f"[//]: # (start-checks)\n# Checks\n{checks_docstring}\n[//]: # (end-checks)"
             readme_path = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "README.md")
             with open(readme_path, "r+", encoding="UTF-8") as f_readme:
                 readme_content = f_readme.read()
                 f_readme.seek(0)
-                readme_with_checks_docstring = re.compile(
-                    r"\[//\]:\ \#\ \(start\-checks\).*^.*\(end\-checks\)", re.M | re.S
-                ).sub(checks_docstring, readme_content)
-                f_readme.write(readme_with_checks_docstring)
+                new_readme = re.compile(r"\[//\]:\ \#\ \(start\-checks\).*^.*\(end\-checks\)", re.M | re.S).sub(
+                    checks_docstring, readme_content
+                )
+
+                # Find a better way to get the --help string
+                help_content = subprocess.check_output(
+                    ["oca-checks-odoo-module", "--help"], stderr=subprocess.STDOUT
+                ).decode(sys.stdout.encoding)
+                help_content = f"[//]: # (start-help)\n# Help\n```bash\n{help_content}\n```\n[//]: # (end-help)"
+                new_readme = re.compile(r"\[//\]:\ \#\ \(start\-help\).*^.*\(end\-help\)", re.M | re.S).sub(
+                    help_content, new_readme
+                )
+
+                f_readme.write(new_readme)
+
         self.assertFalse(set(self.expected_errors) - checks_found, "Missing docstring of checks tested")

@@ -143,13 +143,34 @@ If you install directly the package use the entry point:
 [//]: # (end-checks)
 
 
+[//]: # (start-help)
+# Help
+```bash
+usage: oca-checks-odoo-module [-h] [--no-verbose] [--no-exit]
+                              [--disable DISABLE] [--enable ENABLE]
+                              [filenames_or_modules [filenames_or_modules ...]]
+
+positional arguments:
+  filenames_or_modules  Odoo __manifest__.py paths or Odoo module paths.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --no-verbose          If enabled so disable verbose mode.
+  --no-exit             If enabled so it will not call exit.
+  --disable DISABLE, -d DISABLE
+                        Disable the checker with the given 'check-name',
+                        separated by commas.
+  --enable ENABLE, -e ENABLE
+                        Enable the checker with the given 'check-name',
+                        separated by commas. Default: All checks are enabled
+                        by default
+
+```
+[//]: # (end-help)
+
 ## Licenses
 
 This repository is licensed under [AGPL-3.0](LICENSE).
-
-However, each module can have a totally different license, as long as they adhere to Odoo Community Association (OCA)
-policy. Consult each module's `__manifest__.py` file, which contains a `license` key
-that explains its license.
 
 ----
 OCA, or the [Odoo Community Association](http://odoo-community.org/), is a nonprofit
