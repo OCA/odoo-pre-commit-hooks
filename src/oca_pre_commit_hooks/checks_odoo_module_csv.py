@@ -20,12 +20,12 @@ class ChecksOdooModuleCSV:
             )
         self.checks_errors = defaultdict(list)
 
-    @utils.only_required_for_checks("csv_syntax_error", "csv_duplicate_record_id")
+    @utils.only_required_for_checks("csv-syntax-error", "csv-duplicate-record-id")
     def check_csv(self):
-        """* Check csv_duplicate_record_id
+        """* Check csv-duplicate-record-id
         duplicate CSV "id" AKA xmlid but for CSV files
 
-        * Check csv_syntax_error
+        * Check csv-syntax-error
         Check syntax error for CSV files declared in the manifest
         """
         csvids = defaultdict(list)
@@ -46,11 +46,11 @@ class ChecksOdooModuleCSV:
                             )
                         )
             except (FileNotFoundError, csv.Error, UnicodeDecodeError) as csv_err:
-                self.checks_errors["csv_syntax_error"].append(f'{manifest_data["filename_short"]} {csv_err}')
+                self.checks_errors["csv-syntax-error"].append(f'{manifest_data["filename_short"]} {csv_err}')
         for csvid, records in csvids.items():
             if len(records) < 2:
                 continue
-            self.checks_errors["csv_duplicate_record_id"].append(
+            self.checks_errors["csv-duplicate-record-id"].append(
                 f"{records[0][0]}:{records[0][1]} "
                 f'Duplicate CSV record id "{csvid}" in '
                 f'{", ".join(f"{record[0]}:{record[1]}" for record in records[1:])}'

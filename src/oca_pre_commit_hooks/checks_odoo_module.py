@@ -87,28 +87,28 @@ class ChecksOdooModule:
             )
         return ext_referenced_files
 
-    @utils.only_required_for_checks("manifest_syntax_error")
+    @utils.only_required_for_checks("manifest-syntax-error")
     def check_manifest(self):
-        """* Check manifest_syntax_error
+        """* Check manifest-syntax-error
         Check if the manifest file has syntax error
         """
         if not self.manifest_dict:
             manifest_path_short = os.path.relpath(self.manifest_path, self.manifest_top_path)
-            self.checks_errors["manifest_syntax_error"].append(
+            self.checks_errors["manifest-syntax-error"].append(
                 f"{manifest_path_short} could not be loaded {self.error}"
             )
 
     @utils.only_required_for_installable()
-    @utils.only_required_for_checks("missing_readme")
+    @utils.only_required_for_checks("missing-readme")
     def check_missing_readme(self):
-        """* Check missing_readme
+        """* Check missing-readme
         Check if a README file is missing"""
         for readme_name in DFTL_README_FILES:
             readme_path = os.path.join(self.odoo_addon_path, readme_name)
             if os.path.isfile(readme_path):
                 return
         readme_path_short = os.path.relpath(readme_path, self.manifest_top_path)
-        self.checks_errors["missing_readme"].append(
+        self.checks_errors["missing-readme"].append(
             f"{readme_path_short} missed file. Template here: {DFTL_README_TMPL_URL}"
         )
 
