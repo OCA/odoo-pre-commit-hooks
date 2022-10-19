@@ -46,6 +46,7 @@ If you install directly the package use the entry point:
 
 
 [//]: # (start-checks)
+
 # Checks
 
 * Check manifest-syntax-error
@@ -140,10 +141,12 @@ If you install directly the package use the entry point:
 * Check xml-syntax-error
         Check syntax of XML files declared in the Odoo manifest
 
+
 [//]: # (end-checks)
 
 
 [//]: # (start-help)
+
 # Help
 ```bash
 usage: oca-checks-odoo-module [-h] [--no-verbose] [--no-exit]
@@ -166,10 +169,12 @@ optional arguments:
                         by default
 
 ```
+
 [//]: # (end-help)
 
 
 [//]: # (start-example)
+
 # Examples
 
 
@@ -273,7 +278,7 @@ optional arguments:
 
  * manifest-syntax-error
 
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.8/test_repo/manifest_werror/__manifest__.py#L1 could not be loaded Manifest /Users/moylop260/odoo/odoo-pre-commit-hooks/test_repo/manifest_werror/__manifest__.py with error malformed node or string: <_ast.Name object at 0x10ef69070>
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.8/test_repo/manifest_werror/__manifest__.py#L1 could not be loaded manifest malformed
 
  * csv-syntax-error
 
