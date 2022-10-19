@@ -189,8 +189,10 @@ class TestChecks(unittest.TestCase):
 
     @staticmethod
     def re_replace(sub_start, sub_end, substitution, content):
-        re_sub = re.compile(rf"${re.escape(sub_start)}^.*${re.escape(sub_end)}^", re.M | re.S)
-        new_content = re_sub.sub(f"{sub_start}\n{substitution}\n{sub_end}", content)
+        re_sub = re.compile(rf"^{re.escape(sub_start)}$.*^{re.escape(sub_end)}$", re.M | re.S)
+        if not re_sub.findall(content):
+            raise UserWarning("No matched content")
+        new_content = re_sub.sub(f"{sub_start}\n\n{substitution}\n\n{sub_end}", content)
         return new_content
 
     def test_build_docstring(self):
@@ -246,12 +248,15 @@ class TestChecks(unittest.TestCase):
                             check_example_content += (
                                 f"\n    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v{version}/{msg}"
                             )
-
                 check_example_content = f"# Examples\n{check_example_content}"
-                new_readme = self.re_replace("[//]: # (start-help)", "[//]: # (end-help)", help_content, new_readme)
+                new_readme = self.re_replace(
+                    "[//]: # (start-example)", "[//]: # (end-example)", check_example_content, new_readme
+                )
 
                 f_readme.seek(0)
                 f_readme.write(new_readme)
-            self.assertEqual(readme_content, new_readme)
+            self.assertEqual(
+                readme_content, new_readme, "The README was updated! Don't panic only failing for CI purposes."
+            )
 
         self.assertFalse(set(self.expected_errors) - checks_found, "Missing docstring of checks tested")

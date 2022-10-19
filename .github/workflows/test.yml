@@ -42,7 +42,8 @@ jobs:
             python: '3.10'
             toxpython: 'python3.10'
             python_arch: 'x64'
-            tox_env: 'py310-cover,codecov,update-readme,lint,build'
+            # FIXME: CI mutable content update-readme
+            tox_env: 'py310-cover,codecov,lint,build'
             os: 'ubuntu-latest'
 
           # windows
