@@ -6,7 +6,9 @@
   entry: oca-checks-odoo-module
   args: []
   language: python
-  types_or: ["csv", "markdown", "python", "rst", "xml"]
+  types_or: ["csv", "python", "xml"]
+  # TODO: Check if should consider uppercase extension
+  files: \.(csv|xml)$|/\_\_(manifest|openerp)\_\_.py$
   # require_serial to evaluate the whole module in-one-shot to have full context about other xmlids and so on
   require_serial: true
 - id: oca-checks-po
