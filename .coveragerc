@@ -2,12 +2,10 @@
 source = src
 
 [run]
-source =
-    src
-    tests
+source = src
 parallel = true
 dynamic_context = test_function
-
+context = ${{COVERAGE_CONTEXT}}
 
 [report]
 show_missing = true
