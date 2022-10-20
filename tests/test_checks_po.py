@@ -52,7 +52,7 @@ class TestChecksPO(common.ChecksCommon):
         )
 
         readme_path = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "README.md")
-        with open(readme_path, "r", encoding="UTF-8") as f_readme:
+        with open(readme_path, encoding="UTF-8") as f_readme:
             readme_content = f_readme.read()
 
         checks_docstring = f"# Checks PO\n{checks_docstring}"

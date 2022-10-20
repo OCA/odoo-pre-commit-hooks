@@ -44,7 +44,7 @@ class ChecksOdooModule:
         if not os.path.isfile(os.path.join(self.odoo_addon_path, "__init__.py")):
             self.print(f"The path {self.manifest_path} does not have __init__.py file")
             return {}
-        with open(self.manifest_path, "r", encoding="UTF-8") as f_manifest:
+        with open(self.manifest_path, encoding="UTF-8") as f_manifest:
             try:
                 return ast.literal_eval(f_manifest.read())
             # Using same way than odoo
@@ -139,7 +139,7 @@ class ChecksOdooModule:
     def print(self, object2print):
         if not self.verbose:
             return
-        print(object2print)  # pylint: disable=print-used
+        print(object2print)
 
 
 def lookup_manifest_paths(filenames_or_modules):

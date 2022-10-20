@@ -53,7 +53,7 @@ class ChecksOdooModulePO:
             "top_path": top_path,
         }
         try:
-            with open(po_filename, "rt", encoding="UTF-8") as filename_obj:
+            with open(po_filename, encoding="UTF-8") as filename_obj:
                 # Do not use polib.pofile(self.po_data["filename"])
                 # because raise the following error for PO files with syntax error:
                 # pytest.PytestUnraisableExceptionWarning: Exception ignored in: <_io.FileIO [closed]>
@@ -291,7 +291,6 @@ class ChecksOdooModulePO:
             )
 
     def run_checks(self, no_verbose):
-        # pylint: disable=print-used
         all_check_errors = []
         for check in utils.getattr_checks(self, enable=self.enable, disable=self.disable):
             check()

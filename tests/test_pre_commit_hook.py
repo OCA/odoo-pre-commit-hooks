@@ -30,7 +30,7 @@ class ChecksCommon(unittest.TestCase):
         top_path = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
         cls.pre_commit_hooks_yaml_path = os.path.join(top_path, ".pre-commit-hooks.yaml")
         cls.pre_commit_config_yaml_path = os.path.join(top_path, ".pre-commit-config-local.yaml")
-        with open(cls.pre_commit_hooks_yaml_path, "r", encoding="UTF-8") as f_src, open(
+        with open(cls.pre_commit_hooks_yaml_path, encoding="UTF-8") as f_src, open(
             cls.pre_commit_config_yaml_path, "w", encoding="UTF-8"
         ) as f_dest:
             new_content = f"""
