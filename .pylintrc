@@ -1,22 +1,15 @@
 
 
 [MASTER]
-load-plugins=pylint_odoo, pylint.extensions.docstyle, pylint.extensions.mccabe
+load-plugins=pylint.extensions.docstyle, pylint.extensions.mccabe
 score=n
-
-[ODOOLINT]
-readme_template_url="https://github.com/OCA/maintainer-tools/blob/master/template/module/README.rst"
-manifest_required_authors=Odoo Community Association (OCA)
-manifest_required_keys=license
-manifest_deprecated_keys=description,active
-license_allowed=AGPL-3,GPL-2,GPL-2 or any later version,GPL-3,GPL-3 or any later version,LGPL-3
-valid_odoo_versions=16.0
 
 [MESSAGES CONTROL]
 enable=all
 # Enable all then relax disable instead of disable all and enable one-by-one
 disable=c-extension-no-member,
     fixme,
+    import-error,
     inconsistent-return-statements,
     line-too-long,
     locally-disabled,
@@ -53,3 +46,11 @@ reports=no
 min-similarity-lines=14
 ignore-comments=yes
 ignore-docstrings=yes
+
+[DESIGN]
+# McCabe complexity cyclomatic threshold for too-complex check
+#  Value definied from https://en.wikipedia.org/wiki/Cyclomatic_complexity
+#   - The figure of 10 had received substantial corroborating evidence,
+#     but that in some circumstances it may be appropriate to relax the restriction
+#     and permit modules with a complexity as high as 15
+max-complexity=15
