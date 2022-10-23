@@ -55,9 +55,6 @@ If you install directly the package use the entry point:
 * Check manifest-syntax-error
         Check if the manifest file has syntax error
 
-* Check missing-readme
-        Check if a README file is missing
-
 * Check csv-duplicate-record-id
         duplicate CSV "id" AKA xmlid but for CSV files
 
@@ -229,11 +226,6 @@ options:
 
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.10/test_repo/manifest_werror/__manifest__.py#L1 could not be loaded manifest malformed
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.10/test_repo/woinit_module/__manifest__.py#L1 could not be loaded
-
- * missing-readme
-
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.10/test_repo/broken_module/README.rst#L1 missed file. Template here: https://github.com/OCA/maintainer-tools/blob/master/template/module/README.rst
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.10/test_repo/syntax_err_module/README.rst#L1 missed file. Template here: https://github.com/OCA/maintainer-tools/blob/master/template/module/README.rst
 
  * xml-create-user-wo-reset-password
 

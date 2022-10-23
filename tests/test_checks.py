@@ -19,7 +19,6 @@ EXPECTED_ERRORS = {
     "csv-duplicate-record-id": 1,
     "csv-syntax-error": 1,
     "manifest-syntax-error": 2,
-    "missing-readme": 2,
     "xml-create-user-wo-reset-password": 1,
     "xml-dangerous-filter-wo-user": 1,
     "xml-dangerous-qweb-replace-low-priority": 3,

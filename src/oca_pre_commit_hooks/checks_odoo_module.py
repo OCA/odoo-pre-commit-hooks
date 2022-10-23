@@ -99,20 +99,6 @@ class ChecksOdooModule:
             )
 
     @utils.only_required_for_installable()
-    @utils.only_required_for_checks("missing-readme")
-    def check_missing_readme(self):
-        """* Check missing-readme
-        Check if a README file is missing"""
-        for readme_name in DFTL_README_FILES:
-            readme_path = os.path.join(self.odoo_addon_path, readme_name)
-            if os.path.isfile(readme_path):
-                return
-        readme_path_short = os.path.relpath(readme_path, self.manifest_top_path)
-        self.checks_errors["missing-readme"].append(
-            f"{readme_path_short}:1 missed file. Template here: {DFTL_README_TMPL_URL}"
-        )
-
-    @utils.only_required_for_installable()
     def check_xml(self):
         manifest_datas = self.manifest_referenced_files[".xml"]
         if not manifest_datas:
