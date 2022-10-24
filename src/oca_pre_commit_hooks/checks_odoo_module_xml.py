@@ -90,6 +90,7 @@ class ChecksOdooModuleXML:
                             field.get("name"),
                             field.get("context"),
                             field.get("filter_domain"),
+                            field.get("groups"),
                             field.getparent(),
                         )
                         xml_fields[field_key].append((manifest_data, field))
