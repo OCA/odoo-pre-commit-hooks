@@ -37,7 +37,7 @@ class TestChecksPO(common.ChecksCommon):
         super().setUp()
         self.expected_errors = EXPECTED_ERRORS.copy()
         self.checks_run = oca_pre_commit_hooks.checks_odoo_module_po.run
-        self.checks_cli_main = oca_pre_commit_hooks.cli.main_po
+        self.checks_cli_main = oca_pre_commit_hooks.cli_po.main
 
     def test_non_exists_path(self):
         all_check_errors = self.checks_run(["/tmp/no_exists"], no_exit=True, no_verbose=False)
