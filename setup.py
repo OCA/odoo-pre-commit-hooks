@@ -85,7 +85,7 @@ setup(
         "Odoo Community Association",
         "pre-commit-hook",
     ],
-    python_requires=">=3.5",
+    python_requires=">=3.7",
     install_requires=generate_dependencies(),
     extras_require={},
     entry_points={
