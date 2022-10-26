@@ -21,7 +21,7 @@ You don't need to install it directly only configure your ".pre-commit-config.ya
 
 You even can install it directly:
  - Installing from pypi:
-   - `pip install -U odoo-pre-commit-hooks`
+   - `pip install -U oca-odoo-pre-commit-hooks`
 
  - Installing from github:
    - `pip install --force-reinstall -U git+https://github.com/OCA/odoo-pre-commit-hooks.git@main`
