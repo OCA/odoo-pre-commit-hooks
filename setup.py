@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import re
 from glob import glob
@@ -91,7 +91,7 @@ setup(
     entry_points={
         "console_scripts": [
             "oca-checks-odoo-module = oca_pre_commit_hooks.cli:main",
-            "oca-checks-po = oca_pre_commit_hooks.cli:main_po",
+            "oca-checks-po = oca_pre_commit_hooks.cli_po:main",
         ]
     },
 )
