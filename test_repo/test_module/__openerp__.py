@@ -13,6 +13,7 @@
         'model_view.xml',
         'model_view.xml',
         'website_templates.xml',
+        'website_templates_disable.xml',
     ],
     'external_dependencies': {
         'bin': [

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<openerp> <!-- pylint: disable=deprecated-openerp-xml-node -->
+<openerp> <!-- oca-hooks: disable=xml-deprecated-openerp-node -->
     <data>
     </data>
 </openerp>

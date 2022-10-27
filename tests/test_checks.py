@@ -15,6 +15,7 @@ ALL_CHECK_CLASS = [
     oca_pre_commit_hooks.checks_odoo_module_xml.ChecksOdooModuleXML,
 ]
 
+
 EXPECTED_ERRORS = {
     "csv-duplicate-record-id": 1,
     "csv-syntax-error": 1,
@@ -22,12 +23,12 @@ EXPECTED_ERRORS = {
     "xml-create-user-wo-reset-password": 1,
     "xml-dangerous-filter-wo-user": 1,
     "xml-dangerous-qweb-replace-low-priority": 3,
-    "xml-deprecated-data-node": 8,
-    "xml-deprecated-openerp-xml-node": 5,
+    "xml-deprecated-data-node": 7,
+    "xml-deprecated-openerp-node": 4,
     "xml-deprecated-qweb-directive": 2,
     "xml-deprecated-tree-attribute": 3,
     "xml-duplicate-fields": 9,
-    "xml-duplicate-record-id": 3,
+    "xml-duplicate-record-id": 2,
     "xml-not-valid-char-link": 2,
     "xml-redundant-module-name": 1,
     "xml-syntax-error": 2,

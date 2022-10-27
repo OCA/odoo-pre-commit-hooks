@@ -48,6 +48,33 @@ If you install directly the package use the entry point:
     oca-checks-po --help
 
 
+# Skip one xml-check for only one file
+
+If you need to skip one check in one particular XML file you can use the follow comment
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<!-- oca-hooks:disable=xml-check-to-skip -->
+<odoo>
+...
+</odoo>
+```
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<!-- oca-hooks:disable=xml-check-to-skip,
+                       xml-check-to-skip2 -->
+<odoo>
+...
+</odoo>
+```
+
+The position of the comment it is not relative to the line that throw the check
+
+It disable the entire file
+
+
+
 [//]: # (start-checks)
 
 # Checks
@@ -67,7 +94,7 @@ If you install directly the package use the entry point:
 * Check xml-deprecated-data-node
         Deprecated <data> node inside <odoo> xml node
 
-* Check xml-deprecated-openerp-xml-node
+* Check xml-deprecated-openerp-node
         deprecated <openerp> xml node
 
 * Check xml-deprecated-qweb-directive
@@ -248,15 +275,13 @@ options:
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.12/test_repo/broken_module/model_view2.xml#L2 Use `<odoo>` instead of `<odoo><data>` or use `<odoo noupdate="1">` instead of `<odoo><data noupdate="1">`
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.12/test_repo/broken_module/model_view_odoo.xml#L2 Use `<odoo>` instead of `<odoo><data>` or use `<odoo noupdate="1">` instead of `<odoo><data noupdate="1">`
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.12/test_repo/broken_module/model_view_odoo2.xml#L2 Use `<odoo>` instead of `<odoo><data>` or use `<odoo noupdate="1">` instead of `<odoo><data noupdate="1">`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.12/test_repo/broken_module/skip_xml_check.xml#L3 Use `<odoo>` instead of `<odoo><data>` or use `<odoo noupdate="1">` instead of `<odoo><data noupdate="1">`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.12/test_repo/broken_module/skip_xml_check_3.xml#L4 Use `<odoo>` instead of `<odoo><data>` or use `<odoo noupdate="1">` instead of `<odoo><data noupdate="1">`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.12/test_repo/broken_module/skip_xml_check.xml#L4 Use `<odoo>` instead of `<odoo><data>` or use `<odoo noupdate="1">` instead of `<odoo><data noupdate="1">`
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.12/test_repo/test_module/model_view.xml#L2 Use `<odoo>` instead of `<odoo><data>` or use `<odoo noupdate="1">` instead of `<odoo><data noupdate="1">`
 
- * xml-deprecated-openerp-xml-node
+ * xml-deprecated-openerp-node
 
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.12/test_repo/broken_module/model_view.xml#L2 Deprecated <openerp> xml node
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.12/test_repo/broken_module/model_view2.xml#L2 Deprecated <openerp> xml node
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.12/test_repo/broken_module/skip_xml_check_2.xml#L2 Deprecated <openerp> xml node
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.12/test_repo/test_module/model_view.xml#L2 Deprecated <openerp> xml node
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.12/test_repo/test_module/res_users.xml#L2 Deprecated <openerp> xml node
 
@@ -286,7 +311,6 @@ options:
  * xml-duplicate-record-id
 
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.12/test_repo/broken_module/model_view.xml#L5 Duplicate xml record id "data/view_model_form_noupdate_0" in test_repo/broken_module/model_view_odoo.xml:5, test_repo/broken_module/model_view_odoo2.xml:5
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.12/test_repo/broken_module/model_view2.xml#L103 Duplicate xml record id "data/view_model_form80_noupdate_0" in test_repo/broken_module/skip_xml_check.xml:5, test_repo/broken_module/skip_xml_check.xml:9, test_repo/broken_module/skip_xml_check_3.xml:6, test_repo/broken_module/skip_xml_check_3.xml:10
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.12/test_repo/broken_module/model_view2.xml#L5 Duplicate xml record id "data/view_model_form2_noupdate_0" in test_repo/broken_module/model_view_odoo2.xml:17
 
  * xml-not-valid-char-link

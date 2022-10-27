@@ -1,9 +1,20 @@
 import os
+import re
 import subprocess
 import sys
 from contextlib import contextmanager
 from functools import lru_cache
 from pathlib import Path
+
+CHECKS_DISABLED_REGEX = re.compile(re.escape("oca-hooks:disable=") + r"([a-z\-,]+)")
+
+
+def checks_disabled(comment):
+    comment_strip = comment.replace("\n", "").replace(" ", "").replace("#", "")
+    check_disable_match = CHECKS_DISABLED_REGEX.search(comment_strip)
+    if not check_disable_match:
+        return []
+    return check_disable_match.groups()[0].split(",")
 
 
 def only_required_for_checks(*checks):
@@ -36,17 +47,37 @@ def only_required_for_installable():
     return store_installable
 
 
-def getattr_checks(obj_or_class, enable=None, disable=None, prefix="check_"):
+def is_message_enabled(msg_code, enable, disable, disable_node=None):
+    if disable_node and msg_code in disable_node:
+        # If the check is disabled in the node so return early
+        # because of it could be enabled for other files except this one
+        return False
+    if disable:
+        return msg_code not in disable
+    if enable:
+        return msg_code in enable
+    return True
+
+
+def getattr_checks(obj_or_class, enable=None, disable=None, prefix="check_", disable_node=None):
     """Get all the attributes callables (methods)
     that start with word 'def check_*'
     Skip the methods with attribute "checks" defined if
     the check is not enable or if it is disabled"""
+    if enable is None:
+        enable = set()
+    if disable is None:
+        disable = set()
+    if disable_node is None:
+        disable_node = set()
     for attr in dir(obj_or_class):
         if not callable(getattr(obj_or_class, attr)) or not attr.startswith(prefix):
             continue
         meth = getattr(obj_or_class, attr)
         meth_checks = getattr(meth, "checks", set())
-        if meth_checks and (disable and not meth.checks - disable or enable and not meth.checks & enable):
+        if meth_checks and not any(
+            is_message_enabled(meth_check, enable, disable, disable_node) for meth_check in meth_checks
+        ):
             continue
         meth_installable = getattr(meth, "installable", None)
         is_module_installable = getattr(obj_or_class, "is_module_installable", None)

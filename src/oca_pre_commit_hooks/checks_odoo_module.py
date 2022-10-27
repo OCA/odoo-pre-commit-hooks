@@ -151,6 +151,10 @@ def run(files_or_modules, enable=None, disable=None, no_verbose=False, no_exit=F
     # TODO: Add unnitest to check files filtered from pre-commit by hook
     # Uncommet to check what files sent pre-commit
     # open("/tmp/borrar.txt", "w").write(f"{len(files_or_modules)}\n{files_or_modules}")
+    if enable is None:
+        enable = set()
+    if disable is None:
+        disable = set()
     for manifest_path, changed in lookup_manifest_paths(files_or_modules).items():
         if not manifest_path:
             continue
