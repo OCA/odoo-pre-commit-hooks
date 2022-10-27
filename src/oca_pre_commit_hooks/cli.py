@@ -11,52 +11,14 @@ Why does this file exist, and why not put this in __main__?
   Also see (1) from http://click.pocoo.org/5/setuptools/#setuptools-integration
 """
 
-import argparse
 import sys
 
 from oca_pre_commit_hooks import checks_odoo_module
-
-
-def parse_disable(value):
-    return set(value.split(","))
-
-
-def global_parser():
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--no-verbose",
-        action="store_true",
-        default=False,
-        help="If enabled so disable verbose mode.",
-    )
-    parser.add_argument(
-        "--no-exit",
-        action="store_true",
-        default=False,
-        help="If enabled so it will not call exit.",
-    )
-    parser.add_argument(
-        "--disable",
-        "-d",
-        type=parse_disable,
-        default=set(),
-        help="Disable the checker with the given 'check-name', separated by commas.",
-    )
-    parser.add_argument(
-        "--enable",
-        "-e",
-        type=parse_disable,
-        default=set(),
-        help=(
-            "Enable the checker with the given 'check-name', separated by commas. "
-            "Default: All checks are enabled by default"
-        ),
-    )
-    return parser
+from oca_pre_commit_hooks.global_parser import GlobalParser
 
 
 def main(argv=None):
-    parser = global_parser()
+    parser = GlobalParser()
     parser.add_argument(
         "files_or_modules",
         nargs="*",

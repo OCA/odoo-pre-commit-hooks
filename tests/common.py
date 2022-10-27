@@ -1,8 +1,10 @@
+import os
 import re
 import sys
 import unittest
 from collections import defaultdict
 from itertools import chain
+from tempfile import NamedTemporaryFile
 
 import oca_pre_commit_hooks
 
@@ -91,6 +93,25 @@ class ChecksCommon(unittest.TestCase):
             real_errors = self.get_count_code_errors(all_check_errors)
             assertDictEqual(self, real_errors, expected_errors)
 
+    def test_checks_disable_one_by_one_with_cli_conf_file(self):
+        file_tmpl = "[MESSAGES_CONTROL]\ndisable=%s"
+        with NamedTemporaryFile(mode="w") as temp_fl:
+            for check2disable in self.expected_errors:
+                content = file_tmpl % check2disable
+
+                temp_fl.seek(0)
+                temp_fl.write(content)
+                temp_fl.truncate(len(content))
+                temp_fl.flush()
+                os.fsync(temp_fl.fileno())
+
+                expected_errors = self.expected_errors.copy()
+                sys.argv = ["", "--no-exit", "--no-verbose", f"--config={temp_fl.name}"] + self.file_paths
+                all_check_errors = self.checks_cli_main()
+                expected_errors.pop(check2disable)
+                real_errors = self.get_count_code_errors(all_check_errors)
+                self.assertTrue(real_errors == expected_errors)
+
     def test_checks_enable_one_by_one(self):
         for check2enable in self.expected_errors:
             all_check_errors = self.checks_run(self.file_paths, no_exit=True, no_verbose=True, enable={check2enable})
@@ -103,6 +124,23 @@ class ChecksCommon(unittest.TestCase):
             all_check_errors = self.checks_cli_main()
             real_errors = self.get_count_code_errors(all_check_errors)
             assertDictEqual(self, real_errors, {check2enable: self.expected_errors[check2enable]})
+
+    def test_checks_enable_one_by_one_with_cli_conf_file(self):
+        file_tmpl = "[MESSAGES_CONTROL]\nenable=%s"
+        with NamedTemporaryFile(mode="w") as temp_fl:
+            for check2enable in self.expected_errors:
+                content = file_tmpl % check2enable
+
+                temp_fl.seek(0)
+                temp_fl.write(content)
+                temp_fl.truncate(len(content))
+                temp_fl.flush()
+                os.fsync(temp_fl.fileno())
+
+                sys.argv = ["", "--no-exit", "--no-verbose", f"--config={temp_fl.name}"] + self.file_paths
+                all_check_errors = self.checks_cli_main()
+                real_errors = self.get_count_code_errors(all_check_errors)
+                assertDictEqual(self, real_errors, {check2enable: self.expected_errors[check2enable]})
 
     def test_checks_disable_one_by_one(self):
         for check2disable in self.expected_errors:

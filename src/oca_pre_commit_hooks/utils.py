@@ -108,8 +108,7 @@ def chdir(directory):
 @lru_cache(maxsize=256)
 def top_path(path):
     """Get the top level path based on git
-    But if it is not a git repository so the top is the drive name
-    e.g. / or C:\\
+    If no git repository is found (and therefore no top level path), the user's HOME is returned.
 
     It is using lru_cache in order to re-use top level path values
     if multiple files are sharing the same path
@@ -119,7 +118,7 @@ def top_path(path):
             return subprocess.check_output(["git", "rev-parse", "--show-toplevel"]).decode(sys.stdout.encoding).strip()
     except (FileNotFoundError, subprocess.CalledProcessError):
         path = Path(path)
-        return path.root or path.drive
+        return path.root or Path.home()
 
 
 def full_norm_path(path):
