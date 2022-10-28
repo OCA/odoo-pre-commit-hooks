@@ -17,6 +17,7 @@
         'skip_xml_check_3.xml',
         'report.xml',
         'template1.xml',
+        'template1_disable.xml',
         'ir.model.access.csv',
     ],
     'demo': ['demo/duplicated_id_demo.xml', 'file_no_exist.xml'],

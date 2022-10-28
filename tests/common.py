@@ -73,7 +73,7 @@ class ChecksCommon(unittest.TestCase):
         all_check_errors = self.checks_run(self.file_paths, no_exit=True, no_verbose=False)
         real_errors = self.get_count_code_errors(all_check_errors)
         # Uncommet to get sorted values to update EXPECTED_ERRORS dict
-        # print('\n'.join(f"'{key}':{count_code_errors[key]}," for key in sorted(count_code_errors)))
+        # print("\n".join(f"'{key}':{real_errors[key]}," for key in sorted(real_errors)))
         assertDictEqual(self, real_errors, self.expected_errors)
 
     def test_checks_with_cli(self):

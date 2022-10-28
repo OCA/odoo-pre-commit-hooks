@@ -10,7 +10,6 @@ class ChecksOdooModuleCSV:
         self.manifest_datas = manifest_datas
         self.module_name = module_name
         self.enable = enable
-        self.enable = disable
         self.disable = disable
         for manifest_data in manifest_datas:
             manifest_data.update(

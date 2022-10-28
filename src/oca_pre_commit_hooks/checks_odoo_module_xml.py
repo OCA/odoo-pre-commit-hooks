@@ -17,13 +17,15 @@ class ChecksOdooModuleXML:
         self.disable = disable
         self.manifest_datas = manifest_datas
         self.checks_errors = defaultdict(list)
-        for manifest_data in manifest_datas:
+        for manifest_data in self.manifest_datas:
             try:
                 with open(manifest_data["filename"], "rb") as f_xml:
+                    node = etree.parse(f_xml)
                     manifest_data.update(
                         {
-                            "node": etree.parse(f_xml),
+                            "node": node,
                             "file_error": None,
+                            "disabled_checks": self._get_disabled_checks(node),
                         }
                     )
             except (FileNotFoundError, etree.XMLSyntaxError, UnicodeDecodeError) as xml_err:
@@ -31,8 +33,27 @@ class ChecksOdooModuleXML:
                     {
                         "node": etree.Element("__empty__"),
                         "file_error": str(xml_err).replace(manifest_data["filename"], ""),
+                        "disabled_checks": set(),
                     }
                 )
+
+    def _get_disabled_checks(self, node):
+        """Get the check-name disable comments from etree XML node
+
+        e.g. <!-- oca-hooks:disable=check-name -->
+        """
+        all_checks_disabled = set()
+        for comment_node in node.xpath("//comment()"):
+            all_checks_disabled |= set(utils.checks_disabled(comment_node.text))
+        return all_checks_disabled
+
+    def getattr_checks(self, manifest_data, prefix):
+        disable_node = manifest_data["disabled_checks"]
+        yield from utils.getattr_checks(self, self.enable, self.disable, prefix, disable_node)
+
+    def is_message_enabled(self, checks, manifest_data):
+        disable_node = manifest_data["disabled_checks"]
+        return utils.is_message_enabled(checks, self.enable, self.disable, disable_node)
 
     @staticmethod
     def _get_priority(view):
@@ -53,6 +74,7 @@ class ChecksOdooModuleXML:
         replaces = arch.xpath(".//field[@name='name' and @position='replace'][1] | .//*[@position='replace'][1]")
         return bool(replaces)
 
+    # Not set only_required_for_checks because of the calls to visit_xml_record... methods
     def check_xml_records(self):
         """* Check xml-duplicate-record-id
 
@@ -72,33 +94,37 @@ class ChecksOdooModuleXML:
         for manifest_data in self.manifest_datas:
             for record in manifest_data["node"].xpath("/odoo//record[@id] | /openerp//record[@id]"):
                 record_id = record.get("id")
-                # xmlids_duplicated
-                xmlid_key = (
-                    f"{manifest_data['data_section']}/{record_id}"
-                    f"_noupdate_{record.getparent().get('noupdate', '0')}"
-                )
-                xmlids_section[xmlid_key].append((manifest_data, record))
+
+                if self.is_message_enabled("xml-duplicate-record-id", manifest_data):
+                    # xmlids_duplicated
+                    xmlid_key = (
+                        f"{manifest_data['data_section']}/{record_id}"
+                        f"_noupdate_{record.getparent().get('noupdate', '0')}"
+                    )
+                    xmlids_section[xmlid_key].append((manifest_data, record))
 
                 # fields_duplicated
-                if not record.xpath('field[@name="inherit_id"]'):
-                    for field in record.xpath(
-                        "field[@name] | field/*/field[@name] | "
-                        "field/*/field/tree/field[@name] | "
-                        "field/*/field/form/field[@name]"
-                    ):
-                        field_key = (
-                            field.get("name"),
-                            field.get("context"),
-                            field.get("filter_domain"),
-                            field.get("groups"),
-                            field.getparent(),
-                        )
-                        xml_fields[field_key].append((manifest_data, field))
+                if self.is_message_enabled("xml-duplicate-fields", manifest_data):
+                    if not record.xpath('field[@name="inherit_id"]'):
+                        for field in record.xpath(
+                            "field[@name] | field/*/field[@name] | "
+                            "field/*/field/tree/field[@name] | "
+                            "field/*/field/form/field[@name]"
+                        ):
+                            field_key = (
+                                field.get("name"),
+                                field.get("context"),
+                                field.get("filter_domain"),
+                                field.get("groups"),
+                                field.getparent(),
+                            )
+                            xml_fields[field_key].append((manifest_data, field))
 
-                for meth in utils.getattr_checks(self, self.enable, self.disable, "visit_xml_record"):
+                # call "visit_xml_record_*" methods to re-use the same node xpath loop
+                for meth in self.getattr_checks(manifest_data, "visit_xml_record"):
                     meth(manifest_data, record)
 
-        # xmlids_duplicated
+        # xmlids_duplicated (empty dict if check is not enabled)
         for xmlid_key, records in xmlids_section.items():
             if len(records) < 2:
                 continue
@@ -108,7 +134,7 @@ class ChecksOdooModuleXML:
                 f'Duplicate xml record id "{xmlid_key}" in {lines_str}'
             )
 
-        # fields_duplicated
+        # fields_duplicated (empty dict if check is not enabled)
         for field_key, fields in xml_fields.items():
             if len(fields) < 2:
                 continue
@@ -223,6 +249,8 @@ class ChecksOdooModuleXML:
         """* Check xml-not-valid-char-link
         The resource in in src/href contains a not valid character."""
         for manifest_data in self.manifest_datas:
+            if not self.is_message_enabled("xml-not-valid-char-link", manifest_data):
+                continue
             for name, attr in (("link", "href"), ("script", "src")):
                 nodes = manifest_data["node"].xpath(f".//{name}[@{attr}]")
                 for node in nodes:
@@ -239,6 +267,8 @@ class ChecksOdooModuleXML:
         """* Check xml-dangerous-qweb-replace-low-priority
         Dangerous qweb view defined with low priority"""
         for manifest_data in self.manifest_datas:
+            if not self.is_message_enabled("xml-dangerous-qweb-replace-low-priority", manifest_data):
+                continue
             for template in manifest_data["node"].xpath("/odoo//template|/openerp//template"):
                 try:
                     priority = int(template.get("priority"))
@@ -258,14 +288,14 @@ class ChecksOdooModuleXML:
         """* Check xml-deprecated-data-node
         Deprecated <data> node inside <odoo> xml node"""
         for manifest_data in self.manifest_datas:
+            if not self.is_message_enabled("xml-deprecated-data-node", manifest_data):
+                continue
             for odoo_node in manifest_data["node"].xpath("/odoo|/openerp"):
                 children_count = 0
                 for children_count, _ in enumerate(odoo_node.iterchildren(), start=1):
                     if children_count == 2:
                         # Only needs to know if there are more than one child
                         break
-                # if "broken_module/model_view_odoo2.xml" in manifest_data["filename"]:
-                #     import pdb;pdb.set_trace()
                 if children_count == 1 and len(odoo_node.xpath("./data")) == 1:
                     # TODO: Add autofix option
                     self.checks_errors["xml-deprecated-data-node"].append(
@@ -274,14 +304,16 @@ class ChecksOdooModuleXML:
                         'instead of `<odoo><data noupdate="1">`'
                     )
 
-    @utils.only_required_for_checks("xml-deprecated-openerp-xml-node")
+    @utils.only_required_for_checks("xml-deprecated-openerp-node")
     def check_xml_deprecated_openerp_node(self):
-        """* Check xml-deprecated-openerp-xml-node
+        """* Check xml-deprecated-openerp-node
         deprecated <openerp> xml node"""
         for manifest_data in self.manifest_datas:
+            if not self.is_message_enabled("xml-deprecated-openerp-node", manifest_data):
+                continue
             for openerp_node in manifest_data["node"].xpath("/openerp"):
                 # TODO: Add autofix option
-                self.checks_errors["xml-deprecated-openerp-xml-node"].append(
+                self.checks_errors["xml-deprecated-openerp-node"].append(
                     f'{manifest_data["filename_short"]}:{openerp_node.sourceline} ' "Deprecated <openerp> xml node"
                 )
 
@@ -298,6 +330,8 @@ class ChecksOdooModuleXML:
         xpath = f"/odoo//template//*[{deprecated_attrs}] | " f"/openerp//template//*[{deprecated_attrs}]"
 
         for manifest_data in self.manifest_datas:
+            if not self.is_message_enabled("xml-deprecated-qweb-directive", manifest_data):
+                continue
             for node in manifest_data["node"].xpath(xpath):
                 directive_str = ", ".join(set(node.attrib) & deprecated_directives)
                 self.checks_errors["xml-deprecated-qweb-directive"].append(

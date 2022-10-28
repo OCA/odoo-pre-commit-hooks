@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- pylint:disable=deprecated-data-xml-node, duplicate-xml-record-id -->
+<!-- oca-hooks:disable=xml-deprecated-openerp-node, 
+               xml-duplicate-record-id -->
 <odoo>
     <data>
         <record id="view_model_form80" model="ir.ui.view">
