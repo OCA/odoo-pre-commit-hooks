@@ -270,13 +270,13 @@ options:
 
  * xml-deprecated-data-node
 
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.12/test_repo/broken_module/demo/duplicated_id_demo.xml#L2 Use `<odoo>` instead of `<odoo><data>` or use `<odoo noupdate="1">` instead of `<odoo><data noupdate="1">`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.12/test_repo/broken_module/model_view.xml#L2 Use `<odoo>` instead of `<odoo><data>` or use `<odoo noupdate="1">` instead of `<odoo><data noupdate="1">`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.12/test_repo/broken_module/model_view2.xml#L2 Use `<odoo>` instead of `<odoo><data>` or use `<odoo noupdate="1">` instead of `<odoo><data noupdate="1">`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.12/test_repo/broken_module/model_view_odoo.xml#L2 Use `<odoo>` instead of `<odoo><data>` or use `<odoo noupdate="1">` instead of `<odoo><data noupdate="1">`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.12/test_repo/broken_module/model_view_odoo2.xml#L2 Use `<odoo>` instead of `<odoo><data>` or use `<odoo noupdate="1">` instead of `<odoo><data noupdate="1">`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.12/test_repo/broken_module/skip_xml_check.xml#L4 Use `<odoo>` instead of `<odoo><data>` or use `<odoo noupdate="1">` instead of `<odoo><data noupdate="1">`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.12/test_repo/test_module/model_view.xml#L2 Use `<odoo>` instead of `<odoo><data>` or use `<odoo noupdate="1">` instead of `<odoo><data noupdate="1">`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.12/test_repo/broken_module/demo/duplicated_id_demo.xml#L3 Use `<odoo>` instead of `<odoo><data>` or use `<odoo noupdate="1">` instead of `<odoo><data noupdate="1">`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.12/test_repo/broken_module/model_view.xml#L3 Use `<odoo>` instead of `<odoo><data>` or use `<odoo noupdate="1">` instead of `<odoo><data noupdate="1">`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.12/test_repo/broken_module/model_view2.xml#L3 Use `<odoo>` instead of `<odoo><data>` or use `<odoo noupdate="1">` instead of `<odoo><data noupdate="1">`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.12/test_repo/broken_module/model_view_odoo.xml#L3 Use `<odoo>` instead of `<odoo><data>` or use `<odoo noupdate="1">` instead of `<odoo><data noupdate="1">`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.12/test_repo/broken_module/model_view_odoo2.xml#L3 Use `<odoo>` instead of `<odoo><data>` or use `<odoo noupdate="1">` instead of `<odoo><data noupdate="1">`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.12/test_repo/broken_module/skip_xml_check.xml#L5 Use `<odoo>` instead of `<odoo><data>` or use `<odoo noupdate="1">` instead of `<odoo><data noupdate="1">`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.12/test_repo/test_module/model_view.xml#L3 Use `<odoo>` instead of `<odoo><data>` or use `<odoo noupdate="1">` instead of `<odoo><data noupdate="1">`
 
  * xml-deprecated-openerp-node
 

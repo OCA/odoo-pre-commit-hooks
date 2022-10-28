@@ -296,10 +296,11 @@ class ChecksOdooModuleXML:
                     if children_count == 2:
                         # Only needs to know if there are more than one child
                         break
-                if children_count == 1 and len(odoo_node.xpath("./data")) == 1:
+                data_nodes = odoo_node.xpath("./data")
+                if children_count == 1 and len(data_nodes) == 1:
                     # TODO: Add autofix option
                     self.checks_errors["xml-deprecated-data-node"].append(
-                        f'{manifest_data["filename_short"]}:{odoo_node.sourceline} '
+                        f'{manifest_data["filename_short"]}:{data_nodes[0].sourceline} '
                         'Use `<odoo>` instead of `<odoo><data>` or use `<odoo noupdate="1">` '
                         'instead of `<odoo><data noupdate="1">`'
                     )
