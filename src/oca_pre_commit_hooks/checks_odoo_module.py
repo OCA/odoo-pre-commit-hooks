@@ -14,13 +14,6 @@ MANIFEST_NAMES = ("__openerp__.py", "__manifest__.py")
 
 
 class ChecksOdooModule:
-    # TODO: Support check by version
-    # TODO: skip_files_ext skip check based on comment XML
-    # TODO: Support configuration file to set custom value for DFTL_ global variables
-    # TODO: Add autofix option and autofix the files
-    # TODO: ir.model.access.csv:5 Duplicate csv record ... in ir.model.access.csv:6
-    #       Use ir.model.access.csv:5 Duplicate csv record ... in line 6
-    # TODO: Use current directory for filename_short if it is not related with the repo
     def __init__(self, manifest_path, enable, disable, changed=None, verbose=True):
         if not os.path.isfile(manifest_path) or os.path.basename(manifest_path) not in MANIFEST_NAMES:
             raise UserWarning(  # pragma: no cover

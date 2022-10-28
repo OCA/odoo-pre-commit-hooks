@@ -52,7 +52,6 @@ def global_parser():
             "Default: All checks are enabled by default"
         ),
     )
-    # TODO: Add argument to show current checks
     return parser
 
 
