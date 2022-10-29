@@ -9,8 +9,8 @@ CONFIG_NAME = ".oca_hooks.cfg"
 MSG_CTRL = "MESSAGES_CONTROL"
 
 
-def parse_disable(value):
-    return set(value.split(","))
+def parse_csv(comma_sep_str):
+    return set(map(str.strip, comma_sep_str.split(",")))
 
 
 class GlobalParser(argparse.ArgumentParser):
@@ -31,14 +31,14 @@ class GlobalParser(argparse.ArgumentParser):
         self.add_argument(
             "--disable",
             "-d",
-            type=parse_disable,
+            type=parse_csv,
             default=set(),
             help="Disable the checker with the given 'check-name', separated by commas.",
         )
         self.add_argument(
             "--enable",
             "-e",
-            type=parse_disable,
+            type=parse_csv,
             default=set(),
             help=(
                 "Enable the checker with the given 'check-name', separated by commas. "
@@ -49,10 +49,6 @@ class GlobalParser(argparse.ArgumentParser):
 
     def parse_args(self, args=None, namespace=None):
         res = super().parse_args(args)
-
-        # --enable, --disable takes precedence over config file so no point parsing it.
-        if res.enable and res.disable:
-            return res
 
         if not res.config:
             if isfile(join(getcwd(), CONFIG_NAME)):
@@ -68,10 +64,11 @@ class GlobalParser(argparse.ArgumentParser):
 
             if conf.has_section(MSG_CTRL):
                 message_conf = conf[MSG_CTRL]
-                if not res.enable and message_conf.get("enable", None):
-                    res.enable = parse_disable(message_conf.get("enable"))
-                if not res.disable and message_conf.get("disable", None):
-                    res.disable = parse_disable(message_conf.get("disable"))
+                # --arguments takes precedence over config file
+                if not res.enable and message_conf.get("enable"):
+                    res.enable = parse_csv(message_conf.get("enable"))
+                if not res.disable and message_conf.get("disable"):
+                    res.disable = parse_csv(message_conf.get("disable"))
 
             res.config.close()
 
