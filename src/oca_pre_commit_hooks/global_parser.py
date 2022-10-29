@@ -54,7 +54,8 @@ class GlobalParser(argparse.ArgumentParser):
             if isfile(join(getcwd(), CONFIG_NAME)):
                 res.config = open(join(getcwd(), CONFIG_NAME), encoding="UTF-8")  # pylint:disable=consider-using-with
             elif isfile(join(top_path(getcwd()), CONFIG_NAME)):
-                res.config = open(  # pylint:disable=consider-using-with
+                # TODO: Add unittest creating a new git repo
+                res.config = open(  # pragma: no cover # pylint:disable=consider-using-with
                     join(top_path(getcwd()), CONFIG_NAME), encoding="UTF-8"
                 )
 
