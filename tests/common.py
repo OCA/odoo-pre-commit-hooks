@@ -1,10 +1,10 @@
 import os
 import re
 import sys
+import tempfile
 import unittest
 from collections import defaultdict
 from itertools import chain
-import tempfile
 
 import oca_pre_commit_hooks
 
@@ -98,7 +98,7 @@ class ChecksCommon(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp_dir:
             tmp_fname = os.path.join(tmp_dir, "oca.cfg")
             for check2disable in self.expected_errors:
-                with open(tmp_fname, "w") as temp_fl:
+                with open(tmp_fname, "w", encoding="UTF-8") as temp_fl:
                     content = file_tmpl % check2disable
                     temp_fl.write(content)
 
@@ -127,7 +127,7 @@ class ChecksCommon(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp_dir:
             tmp_fname = os.path.join(tmp_dir, "oca.cfg")
             for check2enable in self.expected_errors:
-                with open(tmp_fname, "w") as temp_fl:
+                with open(tmp_fname, "w", encoding="UTF-8") as temp_fl:
                     content = file_tmpl % check2enable
                     temp_fl.write(content)
 
