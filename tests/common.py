@@ -4,7 +4,7 @@ import sys
 import unittest
 from collections import defaultdict
 from itertools import chain
-from tempfile import NamedTemporaryFile
+import tempfile
 
 import oca_pre_commit_hooks
 
@@ -95,15 +95,12 @@ class ChecksCommon(unittest.TestCase):
 
     def test_checks_disable_one_by_one_with_cli_conf_file(self):
         file_tmpl = "[MESSAGES_CONTROL]\ndisable=%s"
-        with NamedTemporaryFile(mode="rw") as temp_fl:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_fname = os.path.join(tmp_dir, "oca.cfg")
             for check2disable in self.expected_errors:
-                content = file_tmpl % check2disable
-
-                temp_fl.seek(0)
-                temp_fl.write(content)
-                temp_fl.truncate(len(content))
-                temp_fl.flush()
-                os.fsync(temp_fl.fileno())
+                with open(tmp_fname, "w") as temp_fl:
+                    content = file_tmpl % check2disable
+                    temp_fl.write(content)
 
                 expected_errors = self.expected_errors.copy()
                 sys.argv = ["", "--no-exit", "--no-verbose", f"--config={temp_fl.name}"] + self.file_paths
@@ -127,15 +124,12 @@ class ChecksCommon(unittest.TestCase):
 
     def test_checks_enable_one_by_one_with_cli_conf_file(self):
         file_tmpl = "[MESSAGES_CONTROL]\nenable=%s"
-        with NamedTemporaryFile(mode="rw") as temp_fl:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_fname = os.path.join(tmp_dir, "oca.cfg")
             for check2enable in self.expected_errors:
-                content = file_tmpl % check2enable
-
-                temp_fl.seek(0)
-                temp_fl.write(content)
-                temp_fl.truncate(len(content))
-                temp_fl.flush()
-                os.fsync(temp_fl.fileno())
+                with open(tmp_fname, "w") as temp_fl:
+                    content = file_tmpl % check2enable
+                    temp_fl.write(content)
 
                 sys.argv = ["", "--no-exit", "--no-verbose", f"--config={temp_fl.name}"] + self.file_paths
                 all_check_errors = self.checks_cli_main()
