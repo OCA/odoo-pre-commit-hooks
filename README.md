@@ -186,6 +186,7 @@ It disable the entire file
 ```bash
 usage: oca-checks-odoo-module [-h] [--no-verbose] [--no-exit]
                               [--disable DISABLE] [--enable ENABLE]
+                              [--config CONFIG]
                               [files_or_modules ...]
 
 positional arguments:
@@ -202,6 +203,8 @@ options:
                         Enable the checker with the given 'check-name',
                         separated by commas. Default: All checks are enabled
                         by default
+  --config CONFIG, -c CONFIG
+                        Path to a configuration file
 
 ```
 
@@ -213,7 +216,7 @@ options:
 # Help PO
 ```bash
 usage: oca-checks-po [-h] [--no-verbose] [--no-exit] [--disable DISABLE]
-                     [--enable ENABLE]
+                     [--enable ENABLE] [--config CONFIG]
                      [po_files ...]
 
 positional arguments:
@@ -230,6 +233,8 @@ options:
                         Enable the checker with the given 'check-name',
                         separated by commas. Default: All checks are enabled
                         by default
+  --config CONFIG, -c CONFIG
+                        Path to a configuration file
 
 ```
 

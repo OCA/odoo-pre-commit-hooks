@@ -1,11 +1,15 @@
+import os
 import re
 import sys
+import tempfile
 import unittest
 from collections import defaultdict
+from contextlib import contextmanager
 from itertools import chain
 
 import oca_pre_commit_hooks
 
+CONFIG_NAME = oca_pre_commit_hooks.global_parser.CONFIG_NAME
 RE_CHECK_DOCSTRING = r"\* Check (?P<check>[\w|\-]+)"
 
 
@@ -37,6 +41,16 @@ def get_checks_docstring(check_classes):
             checks_found |= set(re.findall(RE_CHECK_DOCSTRING, checks_docstring))
             checks_docstring = re.sub(r"( )+\*", "*", checks_docstring)
     return checks_found, checks_docstring
+
+
+@contextmanager
+def chdir(directory):
+    original_dir = os.getcwd()
+    try:
+        os.chdir(directory)
+        yield
+    finally:
+        os.chdir(original_dir)
 
 
 class ChecksCommon(unittest.TestCase):
@@ -91,6 +105,22 @@ class ChecksCommon(unittest.TestCase):
             real_errors = self.get_count_code_errors(all_check_errors)
             assertDictEqual(self, real_errors, expected_errors)
 
+    def test_checks_disable_one_by_one_with_cli_conf_file(self):
+        file_tmpl = "[MESSAGES_CONTROL]\ndisable=%s"
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_fname = os.path.join(tmp_dir, CONFIG_NAME)
+            for check2disable in self.expected_errors:
+                with open(tmp_fname, "w", encoding="UTF-8") as temp_fl:
+                    content = file_tmpl % check2disable
+                    temp_fl.write(content)
+
+                expected_errors = self.expected_errors.copy()
+                sys.argv = ["", "--no-exit", "--no-verbose", f"--config={temp_fl.name}"] + self.file_paths
+                all_check_errors = self.checks_cli_main()
+                expected_errors.pop(check2disable)
+                real_errors = self.get_count_code_errors(all_check_errors)
+                self.assertTrue(real_errors == expected_errors)
+
     def test_checks_enable_one_by_one(self):
         for check2enable in self.expected_errors:
             all_check_errors = self.checks_run(self.file_paths, no_exit=True, no_verbose=True, enable={check2enable})
@@ -103,6 +133,21 @@ class ChecksCommon(unittest.TestCase):
             all_check_errors = self.checks_cli_main()
             real_errors = self.get_count_code_errors(all_check_errors)
             assertDictEqual(self, real_errors, {check2enable: self.expected_errors[check2enable]})
+
+    def test_checks_enable_one_by_one_with_cli_conf_file(self):
+        file_tmpl = "[MESSAGES_CONTROL]\nenable=%s"
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            with chdir(tmp_dir):  # Should use the configuration file of the current path
+                tmp_fname = os.path.join(tmp_dir, CONFIG_NAME)
+                for check2enable in self.expected_errors:
+                    with open(tmp_fname, "w", encoding="UTF-8") as temp_fl:
+                        content = file_tmpl % check2enable
+                        temp_fl.write(content)
+
+                    sys.argv = ["", "--no-exit", "--no-verbose"] + self.file_paths
+                    all_check_errors = self.checks_cli_main()
+                    real_errors = self.get_count_code_errors(all_check_errors)
+                    assertDictEqual(self, real_errors, {check2enable: self.expected_errors[check2enable]})
 
     def test_checks_disable_one_by_one(self):
         for check2disable in self.expected_errors:
