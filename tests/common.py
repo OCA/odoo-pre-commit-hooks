@@ -95,7 +95,7 @@ class ChecksCommon(unittest.TestCase):
 
     def test_checks_disable_one_by_one_with_cli_conf_file(self):
         file_tmpl = "[MESSAGES_CONTROL]\ndisable=%s"
-        with NamedTemporaryFile(mode="w") as temp_fl:
+        with NamedTemporaryFile(mode="rw") as temp_fl:
             for check2disable in self.expected_errors:
                 content = file_tmpl % check2disable
 
@@ -127,7 +127,7 @@ class ChecksCommon(unittest.TestCase):
 
     def test_checks_enable_one_by_one_with_cli_conf_file(self):
         file_tmpl = "[MESSAGES_CONTROL]\nenable=%s"
-        with NamedTemporaryFile(mode="w") as temp_fl:
+        with NamedTemporaryFile(mode="rw") as temp_fl:
             for check2enable in self.expected_errors:
                 content = file_tmpl % check2enable
 
