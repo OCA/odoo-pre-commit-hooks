@@ -1,7 +1,7 @@
 import argparse
 import configparser
 from os import getcwd
-from os.path import exists, join
+from os.path import isfile, join
 
 from oca_pre_commit_hooks.utils import top_path
 
@@ -54,10 +54,11 @@ class GlobalParser(argparse.ArgumentParser):
         if res.enable and res.disable:
             return res
 
-        if not res.config and exists(join(getcwd(), CONFIG_NAME)):
-            res.config = join(getcwd(), CONFIG_NAME)
-        elif exists(join(top_path(getcwd()), CONFIG_NAME)):
-            res.config = join(top_path(getcwd()), CONFIG_NAME)
+        if not res.config:
+            if isfile(join(getcwd(), CONFIG_NAME)):
+                res.config = join(getcwd(), CONFIG_NAME)
+            elif isfile(join(top_path(getcwd()), CONFIG_NAME)):
+                res.config = join(top_path(getcwd()), CONFIG_NAME)
 
         if res.config:
             conf = configparser.ConfigParser()
