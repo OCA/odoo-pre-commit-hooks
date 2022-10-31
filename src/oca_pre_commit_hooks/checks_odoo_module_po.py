@@ -291,31 +291,31 @@ class ChecksOdooModulePO:
             )
 
     def run_checks(self, no_verbose):
-        all_check_errors = []
         for check in utils.getattr_checks(self, enable=self.enable, disable=self.disable):
             check()
         utils.filter_checks_enabled_disabled(self.checks_errors, self.enable, self.disable)
-        all_check_errors.append(self.checks_errors)
-        for check_errors in all_check_errors if not no_verbose else []:
-            for check_error, msgs in check_errors.items():
-                print(f"\n****{check_error}****")
-                for msg in msgs:
-                    print(f"{msg} - [{check_error}]")
-        return all_check_errors
+        for check_error, msgs in self.checks_errors.items() if not no_verbose else []:
+            print(f"\n****{check_error}****")
+            for msg in msgs:
+                print(f"{msg} - [{check_error}]")
 
 
 def run(po_files, enable=None, disable=None, no_verbose=False, no_exit=False):
     all_check_errors = []
+    exit_status = 0
     for po_file in po_files:
         # Use file by file in order release memory reading file early
         checks_po_obj = ChecksOdooModulePO(po_file, enable, disable)
         try:
-            all_check_errors.extend(checks_po_obj.run_checks(no_verbose))
+            checks_po_obj.run_checks(no_verbose)
+            if checks_po_obj.checks_errors:
+                exit_status = 1
+                all_check_errors.append(checks_po_obj.checks_errors)
         finally:
             del checks_po_obj
     if no_exit:
         return all_check_errors
-    sys.exit(bool(all_check_errors))
+    sys.exit(exit_status)
 
 
 def main(**kwargs):

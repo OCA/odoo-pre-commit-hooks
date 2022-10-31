@@ -148,6 +148,7 @@ def run(files_or_modules, enable=None, disable=None, no_verbose=False, no_exit=F
         enable = set()
     if disable is None:
         disable = set()
+    exit_status = 0
     for manifest_path, changed in lookup_manifest_paths(files_or_modules).items():
         if not manifest_path:
             continue
@@ -157,15 +158,16 @@ def run(files_or_modules, enable=None, disable=None, no_verbose=False, no_exit=F
         for check in utils.getattr_checks(checks_obj, enable=enable, disable=disable):
             check()
         utils.filter_checks_enabled_disabled(checks_obj.checks_errors, enable, disable)
-        all_check_errors.append(checks_obj.checks_errors)
-    for check_errors in all_check_errors if not no_verbose else []:
-        for check_error, msgs in check_errors.items():
+        if checks_obj.checks_errors:
+            all_check_errors.append(checks_obj.checks_errors)
+            exit_status = 1
+        for check_error, msgs in checks_obj.checks_errors.items() if not no_verbose else {}:
             checks_obj.print(f"\n****{check_error}****")
             for msg in msgs:
                 checks_obj.print(f"{msg} - [{check_error}]")
     if no_exit:
         return all_check_errors
-    sys.exit(bool(all_check_errors))
+    sys.exit(exit_status)
 
 
 def main(**kwargs):
