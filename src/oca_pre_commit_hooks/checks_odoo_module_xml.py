@@ -339,3 +339,17 @@ class ChecksOdooModuleXML:
                     f'{manifest_data["filename_short"]}:{node.sourceline} '
                     f'Deprecated QWeb directive `"{directive_str}"`. Use `"t-options"` instead'
                 )
+
+    @utils.only_required_for_checks("xml-xpath-translatable-item")
+    def check_xml_xpath(self):
+        """* Check xml-xpath-translatable-item check `xpath` nodes using `contains(text(), 'Text translatable')`
+        Since that the text could be translated so it is a mutable value.
+        It could raise `ValueError` exception if the language is changed.
+        """
+        for manifest_data in self.manifest_datas:
+            for xpath_node in manifest_data["node"].xpath("//xpath"):
+                if "text()" in (xpath_node.get("expr") or ""):
+                    self.checks_errors["xml-xpath-translatable-item"].append(
+                        f'{manifest_data["filename_short"]}:{xpath_node.sourceline} '
+                        f"Use of translatable xpath `text()`"
+                    )

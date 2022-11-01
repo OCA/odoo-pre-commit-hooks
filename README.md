@@ -143,6 +143,10 @@ It disable the entire file
 * Check xml-syntax-error
         Check syntax of XML files declared in the Odoo manifest
 
+* Check xml-xpath-translatable-item check `xpath` nodes using `contains(text(), 'Text translatable')`
+        Since that the text could be translated so it is a mutable value.
+        It could raise `ValueError` exception if the language is changed.
+
 
 [//]: # (end-checks)
 
@@ -272,6 +276,9 @@ options:
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.15/test_repo/broken_module/template1.xml#L18 Dangerous use of "replace" from view with priority `0 < 99`
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.15/test_repo/broken_module/template1.xml#L4 Dangerous use of "replace" from view with priority `0 < 99`
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.15/test_repo/broken_module/template1.xml#L7 Dangerous use of "replace" from view with priority `0 < 99`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.15/test_repo/broken_module/template1_copy.xml#L18 Dangerous use of "replace" from view with priority `0 < 99`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.15/test_repo/broken_module/template1_copy.xml#L4 Dangerous use of "replace" from view with priority `0 < 99`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.15/test_repo/broken_module/template1_copy.xml#L7 Dangerous use of "replace" from view with priority `0 < 99`
 
  * xml-deprecated-data-node
 
@@ -340,6 +347,12 @@ options:
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.15/test_repo/broken_module/model_view2.xml#L47 Dangerous use of "replace" from view with priority 0 < 99
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.15/test_repo/broken_module/model_view2.xml#L70 Dangerous use of "replace" from view with priority 10 < 99
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.15/test_repo/broken_module/model_view2.xml#L92 Dangerous use of "replace" from view with priority 10 < 99
+
+ * xml-xpath-translatable-item
+
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.15/test_repo/broken_module/model_view.xml#L11 Use of translatable xpath `text()`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.15/test_repo/broken_module/template1.xml#L31 Use of translatable xpath `text()`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.15/test_repo/broken_module/template1_copy.xml#L31 Use of translatable xpath `text()`
 
 [//]: # (end-example)
 
