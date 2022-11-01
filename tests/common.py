@@ -83,7 +83,7 @@ class ChecksCommon(unittest.TestCase):
         new_content = re_sub.sub(f"{sub_start}\n\n{substitution}\n\n{sub_end}", content)
         return new_content
 
-    def test_checks(self):
+    def test_checks_basic(self):
         all_check_errors = self.checks_run(self.file_paths, no_exit=True, no_verbose=False)
         real_errors = self.get_count_code_errors(all_check_errors)
         # Uncommet to get sorted values to update EXPECTED_ERRORS dict

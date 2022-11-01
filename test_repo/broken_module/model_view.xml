@@ -8,6 +8,9 @@
             <field name="arch" type="xml">
                 <form string="Test model">
                     <field name="name"/>
+                    <xpath expr="//div[contains(text(), 'Translatable String')]/more/path" position="attributes">
+                        <attribute name="t-if">o.value</attribute>
+                    </xpath>
                 </form>
             </field>
         </record>

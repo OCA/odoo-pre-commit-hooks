@@ -9,7 +9,7 @@ from oca_pre_commit_hooks import checks_odoo_module_csv, checks_odoo_module_xml,
 
 DFTL_README_TMPL_URL = "https://github.com/OCA/maintainer-tools/blob/master/template/module/README.rst"  # noqa: B950
 DFTL_README_FILES = ["README.md", "README.txt", "README.rst"]
-DFTL_MANIFEST_DATA_KEYS = ["data", "demo", "demo_xml", "init_xml", "test", "update_xml"]
+DFTL_MANIFEST_DATA_KEYS = ["data", "demo", "demo_xml", "init_xml", "qweb", "test", "update_xml"]
 MANIFEST_NAMES = ("__openerp__.py", "__manifest__.py")
 
 
@@ -49,10 +49,43 @@ class ChecksOdooModule:
     def _is_installable(self):
         return self.manifest_dict and self.manifest_dict.get("installable", True)
 
+    def _assets2filenames(self):
+        """Support new way of odoo to add assets
+        e.g. odoo/addons/spreadsheet_dashboard/__manifest__.py
+        "assets": {
+            "web.assets_backend": [
+                "spreadsheet_dashboard/static/src/assets/**/*.js"
+
+        It will return the following format:
+            ['static/src/assets/path1/file1.js']
+        Only if the module is the same
+        """
+        fnames = []
+        for fname_glob_list in (self.manifest_dict.get("assets") or {}).values():
+            for fname_glob in fname_glob_list:
+                if not isinstance(fname_glob, str):
+                    continue
+                with utils.chdir(os.path.dirname(self.odoo_addon_path)):
+                    for fname in glob.glob(fname_glob):
+                        if not fname.startswith(self.odoo_addon_name):
+                            continue
+                        fname = os.path.relpath(fname, os.path.basename(self.odoo_addon_path))
+                        fnames.append(fname)
+        return fnames
+
     def _referenced_files_by_extension(self):
         ext_referenced_files = defaultdict(list)
-        for data_section in DFTL_MANIFEST_DATA_KEYS:
-            for fname in self.manifest_dict.get(data_section) or []:
+        for data_section in DFTL_MANIFEST_DATA_KEYS + ["assets", "po"]:
+            if data_section == "assets":
+                manifest_fnames = self._assets2filenames()
+            elif data_section == "po":
+                # The i18n[_extra]/*.po[t] files are not defined in the manifest
+                manifest_fnames = glob.glob(os.path.join(self.odoo_addon_path, "i18n*", "*.po")) + glob.glob(
+                    os.path.join(self.odoo_addon_path, "i18n*", "*.pot")
+                )
+            else:
+                manifest_fnames = self.manifest_dict.get(data_section) or []
+            for fname in manifest_fnames:
                 fname_path = os.path.join(self.odoo_addon_path, fname)
                 value = {
                     "filename": fname_path,
@@ -65,19 +98,6 @@ class ChecksOdooModule:
                     # pylint will take care about this check error
                     continue
                 ext_referenced_files[ext].append(value)
-        # The i18n[_extra]/*.po[t] files are not defined in the manifest
-        fnames = glob.glob(os.path.join(self.odoo_addon_path, "i18n*", "*.po")) + glob.glob(
-            os.path.join(self.odoo_addon_path, "i18n*", "*.pot")
-        )
-        for fname in fnames:
-            fname_path = os.path.join(self.odoo_addon_path, fname)
-            ext_referenced_files[os.path.splitext(fname)[1].lower()].append(
-                {
-                    "filename": fname_path,
-                    "filename_short": os.path.relpath(fname_path, self.manifest_top_path),
-                    "data_section": "default",
-                }
-            )
         return ext_referenced_files
 
     @utils.only_required_for_checks("manifest-syntax-error")
