@@ -8,8 +8,8 @@ from contextlib import contextmanager
 from itertools import chain
 
 import oca_pre_commit_hooks
+from oca_pre_commit_hooks.global_parser import CONFIG_NAME, DISABLE_ENV_VAR, ENABLE_ENV_VAR
 
-CONFIG_NAME = oca_pre_commit_hooks.global_parser.CONFIG_NAME
 RE_CHECK_DOCSTRING = r"\* Check (?P<check>[\w|\-]+)"
 
 
@@ -60,6 +60,11 @@ class ChecksCommon(unittest.TestCase):
         super().setUpClass()
         cls.maxDiff = None
 
+    def setUp(self):
+        super().setUp()
+        os.environ.pop(DISABLE_ENV_VAR, None)
+        os.environ.pop(ENABLE_ENV_VAR, None)
+
     @staticmethod
     def get_all_code_errors(all_check_errors):
         check_errors_keys = set()
@@ -105,6 +110,16 @@ class ChecksCommon(unittest.TestCase):
             real_errors = self.get_count_code_errors(all_check_errors)
             assertDictEqual(self, real_errors, expected_errors)
 
+    def test_checks_disable_one_by_one_with_env(self):
+        for check2disable in self.expected_errors:
+            expected_errors = self.expected_errors.copy()
+            sys.argv = ["", "--no-exit", "--no-verbose"] + self.file_paths
+            os.environ[DISABLE_ENV_VAR] = check2disable
+            all_check_errors = self.checks_cli_main()
+            expected_errors.pop(check2disable)
+            real_errors = self.get_count_code_errors(all_check_errors)
+            assertDictEqual(self, real_errors, expected_errors)
+
     def test_checks_disable_one_by_one_with_cli_conf_file(self):
         file_tmpl = "[MESSAGES_CONTROL]\ndisable=%s"
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -134,6 +149,14 @@ class ChecksCommon(unittest.TestCase):
             real_errors = self.get_count_code_errors(all_check_errors)
             assertDictEqual(self, real_errors, {check2enable: self.expected_errors[check2enable]})
 
+    def test_checks_enable_one_by_one_with_env(self):
+        for check2enable in self.expected_errors:
+            sys.argv = ["", "--no-exit", "--no-verbose"] + self.file_paths
+            os.environ[ENABLE_ENV_VAR] = check2enable
+            all_check_errors = self.checks_cli_main()
+            real_errors = self.get_count_code_errors(all_check_errors)
+            assertDictEqual(self, real_errors, {check2enable: self.expected_errors[check2enable]})
+
     def test_checks_enable_one_by_one_with_cli_conf_file(self):
         file_tmpl = "[MESSAGES_CONTROL]\nenable=%s"
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -156,3 +179,89 @@ class ChecksCommon(unittest.TestCase):
             expected_errors.pop(check2disable)
             real_errors = self.get_count_code_errors(all_check_errors)
             assertDictEqual(self, real_errors, expected_errors)
+
+    def test_checks_enable_priority(self):
+        """Verify enable configuration options have the correct priority. It should be:
+        1. --enable/--disable arguments
+        2. Environment variables
+        3. Configuration files (either trough arguments or by being in default locations (e.g. repo root))
+        """
+        expected_errors = list(self.expected_errors.keys())
+
+        cli_check = expected_errors[0]
+        env_check = expected_errors[1]
+        conf_check = expected_errors[2]
+
+        os.environ[ENABLE_ENV_VAR] = env_check
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            with open(os.path.join(tmp_dir, CONFIG_NAME), "w", encoding="UTF-8") as conf_file:
+                conf_file.write(f"[MESSAGES_CONTROL]\nenable={conf_check}")
+                conf_file.flush()
+
+                # First case. Only expect cli_check, it comes first over everything else
+                sys.argv = [
+                    "",
+                    "--no-exit",
+                    "--no-verbose",
+                    f"--enable={cli_check}",
+                    f"--config={conf_file.name}",
+                ] + self.file_paths
+                real_errors = self.get_count_code_errors(self.checks_cli_main())
+                assertDictEqual(self, real_errors, {cli_check: self.expected_errors[cli_check]})
+
+                # Second case. Only expect env_check, it overwrites whatever is in the config file
+                sys.argv = ["", "--no-exit", "--no-verbose", f"--config={conf_file.name}"] + self.file_paths
+                real_errors = self.get_count_code_errors(self.checks_cli_main())
+                assertDictEqual(self, real_errors, {env_check: self.expected_errors[env_check]})
+
+                # Third case. Expect only conf_check since there is no cli argument or env var
+                os.environ.pop(ENABLE_ENV_VAR, None)
+                sys.argv = ["", "--no-exit", "--no-verbose", f"--config={conf_file.name}"] + self.file_paths
+                real_errors = self.get_count_code_errors(self.checks_cli_main())
+                assertDictEqual(self, real_errors, {conf_check: self.expected_errors[conf_check]})
+
+    def test_checks_disable_priority(self):
+        """Verify disable configuration options have the correct priority. It should be:
+        1. --enable/--disable arguments
+        2. Environment variables
+        3. Configuration files (either trough arguments or by being in default locations (e.g. repo root))
+        """
+        expected_errors = list(self.expected_errors.keys())
+
+        cli_check = expected_errors[0]
+        env_check = expected_errors[1]
+        conf_check = expected_errors[2]
+
+        os.environ[DISABLE_ENV_VAR] = env_check
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            with open(os.path.join(tmp_dir, CONFIG_NAME), "w", encoding="UTF-8") as conf_file:
+                conf_file.write(f"[MESSAGES_CONTROL]\ndisable={conf_check}")
+                conf_file.flush()
+
+                # First case. Do not expect cli_check, it comes first over everything else
+                sys.argv = [
+                    "",
+                    "--no-exit",
+                    "--no-verbose",
+                    f"--disable={cli_check}",
+                    f"--config={conf_file.name}",
+                ] + self.file_paths
+                real_errors = self.get_count_code_errors(self.checks_cli_main())
+                expected_errors = self.expected_errors.copy()
+                expected_errors.pop(cli_check)
+                assertDictEqual(self, real_errors, expected_errors)
+
+                # Second case. Do not expect env_check, it overwrites whatever is in the config file
+                sys.argv = ["", "--no-exit", "--no-verbose", f"--config={conf_file.name}"] + self.file_paths
+                expected_errors = self.expected_errors.copy()
+                expected_errors.pop(env_check)
+                real_errors = self.get_count_code_errors(self.checks_cli_main())
+                assertDictEqual(self, real_errors, expected_errors)
+
+                # Third case. Expect only conf_check since there is no cli argument or env var
+                os.environ.pop(DISABLE_ENV_VAR, None)
+                sys.argv = ["", "--no-exit", "--no-verbose", f"--config={conf_file.name}"] + self.file_paths
+                expected_errors = self.expected_errors.copy()
+                expected_errors.pop(conf_check)
+                real_errors = self.get_count_code_errors(self.checks_cli_main())
+                assertDictEqual(self, real_errors, expected_errors)

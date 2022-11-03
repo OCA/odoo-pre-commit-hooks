@@ -1,12 +1,15 @@
 import argparse
 import configparser
-from os import getcwd
+from os import environ, getcwd
 from os.path import isfile, join
 
 from oca_pre_commit_hooks.utils import top_path
 
 CONFIG_NAME = ".oca_hooks.cfg"
 MSG_CTRL = "MESSAGES_CONTROL"
+
+ENABLE_ENV_VAR = "OCA_HOOKS_ENABLE"
+DISABLE_ENV_VAR = "OCA_HOOKS_DISABLE"
 
 
 def parse_csv(comma_sep_str):
@@ -32,14 +35,14 @@ class GlobalParser(argparse.ArgumentParser):
             "--disable",
             "-d",
             type=parse_csv,
-            default=set(),
+            default=self._default_env_csv(DISABLE_ENV_VAR),
             help="Disable the checker with the given 'check-name', separated by commas.",
         )
         self.add_argument(
             "--enable",
             "-e",
             type=parse_csv,
-            default=set(),
+            default=self._default_env_csv(ENABLE_ENV_VAR),
             help=(
                 "Enable the checker with the given 'check-name', separated by commas. "
                 "Default: All checks are enabled by default"
@@ -47,12 +50,19 @@ class GlobalParser(argparse.ArgumentParser):
         )
         self.add_argument("--config", "-c", type=argparse.FileType("r"), help="Path to a configuration file")
 
+    @staticmethod
+    def _default_env_csv(env_var):
+        if environ.get(env_var, False):
+            return parse_csv(environ[env_var])
+
+        return set()
+
     def parse_args(self, args=None, namespace=None):
         res = super().parse_args(args)
 
         if not res.config:
             if isfile(join(getcwd(), CONFIG_NAME)):
-                res.config = open(join(getcwd(), CONFIG_NAME), encoding="UTF-8")  # pylint:disable=consider-using-with
+                res.config = open(join(getcwd(), CONFIG_NAME), encoding="UTF-8")
             elif isfile(join(top_path(getcwd()), CONFIG_NAME)):
                 # TODO: Add unittest creating a new git repo
                 res.config = open(  # pragma: no cover # pylint:disable=consider-using-with
