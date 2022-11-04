@@ -115,7 +115,11 @@ def top_path(path):
     """
     try:
         with chdir(path):
-            return subprocess.check_output(["git", "rev-parse", "--show-toplevel"]).decode(sys.stdout.encoding).strip()
+            return (
+                subprocess.check_output(["git", "rev-parse", "--show-toplevel"], stderr=subprocess.STDOUT)
+                .decode(sys.stdout.encoding)
+                .strip()
+            )
     except (FileNotFoundError, subprocess.CalledProcessError):
         path = Path(path)
         return path.root or Path.home()
