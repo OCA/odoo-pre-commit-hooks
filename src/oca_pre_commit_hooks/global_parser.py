@@ -48,7 +48,12 @@ class GlobalParser(argparse.ArgumentParser):
                 "Default: All checks are enabled by default"
             ),
         )
-        self.add_argument("--config", "-c", type=argparse.FileType("r"), help="Path to a configuration file")
+        self.add_argument(
+            "--config",
+            "-c",
+            type=argparse.FileType("r"),
+            help=f"Path to a configuration file (default: {CONFIG_NAME})",
+        )
         self.add_argument(
             "--list-msgs", default=False, action="store_true", help="List all currently enabled messages."
         )
