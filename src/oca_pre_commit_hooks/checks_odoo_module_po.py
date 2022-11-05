@@ -5,6 +5,7 @@ import sys
 from collections import defaultdict
 
 import polib
+from common import get_checks_docstring
 
 from oca_pre_commit_hooks import utils
 
@@ -300,7 +301,14 @@ class ChecksOdooModulePO:
                 print(f"{msg} - [{check_error}]")
 
 
-def run(po_files, enable=None, disable=None, no_verbose=False, no_exit=False):
+def run(po_files, enable=None, disable=None, no_verbose=False, no_exit=False, list_msgs=False):
+    if list_msgs:
+        _, checks_docstring = get_checks_docstring([ChecksOdooModulePO])
+        print("Emittable messages with the current interpreter:", end="")
+        print(checks_docstring)
+
+        sys.exit(0)
+
     all_check_errors = []
     exit_status = 0
     for po_file in po_files:

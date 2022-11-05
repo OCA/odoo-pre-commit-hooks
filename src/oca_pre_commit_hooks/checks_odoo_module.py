@@ -5,6 +5,8 @@ import os
 import sys
 from collections import defaultdict
 
+from common import get_checks_docstring
+
 from oca_pre_commit_hooks import checks_odoo_module_csv, checks_odoo_module_xml, utils
 
 DFTL_README_TMPL_URL = "https://github.com/OCA/maintainer-tools/blob/master/template/module/README.rst"  # noqa: B950
@@ -159,7 +161,16 @@ def lookup_manifest_paths(filenames_or_modules):
     return odoo_module_files_changed
 
 
-def run(files_or_modules, enable=None, disable=None, no_verbose=False, no_exit=False):
+def run(files_or_modules, enable=None, disable=None, no_verbose=False, no_exit=False, list_msgs=False):
+    if list_msgs:
+        _, checks_docstring = get_checks_docstring(
+            [ChecksOdooModule, checks_odoo_module_csv.ChecksOdooModuleCSV, checks_odoo_module_xml.ChecksOdooModuleXML]
+        )
+        print("Emittable messages with the current interpreter:", end="")
+        print(checks_docstring)
+
+        sys.exit(0)
+
     all_check_errors = []
     # TODO: Add unnitest to check files filtered from pre-commit by hook
     # Uncommet to check what files sent pre-commit
