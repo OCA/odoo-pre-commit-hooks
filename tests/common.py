@@ -6,6 +6,7 @@ import unittest
 from collections import defaultdict
 from contextlib import contextmanager
 
+from oca_pre_commit_hooks import utils
 from oca_pre_commit_hooks.global_parser import CONFIG_NAME, DISABLE_ENV_VAR, ENABLE_ENV_VAR
 
 
@@ -240,3 +241,8 @@ class ChecksCommon(unittest.TestCase):
                 expected_errors.pop(conf_check)
                 real_errors = self.get_count_code_errors(self.checks_cli_main())
                 assertDictEqual(self, real_errors, expected_errors)
+
+    def test_list_messages(self):
+        all_messages = self.checks_run([], list_msgs=True, no_exit=True, no_verbose=False)
+        checks_found = re.findall(utils.RE_CHECK_DOCSTRING, all_messages)
+        self.assertFalse(set(self.expected_errors) - set(checks_found), "Missing list-message of checks")

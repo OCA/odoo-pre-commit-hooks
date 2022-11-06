@@ -303,10 +303,11 @@ class ChecksOdooModulePO:
 def run(po_files, enable=None, disable=None, no_verbose=False, no_exit=False, list_msgs=False):
     if list_msgs:
         _, checks_docstring = utils.get_checks_docstring([ChecksOdooModulePO])
-        print("Emittable messages with the current interpreter:", end="")
-        print(checks_docstring)
+        if not no_verbose:
+            print("Emittable messages with the current interpreter:", end="")
+            print(checks_docstring)
         if no_exit:
-            return True
+            return checks_docstring
         sys.exit(0)
 
     all_check_errors = []

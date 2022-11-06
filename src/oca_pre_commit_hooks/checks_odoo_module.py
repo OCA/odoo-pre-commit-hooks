@@ -164,9 +164,11 @@ def run(files_or_modules, enable=None, disable=None, no_verbose=False, no_exit=F
         _, checks_docstring = utils.get_checks_docstring(
             [ChecksOdooModule, checks_odoo_module_csv.ChecksOdooModuleCSV, checks_odoo_module_xml.ChecksOdooModuleXML]
         )
-        print("Emittable messages with the current interpreter:", end="")
-        print(checks_docstring)
-
+        if not no_verbose:
+            print("Emittable messages with the current interpreter:", end="")
+            print(checks_docstring)
+        if no_exit:
+            return checks_docstring
         sys.exit(0)
 
     all_check_errors = []
