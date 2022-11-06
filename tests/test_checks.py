@@ -80,7 +80,7 @@ class TestChecksWithFiles(common.ChecksCommon):
         # and we do not have way to evaluate all checks are evaluated and documented from another side
         # Feel free to migrate to better place this non-standard section of the code
 
-        checks_found, checks_docstring = common.get_checks_docstring(ALL_CHECK_CLASS)
+        checks_found, checks_docstring = oca_pre_commit_hooks.utils.get_checks_docstring(ALL_CHECK_CLASS)
         readme_path = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "README.md")
         with open(readme_path, encoding="UTF-8") as f_readme:
             readme_content = f_readme.read()

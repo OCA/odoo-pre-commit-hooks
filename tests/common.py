@@ -5,12 +5,8 @@ import tempfile
 import unittest
 from collections import defaultdict
 from contextlib import contextmanager
-from itertools import chain
 
-import oca_pre_commit_hooks
 from oca_pre_commit_hooks.global_parser import CONFIG_NAME, DISABLE_ENV_VAR, ENABLE_ENV_VAR
-
-RE_CHECK_DOCSTRING = r"\* Check (?P<check>[\w|\-]+)"
 
 
 def assertDictEqual(self, d1, d2, msg=None):
@@ -20,27 +16,6 @@ def assertDictEqual(self, d1, d2, msg=None):
     real_dict2list = [(i, d1[i]) for i in sorted(d1)]
     expected_dict2list = [(i, d2[i]) for i in sorted(d2)]
     self.assertEqual(real_dict2list, expected_dict2list, msg)
-
-
-def get_checks_docstring(check_classes):
-    checks_docstring = ""
-    checks_found = set()
-    for check_class in check_classes:
-        check_meths = chain(
-            oca_pre_commit_hooks.utils.getattr_checks(check_class, prefix="visit"),
-            oca_pre_commit_hooks.utils.getattr_checks(check_class, prefix="check"),
-        )
-        # Sorted to avoid mutable checks order readme
-        check_meths = sorted(
-            list(check_meths), key=lambda m: m.__name__.replace("visit", "", 1).replace("check", "", 1).strip("_")
-        )
-        for check_meth in check_meths:
-            if not check_meth or not check_meth.__doc__ or "* Check" not in check_meth.__doc__:
-                continue
-            checks_docstring += "\n" + check_meth.__doc__.strip(" \n") + "\n"
-            checks_found |= set(re.findall(RE_CHECK_DOCSTRING, checks_docstring))
-            checks_docstring = re.sub(r"( )+\*", "*", checks_docstring)
-    return checks_found, checks_docstring
 
 
 @contextmanager
