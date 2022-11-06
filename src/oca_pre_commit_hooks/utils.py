@@ -4,9 +4,11 @@ import subprocess
 import sys
 from contextlib import contextmanager
 from functools import lru_cache
+from itertools import chain
 from pathlib import Path
 
 CHECKS_DISABLED_REGEX = re.compile(re.escape("oca-hooks:disable=") + r"([a-z\-,]+)")
+RE_CHECK_DOCSTRING = r"\* Check (?P<check>[\w|\-]+)"
 
 
 def checks_disabled(comment):
@@ -160,3 +162,24 @@ def filter_checks_enabled_disabled(checks_errors, enables, disables):
     checks_no_enable = set(checks_errors) - enables
     for check_no_enable in checks_no_enable:
         checks_errors.pop(check_no_enable, False)
+
+
+def get_checks_docstring(check_classes):
+    checks_docstring = ""
+    checks_found = set()
+    for check_class in check_classes:
+        check_meths = chain(
+            getattr_checks(check_class, prefix="visit"),
+            getattr_checks(check_class, prefix="check"),
+        )
+        # Sorted to avoid mutable checks order readme
+        check_meths = sorted(
+            list(check_meths), key=lambda m: m.__name__.replace("visit", "", 1).replace("check", "", 1).strip("_")
+        )
+        for check_meth in check_meths:
+            if not check_meth or not check_meth.__doc__ or "* Check" not in check_meth.__doc__:
+                continue
+            checks_docstring += "\n" + check_meth.__doc__.strip(" \n") + "\n"
+            checks_found |= set(re.findall(RE_CHECK_DOCSTRING, checks_docstring))
+            checks_docstring = re.sub(r"( )+\*", "*", checks_docstring)
+    return checks_found, checks_docstring

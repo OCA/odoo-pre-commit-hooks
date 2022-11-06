@@ -190,7 +190,7 @@ It disable the entire file
 ```bash
 usage: oca-checks-odoo-module [-h] [--no-verbose] [--no-exit]
                               [--disable DISABLE] [--enable ENABLE]
-                              [--config CONFIG]
+                              [--config CONFIG] [--list-msgs]
                               [files_or_modules ...]
 
 positional arguments:
@@ -209,6 +209,7 @@ options:
                         by default
   --config CONFIG, -c CONFIG
                         Path to a configuration file
+  --list-msgs           List all currently enabled messages.
 
 ```
 
@@ -220,7 +221,7 @@ options:
 # Help PO
 ```bash
 usage: oca-checks-po [-h] [--no-verbose] [--no-exit] [--disable DISABLE]
-                     [--enable ENABLE] [--config CONFIG]
+                     [--enable ENABLE] [--config CONFIG] [--list-msgs]
                      [po_files ...]
 
 positional arguments:
@@ -239,6 +240,7 @@ options:
                         by default
   --config CONFIG, -c CONFIG
                         Path to a configuration file
+  --list-msgs           List all currently enabled messages.
 
 ```
 
