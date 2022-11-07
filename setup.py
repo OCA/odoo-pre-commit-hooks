@@ -57,6 +57,7 @@ setup(
     url="https://github.com/OCA/odoo-pre-commit-hooks",
     packages=find_packages("src"),
     package_dir={"": "src"},
+    data_files=[("requirements", ["requirements.txt"])],
     py_modules=[splitext(basename(path))[0] for path in glob("src/*.py")],
     include_package_data=True,
     zip_safe=False,
