@@ -281,6 +281,9 @@ options:
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.17/test_repo/broken_module/template1_copy.xml#L18 Dangerous use of "replace" from view with priority `0 < 99`
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.17/test_repo/broken_module/template1_copy.xml#L4 Dangerous use of "replace" from view with priority `0 < 99`
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.17/test_repo/broken_module/template1_copy.xml#L7 Dangerous use of "replace" from view with priority `0 < 99`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.17/test_repo/broken_module/template1_copy2.xml#L18 Dangerous use of "replace" from view with priority `0 < 99`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.17/test_repo/broken_module/template1_copy2.xml#L4 Dangerous use of "replace" from view with priority `0 < 99`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.17/test_repo/broken_module/template1_copy2.xml#L7 Dangerous use of "replace" from view with priority `0 < 99`
 
  * xml-deprecated-data-node
 
@@ -355,6 +358,7 @@ options:
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.17/test_repo/broken_module/model_view.xml#L11 Use of translatable xpath `text()`
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.17/test_repo/broken_module/template1.xml#L31 Use of translatable xpath `text()`
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.17/test_repo/broken_module/template1_copy.xml#L31 Use of translatable xpath `text()`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.17/test_repo/broken_module/template1_copy2.xml#L31 Use of translatable xpath `text()`
 
 [//]: # (end-example)
 

@@ -8,7 +8,7 @@
     'version': '8_0.1.0.0',
     'website': 'https://odoo-community.org',
     'depends': ['base'],
-    'qweb': ['template1.xml',],
+    'qweb': ['template1.xml', '*emplate1_copy2.xml'],
     'assets': {
         'point_of_sale.assets': [
             'broken_module/*emplate1_copy.xml',
