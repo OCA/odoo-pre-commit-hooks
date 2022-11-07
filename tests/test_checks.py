@@ -22,7 +22,7 @@ EXPECTED_ERRORS = {
     "manifest-syntax-error": 2,
     "xml-create-user-wo-reset-password": 1,
     "xml-dangerous-filter-wo-user": 1,
-    "xml-dangerous-qweb-replace-low-priority": 6,
+    "xml-dangerous-qweb-replace-low-priority": 9,
     "xml-deprecated-data-node": 7,
     "xml-deprecated-openerp-node": 4,
     "xml-deprecated-qweb-directive": 2,
@@ -33,7 +33,7 @@ EXPECTED_ERRORS = {
     "xml-redundant-module-name": 1,
     "xml-syntax-error": 2,
     "xml-view-dangerous-replace-low-priority": 6,
-    "xml-xpath-translatable-item": 3,
+    "xml-xpath-translatable-item": 4,
 }
 
 

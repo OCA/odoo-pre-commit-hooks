@@ -49,7 +49,7 @@ class ChecksOdooModule:
     def _is_installable(self):
         return self.manifest_dict and self.manifest_dict.get("installable", True)
 
-    def _assets2filenames(self):
+    def _glob_expr2filenames(self, data_section):
         """Support new way of odoo to add assets
         e.g. odoo/addons/spreadsheet_dashboard/__manifest__.py
         "assets": {
@@ -61,10 +61,19 @@ class ChecksOdooModule:
         Only if the module is the same
         """
         fnames = []
-        for fname_glob_list in (self.manifest_dict.get("assets") or {}).values():
+        data_section_value = self.manifest_dict.get(data_section)
+        if isinstance(data_section_value, dict):
+            fname_glob_lists = self.manifest_dict[data_section].values()
+        elif isinstance(data_section_value, list):
+            fname_glob_lists = [data_section_value]
+        else:
+            fname_glob_lists = []
+        for fname_glob_list in fname_glob_lists:
             for fname_glob in fname_glob_list:
                 if not isinstance(fname_glob, str):
                     continue
+                if data_section == "qweb":
+                    fname_glob = os.path.join(os.path.basename(self.odoo_addon_path), fname_glob)
                 with utils.chdir(os.path.dirname(self.odoo_addon_path)):
                     for fname in glob.glob(fname_glob):
                         if not fname.startswith(self.odoo_addon_name):
@@ -76,8 +85,9 @@ class ChecksOdooModule:
     def _referenced_files_by_extension(self):
         ext_referenced_files = defaultdict(list)
         for data_section in DFTL_MANIFEST_DATA_KEYS + ["assets", "po"]:
-            if data_section == "assets":
-                manifest_fnames = self._assets2filenames()
+            if data_section in ["assets", "qweb"]:
+                # support glob expression
+                manifest_fnames = self._glob_expr2filenames(data_section)
             elif data_section == "po":
                 # The i18n[_extra]/*.po[t] files are not defined in the manifest
                 manifest_fnames = glob.glob(os.path.join(self.odoo_addon_path, "i18n*", "*.po")) + glob.glob(
