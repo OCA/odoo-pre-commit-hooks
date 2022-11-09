@@ -27,7 +27,7 @@ EXPECTED_ERRORS = {
     "xml-deprecated-openerp-node": 4,
     "xml-deprecated-qweb-directive": 2,
     "xml-deprecated-tree-attribute": 3,
-    "xml-duplicate-fields": 9,
+    "xml-duplicate-fields": 3,
     "xml-duplicate-record-id": 2,
     "xml-not-valid-char-link": 2,
     "xml-redundant-module-name": 1,

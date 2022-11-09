@@ -158,7 +158,7 @@ def lookup_manifest_paths(filenames_or_modules):
     """
     odoo_module_files_changed = defaultdict(set)
     # Sorted in order to re-use the LRU cached values as possible before to fill maxsize
-    # Ordered paths will have common ascentors closed to next item
+    # Ordered paths will have common ancestors closed to next item
     for filename_or_module in sorted(filenames_or_modules):
         filename_or_module = utils.full_norm_path(filename_or_module)
         directory_path = (

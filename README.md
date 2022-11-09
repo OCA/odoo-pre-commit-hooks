@@ -315,15 +315,9 @@ options:
 
  * xml-duplicate-fields
 
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.20/test_repo/broken_module/model_view_odoo2.xml#L132 Duplicate xml field "name" in lines 133
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.20/test_repo/broken_module/model_view_odoo2.xml#L141 Duplicate xml field "name" in lines 142
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.20/test_repo/broken_module/model_view_odoo2.xml#L41 Duplicate xml field "key_config" in lines 42
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.20/test_repo/broken_module/model_view_odoo2.xml#L19 Duplicate xml field "model" in lines 20
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.20/test_repo/broken_module/model_view_odoo2.xml#L6 Duplicate xml field "name" in lines 13
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.20/test_repo/broken_module/model_view_odoo2.xml#L73 Duplicate xml field "arch" in lines 76
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.20/test_repo/broken_module/model_view_odoo2.xml#L79 Duplicate xml field "user_id" in lines 81
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.20/test_repo/broken_module/model_view_odoo2.xml#L80 Duplicate xml field "name" in lines 83
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.20/test_repo/broken_module/model_view_odoo2.xml#L90 Duplicate xml field "date" in lines 93
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.20/test_repo/broken_module/model_view_odoo2.xml#L91 Duplicate xml field "min_date" in lines 94
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.20/test_repo/broken_module/model_view_odoo2.xml#L74 Duplicate xml field "arch" in lines 77
 
  * xml-duplicate-record-id
 
