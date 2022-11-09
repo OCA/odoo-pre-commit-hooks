@@ -348,7 +348,8 @@ class ChecksOdooModuleXML:
         """
         for manifest_data in self.manifest_datas:
             for xpath_node in manifest_data["node"].xpath("//xpath"):
-                if "text()" in (xpath_node.get("expr") or ""):
+                node_expr = (xpath_node.get("expr") or "").replace(" ", "")
+                if "[contains(text()" in node_expr or "[text()=" in node_expr:
                     self.checks_errors["xml-xpath-translatable-item"].append(
                         f'{manifest_data["filename_short"]}:{xpath_node.sourceline} '
                         f"Use of translatable xpath `text()`"

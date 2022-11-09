@@ -11,6 +11,9 @@
                     <xpath expr="//div[contains(text(), 'Translatable String')]/more/path" position="attributes">
                         <attribute name="t-if">o.value</attribute>
                     </xpath>
+                    <xpath expr="//span[@t-esc='o.amount_to_text()']/.." position="after">
+                        <attribute name="t-if">o.value</attribute>
+                    </xpath>
                 </form>
             </field>
         </record>
