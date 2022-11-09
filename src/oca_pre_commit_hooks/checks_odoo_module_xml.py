@@ -105,20 +105,8 @@ class ChecksOdooModuleXML:
 
                 # fields_duplicated
                 if self.is_message_enabled("xml-duplicate-fields", manifest_data):
-                    if not record.xpath('field[@name="inherit_id"]'):
-                        for field in record.xpath(
-                            "field[@name] | field/*/field[@name] | "
-                            "field/*/field/tree/field[@name] | "
-                            "field/*/field/form/field[@name]"
-                        ):
-                            field_key = (
-                                field.get("name"),
-                                field.get("context"),
-                                field.get("filter_domain"),
-                                field.get("groups"),
-                                field.getparent(),
-                            )
-                            xml_fields[field_key].append((manifest_data, field))
+                    for field in record.xpath("field[@name]"):
+                        xml_fields[(field.get("name"), field.getparent())].append((manifest_data, field))
 
                 # call "visit_xml_record_*" methods to re-use the same node xpath loop
                 for meth in self.getattr_checks(manifest_data, "visit_xml_record"):

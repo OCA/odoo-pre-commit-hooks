@@ -13,9 +13,10 @@
             <field name="name">view.model.form4</field>
         </record>
 
-        <!-- inherit view with duplicated is not checked -->
+        <!-- inherit views with duplicate fields also checked -->
         <record id="view_model_form2" model="ir.ui.view">
             <field name="name">view.model.form</field>
+            <field name="model">which.model.is.right</field>
             <field name="model">test.model</field>
             <field name="inherit_id" ref="id_category_list"/>
             <field name="arch" type="xml">
@@ -32,7 +33,7 @@
             </field>
         </record>
 
-        <!-- duplicate record field "name" inside the search -->
+        <!-- duplicate record field "name" inside the search, not direct children, valid -->
         <record model="ir.ui.view" id="view_ir_config_search">
             <field name="model">ir.config_parameter</field>
             <field name="arch" type="xml">
@@ -74,7 +75,7 @@
             <field name="name">view.model.form</field>
             <field name="model">test.model</field>
             <field name="arch" type="xml">
-                <!-- 2 duplicate record field "user_id" and "name" -->
+                <!-- 2 duplicate record field "user_id" and "name", not invalid since it's inside children -->
                 <form string="Test model6">
                     <field name="user_id"/>
                     <field name="name"/>
@@ -82,7 +83,7 @@
                     <field name="partner_id"/>
                     <field name="name"/>
                     <field name="picking_ids" widget="many2many" domain="[('state', 'not in', ('done', 'cancel'))]">
-                            <!-- 2 duplicate record field "date" and "min_date" -->
+                            <!-- 2 duplicate record field "date" and "min_date", also  not invalid -->
                             <tree>
                                 <field name="name"/>
                                 <field name="backorder_id"/>
