@@ -93,6 +93,7 @@ setup(
         "console_scripts": [
             "oca-checks-odoo-module = oca_pre_commit_hooks.cli:main",
             "oca-checks-po = oca_pre_commit_hooks.cli_po:main",
+            "oca-check-unused-python-file = oca_pre_commit_hooks.check_unused_python_file:main",
         ]
     },
 )

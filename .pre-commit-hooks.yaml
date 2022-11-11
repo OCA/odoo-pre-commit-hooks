@@ -23,3 +23,9 @@
   types_or: ["text"]
   files: \.(po|pot)$
   require_serial: false
+- id: oca-check-unused-python-file
+  name: Check unused python files
+  entry: oca-check-unused-python-file
+  language: python
+  types: [python]
+  files: (controllers|models|report|wizard)\.py$|tests\/test_.*\.py$
