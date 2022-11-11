@@ -8,15 +8,21 @@ from itertools import chain
 from pathlib import Path
 
 CHECKS_DISABLED_REGEX = re.compile(re.escape("oca-hooks:disable=") + r"([a-z\-,]+)")
+DEPRECATED_CHECKS_DISABLED_REGEX = re.compile(re.escape("pylint:disable=") + r"([a-z\-,]+)")
 RE_CHECK_DOCSTRING = r"\* Check (?P<check>[\w|\-]+)"
 
 
 def checks_disabled(comment):
     comment_strip = comment.replace("\n", "").replace(" ", "").replace("#", "")
     check_disable_match = CHECKS_DISABLED_REGEX.search(comment_strip)
-    if not check_disable_match:
-        return []
-    return check_disable_match.groups()[0].split(",")
+    check_deprecated_disable_match = DEPRECATED_CHECKS_DISABLED_REGEX.search(comment_strip)
+
+    match = check_disable_match or check_deprecated_disable_match
+    use_deprecate = bool(check_deprecated_disable_match)
+    if not match:
+        return [], False
+
+    return match.groups()[0].split(","), use_deprecate
 
 
 def only_required_for_checks(*checks):

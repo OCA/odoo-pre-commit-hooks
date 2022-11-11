@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- pylint:disable=xml-duplicate-record-id -->
+<odoo>
+    <record id="duplicate_record" model="magic.model">
+        <field name="name">hello</field>
+    </record>
+
+    <record id="duplicate_record" model="magic.model">
+        <field name="name">hello from duplicate</field>
+    </record>
+</odoo>

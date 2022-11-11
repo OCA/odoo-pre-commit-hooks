@@ -44,7 +44,10 @@ class ChecksOdooModuleXML:
         """
         all_checks_disabled = set()
         for comment_node in node.xpath("//comment()"):
-            all_checks_disabled |= set(utils.checks_disabled(comment_node.text))
+            checks_disabled, use_deprecated = utils.checks_disabled(comment_node.text)
+            all_checks_disabled |= set(checks_disabled)
+            if use_deprecated:
+                print(f"{node.docinfo.URL}:{comment_node.sourceline} WARNING. DEPRECATED. Use oca-disable instead.")
         return all_checks_disabled
 
     def getattr_checks(self, manifest_data, prefix):

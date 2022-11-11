@@ -17,6 +17,7 @@
     'data': [
         'model_view.xml', 'model_view2.xml', 'model_view_odoo.xml',
         'model_view_odoo2.xml',
+        'deprecated_disable.xml',
         'file_no_exist.xml',
         'skip_xml_check.xml',
         'skip_xml_check_2.xml',
