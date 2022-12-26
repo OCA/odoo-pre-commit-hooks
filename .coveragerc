@@ -20,8 +20,10 @@ omit =
 exclude_lines =
     # Have to re-enable the standard pragma
     pragma: no cover
-    # tests import the package instead
+    # tests import the package instead
     if __name__ == "__main__":
+    # Don't complain about abstract methods, they aren't run:
+    @(abc\.)?abstractmethod
 
 [html]
 show_contexts=True
