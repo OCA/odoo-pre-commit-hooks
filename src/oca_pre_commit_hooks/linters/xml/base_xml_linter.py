@@ -13,9 +13,6 @@ class BaseXmlLinter(AbstractBaseLinter):
     _messages = {"xml-syntax-error": "XML file's syntax is not correct"}
     _checks_disabled_regex = re.compile(re.escape("oca-hooks:disable=") + r"([a-z\-,]+)")
 
-    def __init__(self):
-        super().__init__()
-
     @functools.lru_cache(maxsize=256)
     def get_tag_disabled_checks(self, element) -> Sequence[str]:
         """Retrieve all messages which have been disabled on a specific tag. In order to consider the comment as having

@@ -1,5 +1,7 @@
 """Test all methods implemented by AbstractBaseLinter."""
+import os
 import re
+import unittest
 
 from tests.linters.common import OutputCaptureTestCase
 
@@ -37,7 +39,28 @@ class AbstractTestLinter(AbstractBaseLinter):
         pass
 
 
-class TestBaseLinters(OutputCaptureTestCase):
+class TestBaseLinterEnv(unittest.TestCase):
+    """Tests in this class must set environment variables before instantiating the class under test, since
+    argparse sets default values for arguments upon adding them."""
+
+    def test_default_env_config_generator(self):
+        enabled_msg = {"random-message-1", "xml-duplicate-record-id"}
+        disabled_msg = {"xml-syntax-error", "oe-structure-missing-id"}
+
+        os.environ[AbstractTestLinter.disable_env_var] = ",".join(disabled_msg)
+        os.environ[AbstractTestLinter.enable_env_var] = ",".join(enabled_msg)
+
+        class_ut = AbstractTestLinter()
+        config = class_ut.generate_config([])
+        self.assertEqual(enabled_msg, config.enable)
+        self.assertEqual(disabled_msg, config.disable)
+
+    def tearDown(self) -> None:
+        os.environ.pop(AbstractTestLinter.disable_env_var)
+        os.environ.pop(AbstractTestLinter.enable_env_var)
+
+
+class TestBaseLinter(OutputCaptureTestCase):
     def setUp(self) -> None:
         super().setUp()
         self.class_ut = AbstractTestLinter()

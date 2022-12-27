@@ -1,8 +1,10 @@
 from os.path import join
+
 from lxml import etree
 
-from oca_pre_commit_hooks.linters.xml.base_xml_linter import BaseXmlLinter
 from tests.linters.common import OutputCaptureTestCase, with_tmpdir
+
+from oca_pre_commit_hooks.linters.xml.base_xml_linter import BaseXmlLinter
 
 
 class TestBaseXmlLinter(OutputCaptureTestCase):
@@ -42,7 +44,7 @@ class TestBaseXmlLinter(OutputCaptureTestCase):
         )
         self.assertEqual(
             ["illogical-msg", "hello-id", "last-warning"],
-            self.class_ut.get_tag_disabled_checks(tree.xpath("//field")[0])
+            self.class_ut.get_tag_disabled_checks(tree.xpath("//field")[0]),
         )
 
         tree = etree.fromstring('<body class="px-4 py-2"/><!-- Innocent comment. Not trying anything -->')

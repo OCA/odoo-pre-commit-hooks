@@ -22,7 +22,7 @@ class AbstractBaseLinter(SkelAbstractLinter, ABC):
 
         return 0
 
-    def generate_config(self, argv: Union[Sequence[str], None] = None) -> SchedulerConfiguration:
+    def generate_config(self, argv: Sequence[str]) -> SchedulerConfiguration:
         args = self.parser.parse_args(argv)
         return SchedulerConfiguration(args.filenames, args.enable, args.disable, args.list_msgs, args.zero_exit)
 

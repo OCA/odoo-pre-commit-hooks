@@ -1,7 +1,7 @@
 from abc import ABCMeta, abstractmethod
 from argparse import ArgumentParser
 from os import environ
-from typing import Mapping, Sequence, Set, Union
+from typing import Mapping, Sequence, Set
 
 from oca_pre_commit_hooks.linters.message import Message
 from oca_pre_commit_hooks.linters.scheduler_configuration import SchedulerConfiguration
@@ -11,10 +11,10 @@ class SkelAbstractLinter(metaclass=ABCMeta):
     # List of messages this linter can produce
     _messages: Mapping[str, str] = None
 
-    _config_name = ".oca_hooks.cfg"
-    _msg_ctrl = "MESSAGES_CONTROL"
-    _enable_env_var = "OCA_HOOKS_ENABLE"
-    _disable_env_var = "OCA_HOOKS_DISABLE"
+    config_name = ".oca_hooks.cfg"
+    msg_ctrl = "MESSAGES_CONTROL"
+    enable_env_var = "OCA_HOOKS_ENABLE"
+    disable_env_var = "OCA_HOOKS_DISABLE"
 
     def __init__(self):
         super().__init__()
@@ -24,13 +24,13 @@ class SkelAbstractLinter(metaclass=ABCMeta):
         self.parser.add_argument(
             "--enable",
             type=self.parse_csv,
-            default=self._default_env_csv(self._enable_env_var),
+            default=self._default_env_csv(self.enable_env_var),
             help="Comma separated list of messages to enable. Messages not in this list will be disabled",
         )
         self.parser.add_argument(
             "--disable",
             type=self.parse_csv,
-            default=self._default_env_csv(self._disable_env_var),
+            default=self._default_env_csv(self.disable_env_var),
             help="Comma separated list of messages to disable. Messages not in this list will be enabled",
         )
         self.parser.add_argument(
@@ -66,7 +66,7 @@ class SkelAbstractLinter(metaclass=ABCMeta):
     def get_exit_status(self, zero_exit: bool = False) -> int:
         pass
 
-    def run(self, argv: Union[Sequence[str], None] = None) -> int:
+    def run(self, argv: Sequence[str]) -> int:
         """Entrypoint (this runs when  the user calls the executable)."""
         # Frontend is called
         config = self.generate_config(argv)
@@ -88,7 +88,7 @@ class SkelAbstractLinter(metaclass=ABCMeta):
 
     # Frontend
     @abstractmethod
-    def generate_config(self, argv: Union[Sequence[str], None] = None) -> SchedulerConfiguration:
+    def generate_config(self, argv: Sequence[str]) -> SchedulerConfiguration:
         pass
 
     # Scheduler
