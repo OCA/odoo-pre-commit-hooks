@@ -13,5 +13,7 @@ class StatelessXmlLinter(BaseXmlLinter):
     def check_oe_structure_missing_id(self, tree):
         oe_structure_elements = self.find_tags_with_class(tree, "oe_structure")
         for elem in oe_structure_elements:
+            if "oe-structure-missing-id" in self.get_tag_disabled_checks(elem):
+                continue
             if "id" not in elem.attrib:
                 self.add_message(Message("oe-structure-missing-id", elem.base, (elem.tag,), elem.sourceline))
