@@ -93,6 +93,8 @@ setup(
         "console_scripts": [
             "oca-checks-odoo-module = oca_pre_commit_hooks.cli:main",
             "oca-checks-po = oca_pre_commit_hooks.cli_po:main",
+            "stateless-xml-checks = oca_pre_commit_hooks.linters.xml.stateless_xml_linter:StatelessXmlLinter.main",
+            "stateful-xml-checks = oca_pre_commit_hooks.linters.xml.stateful_xml_linter:StatefulXmlLinter.main",
         ]
     },
 )

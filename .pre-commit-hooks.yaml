@@ -1,5 +1,15 @@
-# Do not use this file as example
-# Check the README
+- id: stateless-xml-checks
+  name: stateless-xml-checks
+  entry: stateless-xml-checks
+  language: python
+  types: [xml]
+- id: stateful-xml-checks
+  name: stateful-xml-checks
+  entry: stateful-xml-checks
+  language: python
+  types: [xml]
+  require_serial: true
+# Legacy Hooks
 - id: oca-checks-odoo-module
   name: Checks for Odoo modules
   description: Multiple checks for Odoo modules

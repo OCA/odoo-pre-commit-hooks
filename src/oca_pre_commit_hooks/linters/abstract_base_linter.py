@@ -1,4 +1,5 @@
 import inspect
+import sys
 from abc import ABC
 from typing import List, MutableMapping, Sequence, Set, Union
 
@@ -11,6 +12,13 @@ class AbstractBaseLinter(SkelAbstractLinter, ABC):
     def __init__(self):
         super().__init__()
         self.generated_messages: MutableMapping[str, List[Message]] = {}
+
+    @classmethod
+    def main(cls, argv: Union[Sequence[str], None] = None) -> int:
+        if argv is None:
+            argv = sys.argv[1:]
+
+        return cls().run(argv)
 
     # Abstract Methods
     def get_exit_status(self, zero_exit: bool = False) -> int:
@@ -33,12 +41,14 @@ class AbstractBaseLinter(SkelAbstractLinter, ABC):
             self.generated_messages[message.key] = [message]
 
     def print_generated_messages(self):
-        for message_key, messages in self.generated_messages.items():
-            print(f"****{message_key}****")
-            for message in messages:
+        for message_type in self.generated_messages.values():
+            for message in message_type:
                 msg_line = message.line if message.line > 0 else ""
                 msg_col = message.column if message.column > 0 else ""
-                print(f"{message.file}:{msg_line}:{msg_col} -> {self._messages[message_key] % message.args}")
+                print(
+                    f"::{message.key}::{message.file}:{msg_line}:{msg_col} -> "
+                    f"{self._messages[message.key] % message.args}"
+                )
 
     def print_message_descriptions(self):
         for key, description in self._messages.items():

@@ -1,27 +1,11 @@
-from os.path import join
+import unittest
 
 from lxml import etree
-
-from tests.linters.common import OutputCaptureTestCase, with_tmpdir
 
 from oca_pre_commit_hooks.linters.xml.base_xml_linter import BaseXmlLinter
 
 
-class TestBaseXmlLinter(OutputCaptureTestCase):
-    def setUp(self) -> None:
-        super().setUp()
-        self.class_ut = BaseXmlLinter()
-
-    @with_tmpdir
-    def test_invalid_xml_file(self, tmpdir):
-        invalid_xml_file = join(tmpdir, "invalid_xml_file.xml")
-        with open(invalid_xml_file, "w", encoding="utf-8") as xml_fd:
-            xml_fd.write("""<odoo><span>Hello!!</span></odoo""")
-
-        self.assertEqual(-1, self.class_ut.run([invalid_xml_file]))
-        self.assertTrue("xml-syntax-error" in self.stdout.getvalue())
-        self.assertEqual(1, self.stdout.getvalue().count(invalid_xml_file))
-
+class TestBaseXmlLinter(unittest.TestCase):
     def test_tag_is_disabled(self):
         tree = etree.fromstring(
             """
@@ -29,26 +13,26 @@ class TestBaseXmlLinter(OutputCaptureTestCase):
             <div class="oe_footer"/>
             """
         )
-        self.assertFalse(self.class_ut.get_tag_disabled_checks(tree.xpath("//div")[0]))
+        self.assertFalse(BaseXmlLinter.get_tag_disabled_checks(tree.xpath("//div")[0]))
 
         tree = etree.fromstring(
             '<!-- oca-hooks:disable=no-effect,nothing --><record id="demo_model1" model="random.model"/>'
         )
-        self.assertFalse(self.class_ut.get_tag_disabled_checks(tree.xpath("//record")[0]))
+        self.assertFalse(BaseXmlLinter.get_tag_disabled_checks(tree.xpath("//record")[0]))
 
         tree = etree.fromstring('<field name="hello">goodbye</field><!-- oca-hooks:disable=illogical -->')
-        self.assertTrue("illogical" in self.class_ut.get_tag_disabled_checks(tree.xpath("//field")[0]))
+        self.assertTrue("illogical" in BaseXmlLinter.get_tag_disabled_checks(tree.xpath("//field")[0]))
 
         tree = etree.fromstring(
             '<field name="hello">goodbye</field><!-- oca-hooks:disable=illogical-msg,hello-id,last-warning -->'
         )
         self.assertEqual(
-            ["illogical-msg", "hello-id", "last-warning"],
-            self.class_ut.get_tag_disabled_checks(tree.xpath("//field")[0]),
+            {"illogical-msg", "hello-id", "last-warning"},
+            BaseXmlLinter.get_tag_disabled_checks(tree.xpath("//field")[0]),
         )
 
         tree = etree.fromstring('<body class="px-4 py-2"/><!-- Innocent comment. Not trying anything -->')
-        self.assertFalse(self.class_ut.get_tag_disabled_checks(tree.xpath("//body")[0]))
+        self.assertFalse(BaseXmlLinter.get_tag_disabled_checks(tree.xpath("//body")[0]))
 
         tree = etree.fromstring(
             """
@@ -56,4 +40,48 @@ class TestBaseXmlLinter(OutputCaptureTestCase):
             <!-- oca-hooks:disable=nothing-being-disabled" -->
             """
         )
-        self.assertFalse(self.class_ut.get_tag_disabled_checks(tree.xpath("//div")[0]))
+        self.assertFalse(BaseXmlLinter.get_tag_disabled_checks(tree.xpath("//div")[0]))
+
+    def test_file_disabled_checks(self):
+        tree = etree.fromstring(
+            """
+        <!-- oca-hooks:disable=xml-duplicate-record-id -->
+        <odoo>
+            <div/>
+        </odoo>
+        """
+        )
+
+        self.assertEqual({"xml-duplicate-record-id"}, BaseXmlLinter.get_file_disabled_checks(tree))
+
+        tree = etree.fromstring(
+            """
+        <!-- oca-hooks:disable=xml-duplicate-record-id,oe-structure-missing-id -->
+        <odoo>
+            <body/>
+        </odoo>
+        """
+        )
+        self.assertEqual(
+            {"xml-duplicate-record-id", "oe-structure-missing-id"}, BaseXmlLinter.get_file_disabled_checks(tree)
+        )
+
+        tree = etree.fromstring("<odoo><record/></odoo>")
+        self.assertEqual(set(), BaseXmlLinter.get_file_disabled_checks(tree))
+
+        tree = etree.fromstring(
+            """
+        <!-- oca-hooks : disable=xml-deprecated-data-node,
+                    xml-duplicate-record-id -->
+        <odoo>
+            <span/>
+        </odoo>
+        """
+        )
+        self.assertEqual(
+            {"xml-deprecated-data-node", "xml-duplicate-record-id"}, BaseXmlLinter.get_file_disabled_checks(tree)
+        )
+
+    def test_normalize_xml_id(self):
+        self.assertEqual("web.customer_template", BaseXmlLinter.normalize_xml_id("customer_template", "web"))
+        self.assertEqual("web.customer_template", BaseXmlLinter.normalize_xml_id("web.customer_template", "web"))

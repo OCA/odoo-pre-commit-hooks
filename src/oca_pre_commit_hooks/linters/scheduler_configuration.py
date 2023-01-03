@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Mapping, Set
 
 
-@dataclass(frozen=True)
+@dataclass()
 class SchedulerConfiguration:
     filenames: Set[str]  # Files to run the checker on.
     enable: Set[str]  # All enabled messages.

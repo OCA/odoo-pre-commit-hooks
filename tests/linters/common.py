@@ -1,8 +1,12 @@
+import os
 import sys
 import tempfile
 import unittest
 from functools import wraps
 from io import StringIO
+from os.path import join, pardir, realpath
+
+TEST_REPO_PATH: str = realpath(join(realpath(__file__), pardir, pardir, pardir, "test_repo"))
 
 
 class OutputCaptureTestCase(unittest.TestCase):
@@ -23,5 +27,21 @@ def with_tmpdir(func):
     def decorator(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             func(self, tmpdir)
+
+    return decorator
+
+
+def with_chdir(path: str):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(self):
+            original_dir = os.getcwd()
+            try:
+                os.chdir(path)
+                func(self)
+            finally:
+                os.chdir(original_dir)
+
+        return wrapper
 
     return decorator

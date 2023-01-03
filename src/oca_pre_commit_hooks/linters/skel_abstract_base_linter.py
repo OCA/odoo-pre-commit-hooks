@@ -15,6 +15,7 @@ class SkelAbstractLinter(metaclass=ABCMeta):
     msg_ctrl = "MESSAGES_CONTROL"
     enable_env_var = "OCA_HOOKS_ENABLE"
     disable_env_var = "OCA_HOOKS_DISABLE"
+    manifest_names: Sequence[str] = ["__manifest__.py", "__openerp__.py"]
 
     def __init__(self):
         super().__init__()
@@ -45,9 +46,11 @@ class SkelAbstractLinter(metaclass=ABCMeta):
         return set(map(str.strip, csv.split(",")))
 
     @staticmethod
-    def _default_env_csv(env_var):
+    def _default_env_csv(env_var) -> Set[str]:
         if environ.get(env_var, False):
             return SkelAbstractLinter.parse_csv(environ[env_var])
+
+        return set()
 
     # Lifecycle
     def on_global_open(self):
