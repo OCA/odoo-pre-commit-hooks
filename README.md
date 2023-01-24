@@ -188,10 +188,7 @@ It disable the entire file
 
 # Help
 ```bash
-usage: oca-checks-odoo-module [-h] [--no-verbose] [--no-exit]
-                              [--disable DISABLE] [--enable ENABLE]
-                              [--config CONFIG] [--list-msgs]
-                              [files_or_modules ...]
+usage: oca-checks-odoo-module [-h] [--no-verbose] [--no-exit] [--disable DISABLE] [--enable ENABLE] [--config CONFIG] [--list-msgs] [files_or_modules ...]
 
 positional arguments:
   files_or_modules      Odoo __manifest__.py paths or Odoo module paths.
@@ -201,12 +198,9 @@ options:
   --no-verbose          If enabled so disable verbose mode.
   --no-exit             If enabled so it will not call exit.
   --disable DISABLE, -d DISABLE
-                        Disable the checker with the given 'check-name',
-                        separated by commas.
+                        Disable the checker with the given 'check-name', separated by commas.
   --enable ENABLE, -e ENABLE
-                        Enable the checker with the given 'check-name',
-                        separated by commas. Default: All checks are enabled
-                        by default
+                        Enable the checker with the given 'check-name', separated by commas. Default: All checks are enabled by default
   --config CONFIG, -c CONFIG
                         Path to a configuration file
   --list-msgs           List all currently enabled messages.
@@ -220,9 +214,7 @@ options:
 
 # Help PO
 ```bash
-usage: oca-checks-po [-h] [--no-verbose] [--no-exit] [--disable DISABLE]
-                     [--enable ENABLE] [--config CONFIG] [--list-msgs]
-                     [po_files ...]
+usage: oca-checks-po [-h] [--no-verbose] [--no-exit] [--disable DISABLE] [--enable ENABLE] [--config CONFIG] [--list-msgs] [po_files ...]
 
 positional arguments:
   po_files              PO files.
@@ -232,12 +224,9 @@ options:
   --no-verbose          If enabled so disable verbose mode.
   --no-exit             If enabled so it will not call exit.
   --disable DISABLE, -d DISABLE
-                        Disable the checker with the given 'check-name',
-                        separated by commas.
+                        Disable the checker with the given 'check-name', separated by commas.
   --enable ENABLE, -e ENABLE
-                        Enable the checker with the given 'check-name',
-                        separated by commas. Default: All checks are enabled
-                        by default
+                        Enable the checker with the given 'check-name', separated by commas. Default: All checks are enabled by default
   --config CONFIG, -c CONFIG
                         Path to a configuration file
   --list-msgs           List all currently enabled messages.
@@ -275,15 +264,15 @@ options:
 
  * xml-dangerous-qweb-replace-low-priority
 
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.21/test_repo/broken_module/template1.xml#L18 Dangerous use of "replace" from view with priority `0 < 99`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.21/test_repo/broken_module/template1.xml#L4 Dangerous use of "replace" from view with priority `0 < 99`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.21/test_repo/broken_module/template1.xml#L7 Dangerous use of "replace" from view with priority `0 < 99`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.21/test_repo/broken_module/template1_copy.xml#L18 Dangerous use of "replace" from view with priority `0 < 99`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.21/test_repo/broken_module/template1_copy.xml#L4 Dangerous use of "replace" from view with priority `0 < 99`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.21/test_repo/broken_module/template1_copy.xml#L7 Dangerous use of "replace" from view with priority `0 < 99`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.21/test_repo/broken_module/template1_copy2.xml#L18 Dangerous use of "replace" from view with priority `0 < 99`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.21/test_repo/broken_module/template1_copy2.xml#L4 Dangerous use of "replace" from view with priority `0 < 99`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.21/test_repo/broken_module/template1_copy2.xml#L7 Dangerous use of "replace" from view with priority `0 < 99`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.21/test_repo/broken_module/template1.xml#L18 Dangerous use of "replace" from view with priority `0 < 99`. Only replace as a last resort. Try position="attributes", position="move" or t-if="False" (invisible) first
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.21/test_repo/broken_module/template1.xml#L4 Dangerous use of "replace" from view with priority `0 < 99`. Only replace as a last resort. Try position="attributes", position="move" or t-if="False" (invisible) first
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.21/test_repo/broken_module/template1.xml#L7 Dangerous use of "replace" from view with priority `0 < 99`. Only replace as a last resort. Try position="attributes", position="move" or t-if="False" (invisible) first
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.21/test_repo/broken_module/template1_copy.xml#L18 Dangerous use of "replace" from view with priority `0 < 99`. Only replace as a last resort. Try position="attributes", position="move" or t-if="False" (invisible) first
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.21/test_repo/broken_module/template1_copy.xml#L4 Dangerous use of "replace" from view with priority `0 < 99`. Only replace as a last resort. Try position="attributes", position="move" or t-if="False" (invisible) first
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.21/test_repo/broken_module/template1_copy.xml#L7 Dangerous use of "replace" from view with priority `0 < 99`. Only replace as a last resort. Try position="attributes", position="move" or t-if="False" (invisible) first
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.21/test_repo/broken_module/template1_copy2.xml#L18 Dangerous use of "replace" from view with priority `0 < 99`. Only replace as a last resort. Try position="attributes", position="move" or t-if="False" (invisible) first
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.21/test_repo/broken_module/template1_copy2.xml#L4 Dangerous use of "replace" from view with priority `0 < 99`. Only replace as a last resort. Try position="attributes", position="move" or t-if="False" (invisible) first
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.21/test_repo/broken_module/template1_copy2.xml#L7 Dangerous use of "replace" from view with priority `0 < 99`. Only replace as a last resort. Try position="attributes", position="move" or t-if="False" (invisible) first
 
  * xml-deprecated-data-node
 
@@ -340,12 +329,12 @@ options:
 
  * xml-view-dangerous-replace-low-priority
 
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.21/test_repo/broken_module/model_view2.xml#L108 Dangerous use of "replace" from view with priority 10 < 99
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.21/test_repo/broken_module/model_view2.xml#L25 Dangerous use of "replace" from view with priority 0 < 99
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.21/test_repo/broken_module/model_view2.xml#L37 Dangerous use of "replace" from view with priority 0 < 99
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.21/test_repo/broken_module/model_view2.xml#L47 Dangerous use of "replace" from view with priority 0 < 99
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.21/test_repo/broken_module/model_view2.xml#L70 Dangerous use of "replace" from view with priority 10 < 99
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.21/test_repo/broken_module/model_view2.xml#L92 Dangerous use of "replace" from view with priority 10 < 99
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.21/test_repo/broken_module/model_view2.xml#L108 Dangerous use of "replace" from view with priority 10 < 99. Only replace as a last resort. Try position="attributes", position="move" or invisible="1" first
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.21/test_repo/broken_module/model_view2.xml#L25 Dangerous use of "replace" from view with priority 0 < 99. Only replace as a last resort. Try position="attributes", position="move" or invisible="1" first
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.21/test_repo/broken_module/model_view2.xml#L37 Dangerous use of "replace" from view with priority 0 < 99. Only replace as a last resort. Try position="attributes", position="move" or invisible="1" first
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.21/test_repo/broken_module/model_view2.xml#L47 Dangerous use of "replace" from view with priority 0 < 99. Only replace as a last resort. Try position="attributes", position="move" or invisible="1" first
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.21/test_repo/broken_module/model_view2.xml#L70 Dangerous use of "replace" from view with priority 10 < 99. Only replace as a last resort. Try position="attributes", position="move" or invisible="1" first
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.21/test_repo/broken_module/model_view2.xml#L92 Dangerous use of "replace" from view with priority 10 < 99. Only replace as a last resort. Try position="attributes", position="move" or invisible="1" first
 
  * xml-xpath-translatable-item
 
