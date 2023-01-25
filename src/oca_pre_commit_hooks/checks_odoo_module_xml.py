@@ -188,7 +188,8 @@ class ChecksOdooModuleXML:
             self.checks_errors["xml-view-dangerous-replace-low-priority"].append(
                 f'{manifest_data["filename_short"]}:{record.sourceline} '
                 'Dangerous use of "replace" from view '
-                f"with priority {priority} < {DFTL_MIN_PRIORITY}"
+                f"with priority {priority} < {DFTL_MIN_PRIORITY}. "
+                'Only replace as a last resort. Try position="attributes", position="move" or invisible="1" first'
             )
 
         # deprecated_tree_attribute
@@ -271,7 +272,9 @@ class ChecksOdooModuleXML:
                         self.checks_errors["xml-dangerous-qweb-replace-low-priority"].append(
                             f'{manifest_data["filename_short"]}:{child.sourceline} '
                             'Dangerous use of "replace" from view '
-                            f"with priority `{priority} < {DFTL_MIN_PRIORITY}`"
+                            f"with priority `{priority} < {DFTL_MIN_PRIORITY}`. "
+                            "Only replace as a last resort. "
+                            'Try position="attributes", position="move" or t-if="False" (invisible) first'
                         )
 
     @utils.only_required_for_checks("xml-deprecated-data-node")

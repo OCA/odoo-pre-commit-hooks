@@ -275,15 +275,15 @@ options:
 
  * xml-dangerous-qweb-replace-low-priority
 
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.21/test_repo/broken_module/template1.xml#L18 Dangerous use of "replace" from view with priority `0 < 99`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.21/test_repo/broken_module/template1.xml#L4 Dangerous use of "replace" from view with priority `0 < 99`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.21/test_repo/broken_module/template1.xml#L7 Dangerous use of "replace" from view with priority `0 < 99`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.21/test_repo/broken_module/template1_copy.xml#L18 Dangerous use of "replace" from view with priority `0 < 99`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.21/test_repo/broken_module/template1_copy.xml#L4 Dangerous use of "replace" from view with priority `0 < 99`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.21/test_repo/broken_module/template1_copy.xml#L7 Dangerous use of "replace" from view with priority `0 < 99`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.21/test_repo/broken_module/template1_copy2.xml#L18 Dangerous use of "replace" from view with priority `0 < 99`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.21/test_repo/broken_module/template1_copy2.xml#L4 Dangerous use of "replace" from view with priority `0 < 99`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.21/test_repo/broken_module/template1_copy2.xml#L7 Dangerous use of "replace" from view with priority `0 < 99`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.21/test_repo/broken_module/template1.xml#L18 Dangerous use of "replace" from view with priority `0 < 99`. Only replace as a last resort. Try position="attributes", position="move" or t-if="False" (invisible) first
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.21/test_repo/broken_module/template1.xml#L4 Dangerous use of "replace" from view with priority `0 < 99`. Only replace as a last resort. Try position="attributes", position="move" or t-if="False" (invisible) first
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.21/test_repo/broken_module/template1.xml#L7 Dangerous use of "replace" from view with priority `0 < 99`. Only replace as a last resort. Try position="attributes", position="move" or t-if="False" (invisible) first
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.21/test_repo/broken_module/template1_copy.xml#L18 Dangerous use of "replace" from view with priority `0 < 99`. Only replace as a last resort. Try position="attributes", position="move" or t-if="False" (invisible) first
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.21/test_repo/broken_module/template1_copy.xml#L4 Dangerous use of "replace" from view with priority `0 < 99`. Only replace as a last resort. Try position="attributes", position="move" or t-if="False" (invisible) first
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.21/test_repo/broken_module/template1_copy.xml#L7 Dangerous use of "replace" from view with priority `0 < 99`. Only replace as a last resort. Try position="attributes", position="move" or t-if="False" (invisible) first
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.21/test_repo/broken_module/template1_copy2.xml#L18 Dangerous use of "replace" from view with priority `0 < 99`. Only replace as a last resort. Try position="attributes", position="move" or t-if="False" (invisible) first
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.21/test_repo/broken_module/template1_copy2.xml#L4 Dangerous use of "replace" from view with priority `0 < 99`. Only replace as a last resort. Try position="attributes", position="move" or t-if="False" (invisible) first
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.21/test_repo/broken_module/template1_copy2.xml#L7 Dangerous use of "replace" from view with priority `0 < 99`. Only replace as a last resort. Try position="attributes", position="move" or t-if="False" (invisible) first
 
  * xml-deprecated-data-node
 
@@ -340,12 +340,12 @@ options:
 
  * xml-view-dangerous-replace-low-priority
 
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.21/test_repo/broken_module/model_view2.xml#L108 Dangerous use of "replace" from view with priority 10 < 99
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.21/test_repo/broken_module/model_view2.xml#L25 Dangerous use of "replace" from view with priority 0 < 99
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.21/test_repo/broken_module/model_view2.xml#L37 Dangerous use of "replace" from view with priority 0 < 99
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.21/test_repo/broken_module/model_view2.xml#L47 Dangerous use of "replace" from view with priority 0 < 99
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.21/test_repo/broken_module/model_view2.xml#L70 Dangerous use of "replace" from view with priority 10 < 99
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.21/test_repo/broken_module/model_view2.xml#L92 Dangerous use of "replace" from view with priority 10 < 99
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.21/test_repo/broken_module/model_view2.xml#L108 Dangerous use of "replace" from view with priority 10 < 99. Only replace as a last resort. Try position="attributes", position="move" or invisible="1" first
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.21/test_repo/broken_module/model_view2.xml#L25 Dangerous use of "replace" from view with priority 0 < 99. Only replace as a last resort. Try position="attributes", position="move" or invisible="1" first
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.21/test_repo/broken_module/model_view2.xml#L37 Dangerous use of "replace" from view with priority 0 < 99. Only replace as a last resort. Try position="attributes", position="move" or invisible="1" first
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.21/test_repo/broken_module/model_view2.xml#L47 Dangerous use of "replace" from view with priority 0 < 99. Only replace as a last resort. Try position="attributes", position="move" or invisible="1" first
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.21/test_repo/broken_module/model_view2.xml#L70 Dangerous use of "replace" from view with priority 10 < 99. Only replace as a last resort. Try position="attributes", position="move" or invisible="1" first
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.21/test_repo/broken_module/model_view2.xml#L92 Dangerous use of "replace" from view with priority 10 < 99. Only replace as a last resort. Try position="attributes", position="move" or invisible="1" first
 
  * xml-xpath-translatable-item
 
