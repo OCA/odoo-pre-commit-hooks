@@ -274,7 +274,7 @@ class ChecksOdooModuleXML:
                             'Dangerous use of "replace" from view '
                             f"with priority `{priority} < {DFTL_MIN_PRIORITY}`. "
                             "Only replace as a last resort. "
-                            'Try position="attributes", position="move" or t-if="False" (invisible) first'
+                            'Try position="attributes", position="move" or t-if="False" first'
                         )
 
     @utils.only_required_for_checks("xml-deprecated-data-node")
