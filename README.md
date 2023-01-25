@@ -188,7 +188,10 @@ It disable the entire file
 
 # Help
 ```bash
-usage: oca-checks-odoo-module [-h] [--no-verbose] [--no-exit] [--disable DISABLE] [--enable ENABLE] [--config CONFIG] [--list-msgs] [files_or_modules ...]
+usage: oca-checks-odoo-module [-h] [--no-verbose] [--no-exit]
+                              [--disable DISABLE] [--enable ENABLE]
+                              [--config CONFIG] [--list-msgs]
+                              [files_or_modules ...]
 
 positional arguments:
   files_or_modules      Odoo __manifest__.py paths or Odoo module paths.
@@ -198,9 +201,12 @@ options:
   --no-verbose          If enabled so disable verbose mode.
   --no-exit             If enabled so it will not call exit.
   --disable DISABLE, -d DISABLE
-                        Disable the checker with the given 'check-name', separated by commas.
+                        Disable the checker with the given 'check-name',
+                        separated by commas.
   --enable ENABLE, -e ENABLE
-                        Enable the checker with the given 'check-name', separated by commas. Default: All checks are enabled by default
+                        Enable the checker with the given 'check-name',
+                        separated by commas. Default: All checks are enabled
+                        by default
   --config CONFIG, -c CONFIG
                         Path to a configuration file
   --list-msgs           List all currently enabled messages.
@@ -214,7 +220,9 @@ options:
 
 # Help PO
 ```bash
-usage: oca-checks-po [-h] [--no-verbose] [--no-exit] [--disable DISABLE] [--enable ENABLE] [--config CONFIG] [--list-msgs] [po_files ...]
+usage: oca-checks-po [-h] [--no-verbose] [--no-exit] [--disable DISABLE]
+                     [--enable ENABLE] [--config CONFIG] [--list-msgs]
+                     [po_files ...]
 
 positional arguments:
   po_files              PO files.
@@ -224,9 +232,12 @@ options:
   --no-verbose          If enabled so disable verbose mode.
   --no-exit             If enabled so it will not call exit.
   --disable DISABLE, -d DISABLE
-                        Disable the checker with the given 'check-name', separated by commas.
+                        Disable the checker with the given 'check-name',
+                        separated by commas.
   --enable ENABLE, -e ENABLE
-                        Enable the checker with the given 'check-name', separated by commas. Default: All checks are enabled by default
+                        Enable the checker with the given 'check-name',
+                        separated by commas. Default: All checks are enabled
+                        by default
   --config CONFIG, -c CONFIG
                         Path to a configuration file
   --list-msgs           List all currently enabled messages.
