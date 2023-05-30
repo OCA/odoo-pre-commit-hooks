@@ -1,6 +1,7 @@
 # pylint: disable=duplicate-code,useless-suppression
 import glob
 import os
+import re
 import subprocess
 import sys
 import unittest
@@ -95,6 +96,9 @@ class TestChecksWithFiles(common.ChecksCommon):
             sys.stdout.encoding
         )
         help_content = f"# Help\n```bash\n{help_content}\n```"
+        # remove extra spaces
+        help_content = re.sub(r"\n(      )+", " ", help_content)
+        help_content = re.sub(r"( )+", " ", help_content)
         new_readme = self.re_replace("[//]: # (start-help)", "[//]: # (end-help)", help_content, new_readme)
 
         all_check_errors = self.checks_run(sorted(self.file_paths), no_exit=True, no_verbose=False)
