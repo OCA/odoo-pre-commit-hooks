@@ -1,5 +1,6 @@
 import glob
 import os
+import re
 import subprocess
 import sys
 import unittest
@@ -65,6 +66,9 @@ class TestChecksPO(common.ChecksCommon):
             sys.stdout.encoding
         )
         help_content = f"# Help PO\n```bash\n{help_content}\n```"
+        # remove extra spaces
+        help_content = re.sub(r"\n(      )+", " ", help_content)
+        help_content = re.sub(r"( )+", " ", help_content)
         new_readme = self.re_replace("[//]: # (start-help-po)", "[//]: # (end-help-po)", help_content, new_readme)
 
         all_check_errors = self.checks_run(self.file_paths, no_exit=True, no_verbose=False)

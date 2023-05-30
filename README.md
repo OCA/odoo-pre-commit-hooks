@@ -219,19 +219,16 @@ be disabled.
 usage: oca-checks-odoo-module [-h] [--no-verbose] [--no-exit] [--disable DISABLE] [--enable ENABLE] [--config CONFIG] [--list-msgs] [files_or_modules ...]
 
 positional arguments:
-  files_or_modules      Odoo __manifest__.py paths or Odoo module paths.
+ files_or_modules Odoo __manifest__.py paths or Odoo module paths.
 
 options:
-  -h, --help            show this help message and exit
-  --no-verbose          If enabled so disable verbose mode.
-  --no-exit             If enabled so it will not call exit.
-  --disable DISABLE, -d DISABLE
-                        Disable the checker with the given 'check-name', separated by commas.
-  --enable ENABLE, -e ENABLE
-                        Enable the checker with the given 'check-name', separated by commas. Default: All checks are enabled by default
-  --config CONFIG, -c CONFIG
-                        Path to a configuration file (default: .oca_hooks.cfg)
-  --list-msgs           List all currently enabled messages.
+ -h, --help show this help message and exit
+ --no-verbose If enabled so disable verbose mode.
+ --no-exit If enabled so it will not call exit.
+ --disable DISABLE, -d DISABLE Disable the checker with the given 'check-name', separated by commas.
+ --enable ENABLE, -e ENABLE Enable the checker with the given 'check-name', separated by commas. Default: All checks are enabled by default
+ --config CONFIG, -c CONFIG Path to a configuration file (default: .oca_hooks.cfg)
+ --list-msgs List all currently enabled messages.
 
 ```
 
@@ -245,19 +242,16 @@ options:
 usage: oca-checks-po [-h] [--no-verbose] [--no-exit] [--disable DISABLE] [--enable ENABLE] [--config CONFIG] [--list-msgs] [po_files ...]
 
 positional arguments:
-  po_files              PO files.
+ po_files PO files.
 
 options:
-  -h, --help            show this help message and exit
-  --no-verbose          If enabled so disable verbose mode.
-  --no-exit             If enabled so it will not call exit.
-  --disable DISABLE, -d DISABLE
-                        Disable the checker with the given 'check-name', separated by commas.
-  --enable ENABLE, -e ENABLE
-                        Enable the checker with the given 'check-name', separated by commas. Default: All checks are enabled by default
-  --config CONFIG, -c CONFIG
-                        Path to a configuration file (default: .oca_hooks.cfg)
-  --list-msgs           List all currently enabled messages.
+ -h, --help show this help message and exit
+ --no-verbose If enabled so disable verbose mode.
+ --no-exit If enabled so it will not call exit.
+ --disable DISABLE, -d DISABLE Disable the checker with the given 'check-name', separated by commas.
+ --enable ENABLE, -e ENABLE Enable the checker with the given 'check-name', separated by commas. Default: All checks are enabled by default
+ --config CONFIG, -c CONFIG Path to a configuration file (default: .oca_hooks.cfg)
+ --list-msgs List all currently enabled messages.
 
 ```
 
