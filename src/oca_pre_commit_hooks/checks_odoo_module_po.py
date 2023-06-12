@@ -44,46 +44,36 @@ class ChecksOdooModulePO:
         self.enable = enable
         self.disable = disable
         self.checks_errors = defaultdict(list)
-        po_filename = utils.full_norm_path(po_filename)
-        top_path = utils.top_path(os.path.dirname(po_filename))
-        self.po_data = {
-            "filename": po_filename,
-            "filename_short": os.path.relpath(po_filename, top_path),
-            "data_section": os.path.basename(os.path.dirname(po_filename)),  # i18n or i18n_extra
-            "top_path": top_path,
-        }
+
+        self.top_path = utils.top_path(os.path.dirname(po_filename))
+        self.filename = utils.full_norm_path(po_filename)
+        self.filename_short = os.path.relpath(self.filename, self.top_path)
+        self.data_section = os.path.basename(os.path.dirname(self.filename))
+
+        self.po_data = []
+        self.file_error = None
+
         try:
             with open(po_filename, encoding="UTF-8") as filename_obj:
-                # Do not use polib.pofile(self.po_data["filename"])
+                # Do not use polib.pofile()
                 # because raise the following error for PO files with syntax error:
                 # pytest.PytestUnraisableExceptionWarning: Exception ignored in: <_io.FileIO [closed]>
                 # Traceback (most recent call last):
                 #     File "../polib.py", line 1474, in add
                 #     action = getattr(self, 'handle_%s' % next_state)
                 # ResourceWarning: unclosed file <_io.FileIO name='..' mode='rb' closefd=True>
-                polib_entries = polib.pofile(filename_obj.read())
-            self.po_data.update(
-                {
-                    "po": polib_entries,
-                    "file_error": None,
-                }
-            )
+                self.po_data = polib.pofile(filename_obj.read())
         except (OSError, UnicodeDecodeError) as po_err:
-            self.po_data.update(
-                {
-                    "po": [],
-                    "file_error": po_err,
-                }
-            )
+            self.file_error = po_err
 
     @utils.only_required_for_checks("po-syntax-error")
     def check_po_syntax_error(self):
         """* Check po-syntax-error
         Check syntax of PO files from i18n* folders"""
-        if not self.po_data["file_error"]:
+        if not self.file_error:
             return
-        msg = str(self.po_data["file_error"]).replace(f'{self.po_data["filename"]} ', "").strip()
-        self.checks_errors["po-syntax-error"].append(f'{self.po_data["filename_short"]}:1 {msg}')
+        msg = str(self.file_error).replace(f"{self.filename} ", "").strip()
+        self.checks_errors["po-syntax-error"].append(f"{self.filename_short}:1 {msg}")
 
     @staticmethod
     def parse_printf(main_str, secondary_str):
@@ -227,8 +217,7 @@ class ChecksOdooModulePO:
         match = re.match(r"(module[s]?): (\w+)", entry.comment)
         if not match:
             self.checks_errors["po-requires-module"].append(
-                f'{self.po_data["filename_short"]}:{entry.linenum} '
-                "Translation entry requires comment `#. module: MODULE`"
+                f"{self.filename_short}:{entry.linenum} " "Translation entry requires comment `#. module: MODULE`"
             )
 
         # po_msgstr_variables
@@ -242,14 +231,14 @@ class ChecksOdooModulePO:
             except PrintfStringParseError as str_parse_exc:
                 linenum = self._get_po_line_number(entry)
                 self.checks_errors["po-python-parse-printf"].append(
-                    f'{self.po_data["filename_short"]}:{linenum} '
+                    f"{self.filename_short}:{linenum} "
                     "Translation string couldn't be parsed "
                     f"correctly using str%variables {str_parse_exc}"
                 )
             except FormatStringParseError as str_parse_exc:
                 linenum = self._get_po_line_number(entry)
                 self.checks_errors["po-python-parse-format"].append(
-                    f'{self.po_data["filename_short"]}:{linenum} '
+                    f"{self.filename_short}:{linenum} "
                     "Translation string couldn't be parsed "
                     f"correctly using str.format {str_parse_exc}"
                 )
@@ -267,7 +256,7 @@ class ChecksOdooModulePO:
         or replacing newlines
         """
         duplicated = defaultdict(list)
-        for entry in self.po_data["po"]:
+        for entry in self.po_data:
             if entry.obsolete:
                 continue
 
@@ -285,7 +274,7 @@ class ChecksOdooModulePO:
             if len(entries[0].msgid) > 40:
                 msg_id_short = f"{msg_id_short}..."
             self.checks_errors["po-duplicate-message-definition"].append(
-                f'{self.po_data["filename_short"]}:{linenum} '
+                f"{self.filename_short}:{linenum} "
                 f'Duplicate PO message definition "{msg_id_short}" '
                 f"in lines {duplicated_str}"
             )
