@@ -51,6 +51,8 @@ class ChecksOdooModulePO:
         self.data_section = os.path.basename(os.path.dirname(self.filename))
 
         self.po_data = []
+        self.original_contents = None
+        self.pretty_contents = None
         self.file_error = None
 
         try:
@@ -62,9 +64,34 @@ class ChecksOdooModulePO:
                 #     File "../polib.py", line 1474, in add
                 #     action = getattr(self, 'handle_%s' % next_state)
                 # ResourceWarning: unclosed file <_io.FileIO name='..' mode='rb' closefd=True>
-                self.po_data = polib.pofile(filename_obj.read())
+                self.original_contents = filename_obj.read()
+
+            self.po_data = polib.pofile(self.original_contents)
         except (OSError, UnicodeDecodeError) as po_err:
             self.file_error = po_err
+
+    def _compute_pretty_contents(self):
+        self.po_data.sort(key=lambda entry: entry.msgid)
+        for entry in self.po_data:
+            if entry.msgid == entry.msgstr:
+                entry.msgstr = ""
+
+        self.pretty_contents = str(self.po_data)
+
+    @utils.only_required_for_checks("po-pretty-format")
+    def check_po_pretty_format(self):
+        """* Check po-pretty-format
+        Check the following:
+        1. Entries sorted alphabetically
+        2. Lines are wrapped at 78 columns (same as Odoo)
+        3. Clear msgstr when it is the same as msgid
+        """
+        if self.file_error:
+            return
+
+        self._compute_pretty_contents()
+        if self.pretty_contents != self.original_contents:
+            self.checks_errors["po-pretty-format"].append(f"{self.filename_short} is not formatted correctly")
 
     @utils.only_required_for_checks("po-syntax-error")
     def check_po_syntax_error(self):

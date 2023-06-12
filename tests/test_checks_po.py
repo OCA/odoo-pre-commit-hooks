@@ -22,6 +22,7 @@ EXPECTED_ERRORS = {
     "po-python-parse-printf": 2,
     "po-requires-module": 1,
     "po-syntax-error": 2,
+    "po-pretty-format": 6,
 }
 
 
@@ -29,8 +30,8 @@ class TestChecksPO(common.ChecksCommon):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        test_repo_path = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "test_repo")
-        po_glob_pattern = os.path.join(test_repo_path, "**", "*.po")
+        cls.test_repo_path = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "test_repo")
+        po_glob_pattern = os.path.join(cls.test_repo_path, "**", "*.po")
         pot_glob_pattern = f"{po_glob_pattern}t"
         cls.file_paths = glob.glob(po_glob_pattern, recursive=True) + glob.glob(pot_glob_pattern, recursive=True)
 
@@ -44,6 +45,16 @@ class TestChecksPO(common.ChecksCommon):
         all_check_errors = self.checks_run(["/tmp/no_exists"], no_exit=True, no_verbose=False)
         real_errors = self.get_count_code_errors(all_check_errors)
         self.assertDictEqual(real_errors, {"po-syntax-error": 1})
+
+    def test_pretty_format_po(self):
+        ugly_po = os.path.join(self.test_repo_path, "eleven_module", "i18n", "ugly.po")
+        pretty_po = os.path.join(self.test_repo_path, "eleven_module", "i18n", "pretty.po")
+
+        errors = self.checks_run([pretty_po], enable={"po-pretty-format"}, no_exit=True, no_verbose=False)
+        self.assertFalse(errors)
+
+        errors = self.checks_run([ugly_po], enable={"po-pretty-format"}, no_exit=True, no_verbose=False)
+        self.assertIn("po-pretty-format", errors[0])
 
     @unittest.skipIf(not os.environ.get("BUILD_README"), "BUILD_README environment variable not enabled")
     def test_build_docstring(self):
