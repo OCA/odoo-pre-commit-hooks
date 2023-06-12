@@ -38,6 +38,7 @@ Add to your ".pre-commit-config.yaml" configuration file the following input
         hooks:
         - id: oca-checks-odoo-module
         - id: oca-checks-po
+          args: ["--fix"]
 ```
 
 # Usage directly the entry points
@@ -222,7 +223,7 @@ be disabled.
 
 # Help
 ```bash
-usage: oca-checks-odoo-module [-h] [--no-verbose] [--no-exit] [--disable DISABLE] [--enable ENABLE] [--config CONFIG] [--list-msgs] [files_or_modules ...]
+usage: oca-checks-odoo-module [-h] [--no-verbose] [--no-exit] [--disable DISABLE] [--enable ENABLE] [--config CONFIG] [--list-msgs] [--fix] [files_or_modules ...]
 
 positional arguments:
  files_or_modules Odoo __manifest__.py paths or Odoo module paths.
@@ -235,6 +236,7 @@ options:
  --enable ENABLE, -e ENABLE Enable the checker with the given 'check-name', separated by commas. Default: All checks are enabled by default
  --config CONFIG, -c CONFIG Path to a configuration file (default: .oca_hooks.cfg)
  --list-msgs List all currently enabled messages.
+ --fix Automatically fix files when possible
 
 ```
 
@@ -245,7 +247,7 @@ options:
 
 # Help PO
 ```bash
-usage: oca-checks-po [-h] [--no-verbose] [--no-exit] [--disable DISABLE] [--enable ENABLE] [--config CONFIG] [--list-msgs] [po_files ...]
+usage: oca-checks-po [-h] [--no-verbose] [--no-exit] [--disable DISABLE] [--enable ENABLE] [--config CONFIG] [--list-msgs] [--fix] [po_files ...]
 
 positional arguments:
  po_files PO files.
@@ -258,6 +260,7 @@ options:
  --enable ENABLE, -e ENABLE Enable the checker with the given 'check-name', separated by commas. Default: All checks are enabled by default
  --config CONFIG, -c CONFIG Path to a configuration file (default: .oca_hooks.cfg)
  --list-msgs List all currently enabled messages.
+ --fix Automatically fix files when possible
 
 ```
 

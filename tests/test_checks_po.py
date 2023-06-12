@@ -5,6 +5,8 @@ import subprocess
 import sys
 import unittest
 from collections import defaultdict
+from shutil import copyfile
+from tempfile import TemporaryDirectory
 
 import oca_pre_commit_hooks
 from . import common
@@ -55,6 +57,25 @@ class TestChecksPO(common.ChecksCommon):
 
         errors = self.checks_run([ugly_po], enable={"po-pretty-format"}, no_exit=True, no_verbose=False)
         self.assertIn("po-pretty-format", errors[0])
+
+    @unittest.skipIf(
+        sys.platform.startswith("win"), "tmpdir may be created in a different disk, breaking relative paths"
+    )
+    def test_pretty_format_po_autofix(self):
+        ugly_po = os.path.join(self.test_repo_path, "eleven_module", "i18n", "ugly.po")
+        autofix_po = os.path.join(self.test_repo_path, "eleven_module", "i18n", "autofixed_ugly.po")
+
+        with TemporaryDirectory() as tmpdir:
+            ugly_po_cp = os.path.join(tmpdir, "ugly.po")
+            copyfile(ugly_po, ugly_po_cp)
+
+            self.checks_run([ugly_po_cp], enable={"po-pretty-format"}, no_exit=True, no_verbose=False, autofix=False)
+            with open(ugly_po_cp, encoding="utf-8") as ugly_fd, open(autofix_po, encoding="utf-8") as pretty_fd:
+                self.assertNotEqual(ugly_fd.read(), pretty_fd.read())
+
+            self.checks_run([ugly_po_cp], enable={"po-pretty-format"}, no_exit=True, no_verbose=False, autofix=True)
+            with open(ugly_po_cp, encoding="utf-8") as ugly_fd, open(autofix_po, encoding="utf-8") as pretty_fd:
+                self.assertEqual(ugly_fd.read(), pretty_fd.read())
 
     @unittest.skipIf(not os.environ.get("BUILD_README"), "BUILD_README environment variable not enabled")
     def test_build_docstring(self):

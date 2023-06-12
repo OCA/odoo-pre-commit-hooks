@@ -7,6 +7,7 @@ from collections import defaultdict
 import polib
 
 from oca_pre_commit_hooks import utils
+from oca_pre_commit_hooks.base_checker import BaseChecker
 
 # Regex used from https://github.com/translate/translate/blob/9de0d72437/translate/filters/checks.py#L50-L62  # noqa
 PRINTF_PATTERN = re.compile(
@@ -39,11 +40,9 @@ class FormatStringParseError(StringParseError):
     pass
 
 
-class ChecksOdooModulePO:
-    def __init__(self, po_filename, enable, disable):
-        self.enable = enable
-        self.disable = disable
-        self.checks_errors = defaultdict(list)
+class ChecksOdooModulePO(BaseChecker):
+    def __init__(self, po_filename, enable, disable, autofix):
+        super().__init__(enable, disable, autofix=autofix)
 
         self.top_path = utils.top_path(os.path.dirname(po_filename))
         self.filename = utils.full_norm_path(po_filename)
@@ -54,6 +53,7 @@ class ChecksOdooModulePO:
         self.original_contents = None
         self.pretty_contents = None
         self.file_error = None
+        self.needs_autofix = False
 
         try:
             with open(po_filename, encoding="UTF-8") as filename_obj:
@@ -78,6 +78,11 @@ class ChecksOdooModulePO:
 
         self.pretty_contents = str(self.po_data)
 
+    def perform_autofix(self):
+        print(f"Fixing {self.filename_short} ⚒")
+        with open(self.filename, "w", encoding="utf-8") as po_fd:
+            po_fd.write(self.pretty_contents)
+
     @utils.only_required_for_checks("po-pretty-format")
     def check_po_pretty_format(self):
         """* Check po-pretty-format
@@ -91,6 +96,7 @@ class ChecksOdooModulePO:
 
         self._compute_pretty_contents()
         if self.pretty_contents != self.original_contents:
+            self.needs_autofix = True
             self.checks_errors["po-pretty-format"].append(f"{self.filename_short} is not formatted correctly")
 
     @utils.only_required_for_checks("po-syntax-error")
@@ -315,8 +321,11 @@ class ChecksOdooModulePO:
             for msg in msgs:
                 print(f"{msg} - [{check_error}]")
 
+        if self.autofix and self.needs_autofix:
+            self.perform_autofix()
 
-def run(po_files, enable=None, disable=None, no_verbose=False, no_exit=False, list_msgs=False):
+
+def run(po_files, enable=None, disable=None, no_verbose=False, no_exit=False, list_msgs=False, autofix=False):
     if list_msgs:
         _, checks_docstring = utils.get_checks_docstring([ChecksOdooModulePO])
         if not no_verbose:
@@ -330,7 +339,7 @@ def run(po_files, enable=None, disable=None, no_verbose=False, no_exit=False, li
     exit_status = 0
     for po_file in po_files:
         # Use file by file in order release memory reading file early
-        checks_po_obj = ChecksOdooModulePO(po_file, enable, disable)
+        checks_po_obj = ChecksOdooModulePO(po_file, enable, disable, autofix)
         try:
             checks_po_obj.run_checks(no_verbose)
             if checks_po_obj.checks_errors:
