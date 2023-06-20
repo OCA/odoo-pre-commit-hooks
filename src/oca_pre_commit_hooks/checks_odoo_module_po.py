@@ -268,11 +268,12 @@ class ChecksOdooModulePO:
         """
         duplicated = defaultdict(list)
         for entry in self.po_data["po"]:
+            entry: polib.POEntry
             if entry.obsolete:
                 continue
 
             # po_duplicate_message_definition
-            duplicated[hash(entry.msgid)].append(entry)
+            duplicated[(entry.msgid, tuple(entry.occurrences))].append(entry)
             for meth in utils.getattr_checks(self, self.enable, self.disable, "visit_entry"):
                 meth(entry)
 
