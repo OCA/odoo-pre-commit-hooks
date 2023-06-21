@@ -273,7 +273,10 @@ class ChecksOdooModulePO:
                 continue
 
             # po_duplicate_message_definition
-            duplicated[(entry.msgid, tuple(entry.occurrences))].append(entry)
+            # Occurrences are deduplicated beforehand as it is valid for odoo to have multiple code
+            # entries, where each entry points to line 0 of a particular file.
+            for occurrence in set(entry.occurrences):
+                duplicated[(entry.msgid, occurrence)].append(entry)
             for meth in utils.getattr_checks(self, self.enable, self.disable, "visit_entry"):
                 meth(entry)
 
