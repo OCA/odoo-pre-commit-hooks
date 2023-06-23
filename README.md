@@ -131,6 +131,11 @@ be disabled.
 * Check xml-not-valid-char-link
         The resource in in src/href contains a not valid character.
 
+* Check xml-oe-structure-missing-id
+
+        Ensure all tags with class 'oe_structure' have an ID. For more information on the rationale, see:
+        https://github.com/OCA/odoo-pre-commit-hooks/issues/27
+
 * Check xml-redundant-module-name
 
         If the module is called "module_a" and the xmlid is
@@ -315,7 +320,7 @@ options:
 
  * xml-deprecated-qweb-directive
 
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.25/test_repo/test_module/website_templates.xml#L14 Deprecated QWeb directive `"t-field-options"`. Use `"t-options"` instead
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.25/test_repo/test_module/website_templates.xml#L21 Deprecated QWeb directive `"t-field-options"`. Use `"t-options"` instead
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.25/test_repo/test_module/website_templates.xml#L7 Deprecated QWeb directive `"t-esc-options"`. Use `"t-options"` instead
 
  * xml-deprecated-tree-attribute
@@ -337,8 +342,13 @@ options:
 
  * xml-not-valid-char-link
 
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.25/test_repo/test_module/website_templates.xml#L21 The resource in in src/href contains a not valid character
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.25/test_repo/test_module/website_templates.xml#L23 The resource in in src/href contains a not valid character
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.25/test_repo/test_module/website_templates.xml#L34 The resource in in src/href contains a not valid character
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.25/test_repo/test_module/website_templates.xml#L36 The resource in in src/href contains a not valid character
+
+ * xml-oe-structure-missing-id
+
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.25/test_repo/test_module/website_templates.xml#L25 Consider removing the class 'oe_structure' or adding an id to the tag
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.25/test_repo/test_module/website_templates.xml#L9 Consider removing the class 'oe_structure' or adding an id to the tag
 
  * xml-redundant-module-name
 

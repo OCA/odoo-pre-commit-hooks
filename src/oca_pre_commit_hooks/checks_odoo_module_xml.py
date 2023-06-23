@@ -10,6 +10,16 @@ DFTL_MIN_PRIORITY = 99
 DFLT_DEPRECATED_TREE_ATTRS = ["colors", "fonts", "string"]
 
 
+# Same as Odoo: https://github.com/odoo/odoo/commit/9cefa76988ff94c3d590c6631b604755114d0297
+def _hasclass(context, *cls):
+    """Checks if the context node has all the classes passed as arguments"""
+    node_classes = set(context.context_node.attrib.get("class", "").split())
+    return node_classes.issuperset(cls)
+
+
+etree.FunctionNamespace(None)["hasclass"] = _hasclass
+
+
 class ChecksOdooModuleXML:
     def __init__(self, manifest_datas, module_name, enable, disable):
         self.module_name = module_name
@@ -348,3 +358,17 @@ class ChecksOdooModuleXML:
                         f'{manifest_data["filename_short"]}:{xpath_node.sourceline} '
                         f"Use of translatable xpath `text()`"
                     )
+
+    @utils.only_required_for_checks("xml-oe-structure-missing-id")
+    def check_xml_oe_structure(self):
+        """* Check xml-oe-structure-missing-id
+
+        Ensure all tags with class 'oe_structure' have an ID. For more information on the rationale, see:
+        https://github.com/OCA/odoo-pre-commit-hooks/issues/27
+        """
+        for manifest_data in self.manifest_datas:
+            for xpath_node in manifest_data["node"].xpath("//*[hasclass('oe_structure') and not(@id)]"):
+                self.checks_errors["xml-oe-structure-missing-id"].append(
+                    f'{manifest_data["filename_short"]}:{xpath_node.sourceline} '
+                    f"Consider removing the class 'oe_structure' or adding an id to the tag"
+                )
