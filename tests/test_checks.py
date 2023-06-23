@@ -24,7 +24,7 @@ EXPECTED_ERRORS = {
     "xml-create-user-wo-reset-password": 1,
     "xml-dangerous-filter-wo-user": 1,
     "xml-dangerous-qweb-replace-low-priority": 9,
-    "xml-deprecated-data-node": 7,
+    "xml-deprecated-data-node": 8,
     "xml-deprecated-openerp-node": 4,
     "xml-deprecated-qweb-directive": 2,
     "xml-deprecated-tree-attribute": 3,
