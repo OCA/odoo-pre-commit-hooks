@@ -23,13 +23,12 @@ etree.FunctionNamespace(None)["hasclass"] = _hasclass
 
 class ChecksOdooModuleXML(BaseChecker):
     xpath_deprecated_data = etree.XPath("/odoo[count(./*) < 2]/data|/openerp[count(./*) < 2]/data")
-    xpath_view_replaces = etree.XPath(
-        ".//field[@name='name' and @position='replace'][1] | .//*[@position='replace'][1]"
-    )
+    xpath_oe_structure_woid = etree.XPath("//*[hasclass('oe_structure') and not(@id)]")
     xpath_record_wid = etree.XPath("/odoo//record[@id] | /openerp//record[@id]")
     xpath_view_arch_xml = etree.XPath("field[@name='arch' and @type='xml'][1]")
     xpath_ir_fields = etree.XPath("field[@name='name' or @name='user_id']")
     xpath_template = etree.XPath("/odoo//template|/openerp//template")
+    xpath_view_replaces = etree.XPath(".//*[@position='replace'][1]")
     xpath_char_links = etree.XPath(".//link[@href]|.//script[@src]")
     xpath_view_priority = etree.XPath("field[@name='priority'][1]")
     xpath_field_name = etree.XPath("field[@name='name'][1]")
@@ -376,7 +375,7 @@ class ChecksOdooModuleXML(BaseChecker):
         https://github.com/OCA/odoo-pre-commit-hooks/issues/27
         """
         for manifest_data in self.manifest_datas:
-            for xpath_node in manifest_data["node"].xpath("//*[hasclass('oe_structure') and not(@id)]"):
+            for xpath_node in self.xpath_oe_structure_woid(manifest_data["node"]):
                 self.checks_errors["xml-oe-structure-missing-id"].append(
                     f'{manifest_data["filename_short"]}:{xpath_node.sourceline} '
                     f"Consider removing the class 'oe_structure' or adding an id to the tag"
