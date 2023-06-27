@@ -38,6 +38,7 @@ Add to your ".pre-commit-config.yaml" configuration file the following input
         hooks:
         - id: oca-checks-odoo-module
         - id: oca-checks-po
+          args: ["--fix"]
 ```
 
 # Usage directly the entry points
@@ -210,6 +211,12 @@ be disabled.
         and it shows the entire string of the message_id without truncating it
         or replacing newlines
 
+* Check po-pretty-format
+        Check the following:
+        1. Entries sorted alphabetically
+        2. Lines are wrapped at 78 columns (same as Odoo)
+        3. Clear msgstr when it is the same as msgid
+
 * Check po-syntax-error
         Check syntax of PO files from i18n* folders
 
@@ -221,7 +228,7 @@ be disabled.
 
 # Help
 ```bash
-usage: oca-checks-odoo-module [-h] [--no-verbose] [--no-exit] [--disable DISABLE] [--enable ENABLE] [--config CONFIG] [--list-msgs] [files_or_modules ...]
+usage: oca-checks-odoo-module [-h] [--no-verbose] [--no-exit] [--disable DISABLE] [--enable ENABLE] [--config CONFIG] [--list-msgs] [--fix] [files_or_modules ...]
 
 positional arguments:
  files_or_modules Odoo __manifest__.py paths or Odoo module paths.
@@ -234,6 +241,7 @@ options:
  --enable ENABLE, -e ENABLE Enable the checker with the given 'check-name', separated by commas. Default: All checks are enabled by default
  --config CONFIG, -c CONFIG Path to a configuration file (default: .oca_hooks.cfg)
  --list-msgs List all currently enabled messages.
+ --fix Automatically fix files when possible
 
 ```
 
@@ -244,7 +252,7 @@ options:
 
 # Help PO
 ```bash
-usage: oca-checks-po [-h] [--no-verbose] [--no-exit] [--disable DISABLE] [--enable ENABLE] [--config CONFIG] [--list-msgs] [po_files ...]
+usage: oca-checks-po [-h] [--no-verbose] [--no-exit] [--disable DISABLE] [--enable ENABLE] [--config CONFIG] [--list-msgs] [--fix] [po_files ...]
 
 positional arguments:
  po_files PO files.
@@ -257,6 +265,7 @@ options:
  --enable ENABLE, -e ENABLE Enable the checker with the given 'check-name', separated by commas. Default: All checks are enabled by default
  --config CONFIG, -c CONFIG Path to a configuration file (default: .oca_hooks.cfg)
  --list-msgs List all currently enabled messages.
+ --fix Automatically fix files when possible
 
 ```
 
@@ -388,6 +397,15 @@ options:
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.25/test_repo/broken_module/i18n/es.po#L17 Duplicate PO message definition "Branch" in lines 23, 29
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.25/test_repo/broken_module/i18n/es.po#L35 Duplicate PO message definition "Message id toooooooooooooooooooooooooooo..." in lines 41
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.25/test_repo/broken_module/i18n/es.po#L65 Duplicate PO message definition "One variable {variable1}" in lines 71
+
+ * po-pretty-format
+
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.25/test_repo/broken_module/i18n/ar_unicode.po is not formatted correctly
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.25/test_repo/broken_module/i18n/broken_module.pot is not formatted correctly
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.25/test_repo/broken_module/i18n/es.po is not formatted correctly
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.25/test_repo/broken_module/xml_semi_empty.po is not formatted correctly
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.25/test_repo/eleven_module/i18n/ugly.po is not formatted correctly
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.25/test_repo/test_module/i18n/fr.po is not formatted correctly
 
  * po-python-parse-format
 
