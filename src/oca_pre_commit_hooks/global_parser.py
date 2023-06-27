@@ -57,6 +57,12 @@ class GlobalParser(argparse.ArgumentParser):
         self.add_argument(
             "--list-msgs", default=False, action="store_true", help="List all currently enabled messages."
         )
+        self.add_argument(
+            "--fix",
+            action="store_true",
+            dest="autofix",
+            help="Automatically fix files when possible",
+        )
 
     @staticmethod
     def _default_env_csv(env_var):
