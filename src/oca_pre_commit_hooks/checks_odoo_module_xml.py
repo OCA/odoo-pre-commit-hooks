@@ -22,6 +22,35 @@ etree.FunctionNamespace(None)["hasclass"] = _hasclass
 
 
 class ChecksOdooModuleXML(BaseChecker):
+    xpath_deprecated_data = etree.XPath("/odoo[count(./*) < 2]/data|/openerp[count(./*) < 2]/data")
+    xpath_view_replaces = etree.XPath(
+        ".//field[@name='name' and @position='replace'][1] | .//*[@position='replace'][1]"
+    )
+    xpath_record_wid = etree.XPath("/odoo//record[@id] | /openerp//record[@id]")
+    xpath_view_arch_xml = etree.XPath("field[@name='arch' and @type='xml'][1]")
+    xpath_ir_fields = etree.XPath("field[@name='name' or @name='user_id']")
+    xpath_template = etree.XPath("/odoo//template|/openerp//template")
+    xpath_char_links = etree.XPath(".//link[@href]|.//script[@src]")
+    xpath_view_priority = etree.XPath("field[@name='priority'][1]")
+    xpath_field_name = etree.XPath("field[@name='name'][1]")
+    xpath_record_fields_wname = etree.XPath("field[@name]")
+    xpath_comment = etree.XPath("//comment()")
+    xpath_openerp = etree.XPath("/openerp")
+    xpath_xpath = etree.XPath("//xpath")
+
+    tree_deprecate_attrs = {"string", "colors", "fonts"}
+    xpath_tree_deprecated = etree.XPath(f'.//tree[{"|".join(f"@{a}" for a in tree_deprecate_attrs)}]')
+
+    qweb_deprecated_directives = {
+        "t-esc-options",
+        "t-field-options",
+        "t-raw-options",
+    }
+    qweb_deprecated_attrs = "|".join(f"@{d}" for d in qweb_deprecated_directives)
+    xpath_qweb_deprecated = etree.XPath(
+        f"/odoo//template//*[{qweb_deprecated_attrs}] | " f"/openerp//template//*[{qweb_deprecated_attrs}]"
+    )
+
     def __init__(self, manifest_datas, module_name, enable, disable):
         super().__init__(enable, disable, module_name)
         self.manifest_datas = manifest_datas
@@ -51,7 +80,7 @@ class ChecksOdooModuleXML(BaseChecker):
         e.g. <!-- oca-hooks:disable=check-name -->
         """
         all_checks_disabled = set()
-        for comment_node in node.xpath("//comment()"):
+        for comment_node in self.xpath_comment(node):
             checks_disabled, use_deprecated = utils.checks_disabled(comment_node.text)
             all_checks_disabled |= set(checks_disabled)
             if use_deprecated:
@@ -66,23 +95,23 @@ class ChecksOdooModuleXML(BaseChecker):
         disable_node = manifest_data["disabled_checks"]
         return utils.is_message_enabled(checks, self.enable, self.disable, disable_node)
 
-    @staticmethod
-    def _get_priority(view):
+    @classmethod
+    def _get_priority(cls, view):
         try:
-            priority_node = view.xpath("field[@name='priority'][1]")[0]
+            priority_node = cls.xpath_view_priority(view)[0]
             return int(priority_node.get("eval", priority_node.text) or 0)
         except (IndexError, ValueError):
             # IndexError: If the field is not found
             # ValueError: If the value found is not valid integer
             return 0
 
-    @staticmethod
-    def _is_replaced_field(view):
+    @classmethod
+    def _is_replaced_field(cls, view):
         try:
-            arch = view.xpath("field[@name='arch' and @type='xml'][1]")[0]
+            arch = cls.xpath_view_arch_xml(view)[0]
         except IndexError:
             return False
-        replaces = arch.xpath(".//field[@name='name' and @position='replace'][1] | .//*[@position='replace'][1]")
+        replaces = cls.xpath_view_replaces(arch)
         return bool(replaces)
 
     # Not set only_required_for_checks because of the calls to visit_xml_record... methods
@@ -103,7 +132,7 @@ class ChecksOdooModuleXML(BaseChecker):
         xmlids_section = defaultdict(list)
         xml_fields = defaultdict(list)
         for manifest_data in self.manifest_datas:
-            for record in manifest_data["node"].xpath("/odoo//record[@id] | /openerp//record[@id]"):
+            for record in self.xpath_record_wid(manifest_data["node"]):
                 record_id = record.get("id")
 
                 if self.is_message_enabled("xml-duplicate-record-id", manifest_data):
@@ -116,7 +145,7 @@ class ChecksOdooModuleXML(BaseChecker):
 
                 # fields_duplicated
                 if self.is_message_enabled("xml-duplicate-fields", manifest_data):
-                    for field in record.xpath("field[@name]"):
+                    for field in self.xpath_record_fields_wname(record):
                         xml_fields[(field.get("name"), field.getparent())].append((manifest_data, field))
 
                 # call "visit_xml_record_*" methods to re-use the same node xpath loop
@@ -201,10 +230,8 @@ class ChecksOdooModuleXML(BaseChecker):
             )
 
         # deprecated_tree_attribute
-        deprecate_attrs = {"string", "colors", "fonts"}
-        xpath = f".//tree[{'|'.join(f'@{a}' for a in deprecate_attrs)}]"
-        for deprecate_attr_node in record.xpath(xpath):
-            deprecate_attr_str = ",".join(set(deprecate_attr_node.attrib.keys()) & deprecate_attrs)
+        for deprecate_attr_node in self.xpath_tree_deprecated(record):
+            deprecate_attr_str = ",".join(set(deprecate_attr_node.attrib.keys()) & self.tree_deprecate_attrs)
             self.checks_errors["xml-deprecated-tree-attribute"].append(
                 f'{manifest_data["filename_short"]}:{deprecate_attr_node.sourceline} '
                 f'Deprecated "<tree {deprecate_attr_str}=..."'
@@ -236,7 +263,7 @@ class ChecksOdooModuleXML(BaseChecker):
         # xml_dangerous_filter_wo_user
         if record.get("model") != "ir.filters":
             return
-        ir_filter_fields = record.xpath("field[@name='name' or @name='user_id']")
+        ir_filter_fields = self.xpath_ir_fields(record)
         # if exists field="name" then is a new record
         # then should be field="user_id" too
         if ir_filter_fields and len(ir_filter_fields) == 1:
@@ -251,16 +278,15 @@ class ChecksOdooModuleXML(BaseChecker):
         for manifest_data in self.manifest_datas:
             if not self.is_message_enabled("xml-not-valid-char-link", manifest_data):
                 continue
-            for name, attr in (("link", "href"), ("script", "src")):
-                nodes = manifest_data["node"].xpath(f".//{name}[@{attr}]")
-                for node in nodes:
-                    resource = node.get(attr, "")
-                    ext = os.path.splitext(os.path.basename(resource))[1]
-                    if resource.startswith("/") and not re.search("^[.][a-zA-Z]+$", ext):
-                        self.checks_errors["xml-not-valid-char-link"].append(
-                            f'{manifest_data["filename_short"]}:{node.sourceline} '
-                            f"The resource in in src/href contains a not valid character"
-                        )
+
+            for node in self.xpath_char_links(manifest_data["node"]):
+                resource = node.get("href", "") or node.get("src", "")
+                ext = os.path.splitext(os.path.basename(resource))[1]
+                if resource.startswith("/") and not re.search("^[.][a-zA-Z]+$", ext):
+                    self.checks_errors["xml-not-valid-char-link"].append(
+                        f'{manifest_data["filename_short"]}:{node.sourceline} '
+                        f"The resource in in src/href contains a not valid character"
+                    )
 
     @utils.only_required_for_checks("xml-dangerous-qweb-replace-low-priority")
     def check_xml_dangerous_qweb_replace_low_priority(self):
@@ -269,7 +295,7 @@ class ChecksOdooModuleXML(BaseChecker):
         for manifest_data in self.manifest_datas:
             if not self.is_message_enabled("xml-dangerous-qweb-replace-low-priority", manifest_data):
                 continue
-            for template in manifest_data["node"].xpath("/odoo//template|/openerp//template"):
+            for template in self.xpath_template(manifest_data["node"]):
                 try:
                     priority = int(template.get("priority"))
                 except (ValueError, TypeError):
@@ -292,20 +318,13 @@ class ChecksOdooModuleXML(BaseChecker):
         for manifest_data in self.manifest_datas:
             if not self.is_message_enabled("xml-deprecated-data-node", manifest_data):
                 continue
-            for odoo_node in manifest_data["node"].xpath("/odoo|/openerp"):
-                children_count = 0
-                for children_count, _ in enumerate(odoo_node.iterchildren(), start=1):
-                    if children_count == 2:
-                        # Only needs to know if there are more than one child
-                        break
-                data_nodes = odoo_node.xpath("./data")
-                if children_count == 1 and len(data_nodes) == 1:
-                    # TODO: Add autofix option
-                    self.checks_errors["xml-deprecated-data-node"].append(
-                        f'{manifest_data["filename_short"]}:{data_nodes[0].sourceline} '
-                        'Use `<odoo>` instead of `<odoo><data>` or use `<odoo noupdate="1">` '
-                        'instead of `<odoo><data noupdate="1">`'
-                    )
+            for data_node in self.xpath_deprecated_data(manifest_data["node"]):
+                # TODO: Add autofix option
+                self.checks_errors["xml-deprecated-data-node"].append(
+                    f'{manifest_data["filename_short"]}:{data_node.sourceline} '
+                    'Use `<odoo>` instead of `<odoo><data>` or use `<odoo noupdate="1">` '
+                    'instead of `<odoo><data noupdate="1">`'
+                )
 
     @utils.only_required_for_checks("xml-deprecated-openerp-node")
     def check_xml_deprecated_openerp_node(self):
@@ -314,7 +333,7 @@ class ChecksOdooModuleXML(BaseChecker):
         for manifest_data in self.manifest_datas:
             if not self.is_message_enabled("xml-deprecated-openerp-node", manifest_data):
                 continue
-            for openerp_node in manifest_data["node"].xpath("/openerp"):
+            for openerp_node in self.xpath_openerp(manifest_data["node"]):
                 # TODO: Add autofix option
                 self.checks_errors["xml-deprecated-openerp-node"].append(
                     f'{manifest_data["filename_short"]}:{openerp_node.sourceline} ' "Deprecated <openerp> xml node"
@@ -324,19 +343,11 @@ class ChecksOdooModuleXML(BaseChecker):
     def check_xml_deprecated_qweb_directive(self):
         """* Check xml-deprecated-qweb-directive
         for use of deprecated QWeb directives t-*-options"""
-        deprecated_directives = {
-            "t-esc-options",
-            "t-field-options",
-            "t-raw-options",
-        }
-        deprecated_attrs = "|".join(f"@{d}" for d in deprecated_directives)
-        xpath = f"/odoo//template//*[{deprecated_attrs}] | " f"/openerp//template//*[{deprecated_attrs}]"
-
         for manifest_data in self.manifest_datas:
             if not self.is_message_enabled("xml-deprecated-qweb-directive", manifest_data):
                 continue
-            for node in manifest_data["node"].xpath(xpath):
-                directive_str = ", ".join(set(node.attrib) & deprecated_directives)
+            for node in self.xpath_qweb_deprecated(manifest_data["node"]):
+                directive_str = ", ".join(set(node.attrib) & self.qweb_deprecated_directives)
                 self.checks_errors["xml-deprecated-qweb-directive"].append(
                     f'{manifest_data["filename_short"]}:{node.sourceline} '
                     f'Deprecated QWeb directive `"{directive_str}"`. Use `"t-options"` instead'
@@ -349,7 +360,7 @@ class ChecksOdooModuleXML(BaseChecker):
         It could raise `ValueError` exception if the language is changed.
         """
         for manifest_data in self.manifest_datas:
-            for xpath_node in manifest_data["node"].xpath("//xpath"):
+            for xpath_node in self.xpath_xpath(manifest_data["node"]):
                 node_expr = (xpath_node.get("expr") or "").replace(" ", "")
                 if "[contains(text()" in node_expr or "[text()=" in node_expr:
                     self.checks_errors["xml-xpath-translatable-item"].append(
