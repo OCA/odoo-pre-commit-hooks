@@ -26,6 +26,14 @@
         <t t-set="address"/>
     </template>
 
+    <template id="my_duplicate_template">
+        <span>Hello</span>
+    </template>
+
+    <template id="my_duplicate_template">
+        <span>Ooops</span>
+    </template>
+
     <templates id="my_template_xpath" xml:space="preserve">
         <t t-name="t-name" t-inherit="module.Inherited" t-inherit-mode="extension" owl="1">
             <xpath expr="//div[contains(text(), 'Translatable Value')]" position="replace">

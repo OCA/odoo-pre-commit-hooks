@@ -37,6 +37,7 @@ EXPECTED_ERRORS = {
     "xml-xpath-translatable-item": 4,
     "xml-oe-structure-missing-id": 6,
     "xml-record-missing-id": 2,
+    "xml-duplicate-template-id": 9,
 }
 
 

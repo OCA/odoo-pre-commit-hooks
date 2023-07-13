@@ -1,6 +1,7 @@
 import os
 import re
-from collections import defaultdict
+from collections import defaultdict, namedtuple
+from typing import Dict, List
 
 from lxml import etree
 
@@ -19,6 +20,9 @@ def _hasclass(context, *cls):
 
 
 etree.FunctionNamespace(None)["hasclass"] = _hasclass
+
+# Store the shortname for the XML File and one of its Elements
+FileElementPair = namedtuple("FileElementPair", ["filename", "element"])
 
 
 class ChecksOdooModuleXML(BaseChecker):
@@ -129,7 +133,7 @@ class ChecksOdooModuleXML(BaseChecker):
                 <field name="field_name1"...
                 <field name="field_name1"...
         """
-        xmlids_section = defaultdict(list)
+        xmlids_section: Dict[str, List[FileElementPair]] = defaultdict(list)
         xml_fields = defaultdict(list)
         for manifest_data in self.manifest_datas:
             for record in self.xpath_record(manifest_data["node"]):
@@ -149,7 +153,7 @@ class ChecksOdooModuleXML(BaseChecker):
                         f"{manifest_data['data_section']}/{record_id}"
                         f"_noupdate_{record.getparent().get('noupdate', '0')}"
                     )
-                    xmlids_section[xmlid_key].append((manifest_data, record))
+                    xmlids_section[xmlid_key].append(FileElementPair(manifest_data["filename_short"], record))
 
                 # fields_duplicated
                 if self.is_message_enabled("xml-duplicate-fields", manifest_data["disabled_checks"]):
@@ -164,9 +168,9 @@ class ChecksOdooModuleXML(BaseChecker):
         for xmlid_key, records in xmlids_section.items():
             if len(records) < 2:
                 continue
-            lines_str = ", ".join(f"{record[0]['filename_short']}:{record[1].sourceline}" for record in records[1:])
+            lines_str = ", ".join(f"{record.filename}:{record.element.sourceline}" for record in records[1:])
             self.checks_errors["xml-duplicate-record-id"].append(
-                f"{records[0][0]['filename_short']}:{records[0][1].sourceline} "
+                f"{records[0].filename}:{records[0].element.sourceline} "
                 f'Duplicate xml record id "{xmlid_key}" in {lines_str}'
             )
 
@@ -301,30 +305,59 @@ class ChecksOdooModuleXML(BaseChecker):
                         f"The resource in in src/href contains a not valid character"
                     )
 
-    @utils.only_required_for_checks("xml-dangerous-qweb-replace-low-priority")
-    def check_xml_dangerous_qweb_replace_low_priority(self):
+    def verify_qweb_replace(self, template, manifest_data):
+        try:
+            priority = int(template.get("priority"))
+        except (ValueError, TypeError):
+            priority = 0
+        for child in template.iterchildren():
+            # TODO: Add self.config.min_priority instead of DFTL_MIN_PRIORITY
+            if child.get("position") == "replace" and priority < DFTL_MIN_PRIORITY:
+                self.checks_errors["xml-dangerous-qweb-replace-low-priority"].append(
+                    f'{manifest_data["filename_short"]}:{child.sourceline} '
+                    'Dangerous use of "replace" from view '
+                    f"with priority `{priority} < {DFTL_MIN_PRIORITY}`. "
+                    "Only replace as a last resort. "
+                    'Try position="attributes", position="move" or t-if="False" first'
+                )
+
+    @staticmethod
+    def get_template_xmlid(template, manifest_data):
+        template_id = template.get("id")
+        if not template_id:
+            return ""
+
+        return f"{manifest_data['data_section']}/{template_id}_noupdate_{template.getparent().get('noupdate', '0')}"
+
+    @utils.only_required_for_checks("xml-dangerous-qweb-replace-low-priority", "xml-duplicate-template-id")
+    def check_xml_templates(self):
         """* Check xml-dangerous-qweb-replace-low-priority
-        Dangerous qweb view defined with low priority"""
+        Dangerous qweb view defined with low priority
+
+        * Check xml-duplicate-template-id
+        Triggered when two templates share the same ID
+        """
+        template_ids: Dict[str, List[FileElementPair]] = defaultdict(list)
         for manifest_data in self.manifest_datas:
-            if not self.is_message_enabled(
-                "xml-dangerous-qweb-replace-low-priority", manifest_data["disabled_checks"]
-            ):
-                continue
             for template in self.xpath_template(manifest_data["node"]):
-                try:
-                    priority = int(template.get("priority"))
-                except (ValueError, TypeError):
-                    priority = 0
-                for child in template.iterchildren():
-                    # TODO: Add self.config.min_priority instead of DFTL_MIN_PRIORITY
-                    if child.get("position") == "replace" and priority < DFTL_MIN_PRIORITY:
-                        self.checks_errors["xml-dangerous-qweb-replace-low-priority"].append(
-                            f'{manifest_data["filename_short"]}:{child.sourceline} '
-                            'Dangerous use of "replace" from view '
-                            f"with priority `{priority} < {DFTL_MIN_PRIORITY}`. "
-                            "Only replace as a last resort. "
-                            'Try position="attributes", position="move" or t-if="False" first'
-                        )
+                if self.is_message_enabled(
+                    "xml-dangerous-qweb-replace-low-priority", manifest_data["disabled_checks"]
+                ):
+                    self.verify_qweb_replace(template, manifest_data)
+                if self.is_message_enabled("xml-duplicate-template-id", manifest_data["disabled_checks"]):
+                    template_id = self.get_template_xmlid(template, manifest_data)
+                    if not template_id:
+                        continue
+                    template_ids[template_id].append(FileElementPair(manifest_data["filename_short"], template))
+
+        for xmlid_key, records in template_ids.items():
+            if len(records) < 2:
+                continue
+            lines_str = ", ".join(f"{record.filename}:{record.element.sourceline}" for record in records[1:])
+            self.checks_errors["xml-duplicate-template-id"].append(
+                f"{records[0].filename}:{records[0].element.sourceline} "
+                f'Duplicate xml template id "{xmlid_key}" in {lines_str}'
+            )
 
     @utils.only_required_for_checks("xml-deprecated-data-node")
     def check_xml_deprecated_data_node(self):
