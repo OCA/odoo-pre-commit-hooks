@@ -23,7 +23,9 @@ etree.FunctionNamespace(None)["hasclass"] = _hasclass
 
 class ChecksOdooModuleXML(BaseChecker):
     xpath_deprecated_data = etree.XPath("/odoo[count(./*) < 2]/data|/openerp[count(./*) < 2]/data")
-    xpath_oe_structure_woid = etree.XPath("//*[hasclass('oe_structure') and not(@id)]")
+    xpath_oe_structure_woid = etree.XPath(
+        "//*[hasclass('oe_structure') and (not(@id) or not(contains(@id, 'oe_structure')))]"
+    )
     xpath_record_wid = etree.XPath("/odoo//record[@id] | /openerp//record[@id]")
     xpath_view_arch_xml = etree.XPath("field[@name='arch' and @type='xml'][1]")
     xpath_ir_fields = etree.XPath("field[@name='name' or @name='user_id']")
@@ -378,5 +380,6 @@ class ChecksOdooModuleXML(BaseChecker):
             for xpath_node in self.xpath_oe_structure_woid(manifest_data["node"]):
                 self.checks_errors["xml-oe-structure-missing-id"].append(
                     f'{manifest_data["filename_short"]}:{xpath_node.sourceline} '
-                    f"Consider removing the class 'oe_structure' or adding an id to the tag"
+                    "Consider removing the class 'oe_structure' or adding a proper id to the tag. The id must contain "
+                    "'oe_structure'"
                 )
