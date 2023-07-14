@@ -35,7 +35,7 @@ EXPECTED_ERRORS = {
     "xml-syntax-error": 2,
     "xml-view-dangerous-replace-low-priority": 6,
     "xml-xpath-translatable-item": 4,
-    "xml-oe-structure-missing-id": 2,
+    "xml-oe-structure-missing-id": 6,
 }
 
 

@@ -12,9 +12,13 @@
 
     <!-- Deprecated QWeb directive "t-field-options". -->
     <template id="test_template_2" name="Test Template 2">
+        <div class="oe_structure" id="oe_structure_test_template_2_1">
+            <span>This shows proper usage. Default content is provided but can be modified/replaced by the user!</span>
+        </div>
         <div>
             <span t-field="line.image" t-field-options='{"widget": "image"}'/>
         </div>
+        <footer class="oe_structure"/>
     </template>
 
     <template id="assets_backend" name="test_module_widget" inherit_id="web.assets_backend">

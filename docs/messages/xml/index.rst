@@ -1,0 +1,7 @@
+XML Messages
+############
+
+.. toctree::
+  :glob:
+
+  *
