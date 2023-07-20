@@ -129,7 +129,7 @@ class ChecksOdooModule(BaseChecker):
         checks_obj = checks_odoo_module_xml.ChecksOdooModuleXML(
             manifest_datas, self.odoo_addon_name, self.enable, self.disable
         )
-        for check_meth in utils.getattr_checks(checks_obj, self.enable, self.disable):
+        for check_meth in utils.getattr_checks(checks_obj):
             check_meth()
         self.checks_errors.update(checks_obj.checks_errors)
 
@@ -141,7 +141,7 @@ class ChecksOdooModule(BaseChecker):
         checks_obj = checks_odoo_module_csv.ChecksOdooModuleCSV(
             manifest_datas, self.odoo_addon_name, self.enable, self.disable
         )
-        for check_meth in utils.getattr_checks(checks_obj, self.enable, self.disable):
+        for check_meth in utils.getattr_checks(checks_obj):
             check_meth()
         self.checks_errors.update(checks_obj.checks_errors)
 
@@ -196,9 +196,8 @@ def run(files_or_modules, enable=None, disable=None, no_verbose=False, no_exit=F
         checks_obj = ChecksOdooModule(
             os.path.realpath(manifest_path), enable, disable, changed=changed, verbose=not no_verbose, autofix=autofix
         )
-        for check in utils.getattr_checks(checks_obj, enable=enable, disable=disable):
+        for check in utils.getattr_checks(checks_obj):
             check()
-        utils.filter_checks_enabled_disabled(checks_obj.checks_errors, enable, disable)
         if checks_obj.checks_errors:
             all_check_errors.append(checks_obj.checks_errors)
             exit_status = 1

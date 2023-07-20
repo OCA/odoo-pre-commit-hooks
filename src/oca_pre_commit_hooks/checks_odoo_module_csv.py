@@ -1,16 +1,23 @@
 import csv
 import os
 from collections import defaultdict
+from typing import Sequence, Set, Union
 
 from oca_pre_commit_hooks import utils
 from oca_pre_commit_hooks.base_checker import BaseChecker
 
 
 class ChecksOdooModuleCSV(BaseChecker):
-    def __init__(self, manifest_datas, module_name, enable, disable):
+    def __init__(
+        self,
+        manifest_datas: Union[Sequence, None] = None,
+        module_name: str = None,
+        enable: Union[Set, None] = None,
+        disable: Union[Set, None] = None,
+    ):
         super().__init__(enable, disable, module_name)
 
-        self.manifest_datas = manifest_datas
+        self.manifest_datas = manifest_datas or []
         for manifest_data in manifest_datas:
             manifest_data.update(
                 {
@@ -44,12 +51,15 @@ class ChecksOdooModuleCSV(BaseChecker):
                             )
                         )
             except (FileNotFoundError, csv.Error, UnicodeDecodeError) as csv_err:
-                self.checks_errors["csv-syntax-error"].append(f'{manifest_data["filename_short"]}:1 {csv_err}')
-        for csvid, records in csvids.items():
-            if len(records) < 2:
-                continue
-            self.checks_errors["csv-duplicate-record-id"].append(
-                f"{records[0][0]}:{records[0][1]} "
-                f'Duplicate CSV record id "{csvid}" in '
-                f'{", ".join(f"{record[0]}:{record[1]}" for record in records[1:])}'
-            )
+                if self.is_message_enabled("csv-syntax-error"):
+                    self.checks_errors["csv-syntax-error"].append(f'{manifest_data["filename_short"]}:1 {csv_err}')
+
+        if self.is_message_enabled("csv-duplicate-record-id"):
+            for csvid, records in csvids.items():
+                if len(records) < 2:
+                    continue
+                self.checks_errors["csv-duplicate-record-id"].append(
+                    f"{records[0][0]}:{records[0][1]} "
+                    f'Duplicate CSV record id "{csvid}" in '
+                    f'{", ".join(f"{record[0]}:{record[1]}" for record in records[1:])}'
+                )
