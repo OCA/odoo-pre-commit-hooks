@@ -26,7 +26,7 @@ class ChecksOdooModuleXML(BaseChecker):
     xpath_oe_structure_woid = etree.XPath(
         "//*[hasclass('oe_structure') and (not(@id) or not(contains(@id, 'oe_structure')))]"
     )
-    xpath_record_wid = etree.XPath("/odoo//record[@id] | /openerp//record[@id]")
+    xpath_record = etree.XPath("/odoo//record | /openerp//record")
     xpath_view_arch_xml = etree.XPath("field[@name='arch' and @type='xml'][1]")
     xpath_ir_fields = etree.XPath("field[@name='name' or @name='user_id']")
     xpath_template = etree.XPath("/odoo//template|/openerp//template")
@@ -117,7 +117,10 @@ class ChecksOdooModuleXML(BaseChecker):
 
     # Not set only_required_for_checks because of the calls to visit_xml_record... methods
     def check_xml_records(self):
-        """* Check xml-duplicate-record-id
+        """* Check xml-record-missing-id
+        Generated when a <record> tag has no id.
+
+        * Check xml-duplicate-record-id
 
         If a module has duplicated record_id AKA xml_ids
         file1.xml
@@ -133,10 +136,16 @@ class ChecksOdooModuleXML(BaseChecker):
         xmlids_section = defaultdict(list)
         xml_fields = defaultdict(list)
         for manifest_data in self.manifest_datas:
-            for record in self.xpath_record_wid(manifest_data["node"]):
+            for record in self.xpath_record(manifest_data["node"]):
                 record_id = record.get("id")
 
-                if self.is_message_enabled("xml-duplicate-record-id", manifest_data):
+                if not record_id and self.is_message_enabled("xml-record-missing-id", manifest_data):
+                    self.checks_errors["xml-record-missing-id"].append(
+                        f"{manifest_data['filename_short']}:{record.sourceline} "
+                        f"Record has no id, add a unique one to create a new record, use an existing one to update it"
+                    )
+
+                if record_id and self.is_message_enabled("xml-duplicate-record-id", manifest_data):
                     # xmlids_duplicated
                     xmlid_key = (
                         f"{manifest_data['data_section']}/{record_id}"
@@ -196,6 +205,9 @@ class ChecksOdooModuleXML(BaseChecker):
         """
         # redundant_module_name
         record_id = record.get("id")
+        if not record_id:
+            return
+
         xmlid_module, xmlid_name = record_id.split(".") if "." in record_id else ["", record_id]
         if xmlid_module == self.module_name:
             # TODO: Add autofix option
