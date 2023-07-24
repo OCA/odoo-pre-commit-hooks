@@ -203,13 +203,8 @@ be disabled.
 * Check po-duplicate-message-definition (message-id)
         in all entries of PO files
 
-        We are not using `check_for_duplicates` parameter of polib.pofile method
-            e.g. `polib.pofile(..., check_for_duplicates=True)`
-        Because the output is:
-            `raise ValueError('Entry "%s" already exists' % entry.msgid)`
-        It doesn't show the number of lines duplicated
-        and it shows the entire string of the message_id without truncating it
-        or replacing newlines
+* Check po-duplicate-model-definition
+        Verify that no entries share the same 'model:' tag
 
 * Check po-pretty-format
         Check the following:
@@ -402,6 +397,16 @@ options:
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.28/test_repo/broken_module/i18n/es.po#L17 Duplicate PO message definition "Branch" in lines 23, 29
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.28/test_repo/broken_module/i18n/es.po#L35 Duplicate PO message definition "Message id toooooooooooooooooooooooooooo..." in lines 41
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.28/test_repo/broken_module/i18n/es.po#L65 Duplicate PO message definition "One variable {variable1}" in lines 71
+
+ * po-duplicate-model-definition
+
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.28/test_repo/broken_module/i18n/es.po#L17 Translation for model:ir.model.fields,field_description:broken_module.field_wizard_description has been defined more than once in line(s) 29
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.28/test_repo/broken_module/i18n/es.po#L35 Translation for model:ir.model.fields,field_description2:broken_module.field_wizard_description2 has been defined more than once in line(s) 41
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.28/test_repo/broken_module/i18n/es.po#L59 Translation for model:ir.model.fields,field_description5:broken_module.field_wizard_description5 has been defined more than once in line(s) 65
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.28/test_repo/test_module/i18n/fr.po#L24 Translation for model:ir.model.fields,field_description2:test_module.field_description2 has been defined more than once in line(s) 24
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.28/test_repo/test_module/i18n/fr.po#L31 Translation for model:ir.model.fields,field_description5:test_module.field_description5 has been defined more than once in line(s) 31
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.28/test_repo/test_module/i18n/fr.po#L38 Translation for model:ir.model.fields,field_description3:test_module.field_description3 has been defined more than once in line(s) 38
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.28/test_repo/test_module/i18n/fr.po#L45 Translation for model:ir.model.fields,field_description4:test_module.field_description4 has been defined more than once in line(s) 45
 
  * po-pretty-format
 

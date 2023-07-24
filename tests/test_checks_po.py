@@ -25,6 +25,7 @@ EXPECTED_ERRORS = {
     "po-requires-module": 1,
     "po-syntax-error": 2,
     "po-pretty-format": 6,
+    "po-duplicate-model-definition": 7,
 }
 
 

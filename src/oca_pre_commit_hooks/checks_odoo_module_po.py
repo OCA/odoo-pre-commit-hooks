@@ -4,7 +4,7 @@ import string
 import sys
 from collections import defaultdict
 
-import polib
+from polib import POEntry, pofile
 
 from oca_pre_commit_hooks import utils
 from oca_pre_commit_hooks.base_checker import BaseChecker
@@ -66,7 +66,7 @@ class ChecksOdooModulePO(BaseChecker):
                 # ResourceWarning: unclosed file <_io.FileIO name='..' mode='rb' closefd=True>
                 self.original_contents = filename_obj.read()
 
-            self.po_data = polib.pofile(self.original_contents)
+            self.po_data = pofile(self.original_contents)
         except (OSError, UnicodeDecodeError) as po_err:
             self.file_error = po_err
 
@@ -279,42 +279,62 @@ class ChecksOdooModulePO(BaseChecker):
                         f"correctly using str.format {str_parse_exc}"
                     )
 
+    @staticmethod
+    def iter_model_occurrences(entry: POEntry):
+        for occurrence in entry.occurrences:
+            if occurrence[0].startswith("model:"):
+                yield occurrence[0]
+
     def check_po(self):
         """* Check po-duplicate-message-definition (message-id)
         in all entries of PO files
 
-        We are not using `check_for_duplicates` parameter of polib.pofile method
-            e.g. `polib.pofile(..., check_for_duplicates=True)`
-        Because the output is:
-            `raise ValueError('Entry "%s" already exists' % entry.msgid)`
-        It doesn't show the number of lines duplicated
-        and it shows the entire string of the message_id without truncating it
-        or replacing newlines
+        * Check po-duplicate-model-definition
+        Verify that no entries share the same 'model:' tag
         """
+
+        # Not using polib.pofile(..., check_for_duplicates=True) because the raised ValueError is missing valuable
+        # information, e.g. line number and the output is not formatted in a usable way
         duplicated = defaultdict(list)
+        duplicated_models = defaultdict(list)
         for entry in self.po_data:
             if entry.obsolete:
                 continue
 
             # po_duplicate_message_definition
-            duplicated[hash(entry.msgid)].append(entry)
+            if self.is_message_enabled("po-duplicate-message-definition"):
+                duplicated[hash(entry.msgid)].append(entry)
+
+            if self.is_message_enabled("po-duplicate-model-definition"):
+                for occurrence in self.iter_model_occurrences(entry):
+                    duplicated_models[occurrence].append(entry)
+
             for meth in utils.getattr_checks(self, "visit_entry"):
                 meth(entry)
 
-        if self.is_message_enabled("po-duplicate-message-definition"):
-            for entries in duplicated.values():
-                if len(entries) < 2:
-                    continue
-                linenum = self._get_po_line_number(entries[0])
-                duplicated_str = ", ".join(map(str, map(self._get_po_line_number, entries[1:])))
-                msg_id_short = re.sub(r"[\n\t]*", "", entries[0].msgid[:40]).strip()
-                if len(entries[0].msgid) > 40:
-                    msg_id_short = f"{msg_id_short}..."
-                self.checks_errors["po-duplicate-message-definition"].append(
-                    f"{self.filename_short}:{linenum} "
-                    f'Duplicate PO message definition "{msg_id_short}" '
-                    f"in lines {duplicated_str}"
-                )
+        for entries in duplicated.values():
+            if len(entries) < 2:
+                continue
+            linenum = self._get_po_line_number(entries[0])
+            duplicated_str = ", ".join(map(str, map(self._get_po_line_number, entries[1:])))
+            msg_id_short = re.sub(r"[\n\t]*", "", entries[0].msgid[:40]).strip()
+            if len(entries[0].msgid) > 40:
+                msg_id_short = f"{msg_id_short}..."
+            self.checks_errors["po-duplicate-message-definition"].append(
+                f"{self.filename_short}:{linenum} "
+                f'Duplicate PO message definition "{msg_id_short}" '
+                f"in lines {duplicated_str}"
+            )
+
+        for model, entries in duplicated_models.items():
+            if len(entries) < 2:
+                continue
+
+            offending_lines = ", ".join(map(str, map(self._get_po_line_number, entries[1:])))
+            self.checks_errors["po-duplicate-model-definition"].append(
+                f"{self.filename_short}:{self._get_po_line_number(entries[0])} "
+                f"Translation for {model} has been defined more than once in line(s) {offending_lines}"
+            )
 
     def run_checks(self, no_verbose):
         for check in utils.getattr_checks(self):
