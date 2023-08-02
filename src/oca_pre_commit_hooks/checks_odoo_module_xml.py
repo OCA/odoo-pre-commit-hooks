@@ -135,7 +135,9 @@ class ChecksOdooModuleXML(BaseChecker):
             for record in self.xpath_record(manifest_data["node"]):
                 record_id = record.get("id")
 
-                if not record_id and self.is_message_enabled("xml-record-missing-id", manifest_data["disabled_checks"]):
+                if not record_id and self.is_message_enabled(
+                    "xml-record-missing-id", manifest_data["disabled_checks"]
+                ):
                     self.checks_errors["xml-record-missing-id"].append(
                         f"{manifest_data['filename_short']}:{record.sourceline} "
                         f"Record has no id, add a unique one to create a new record, use an existing one to update it"
