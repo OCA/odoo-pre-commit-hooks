@@ -312,19 +312,20 @@ class ChecksOdooModulePO(BaseChecker):
             for meth in utils.getattr_checks(self, "visit_entry"):
                 meth(entry)
 
-        for entries in duplicated.values():
-            if len(entries) < 2:
-                continue
-            linenum = self._get_po_line_number(entries[0])
-            duplicated_str = ", ".join(map(str, map(self._get_po_line_number, entries[1:])))
-            msg_id_short = re.sub(r"[\n\t]*", "", entries[0].msgid[:40]).strip()
-            if len(entries[0].msgid) > 40:
-                msg_id_short = f"{msg_id_short}..."
-            self.checks_errors["po-duplicate-message-definition"].append(
-                f"{self.filename_short}:{linenum} "
-                f'Duplicate PO message definition "{msg_id_short}" '
-                f"in lines {duplicated_str}"
-            )
+        if self.is_message_enabled("po-duplicate-message-definition"):
+            for entries in duplicated.values():
+                if len(entries) < 2:
+                    continue
+                linenum = self._get_po_line_number(entries[0])
+                duplicated_str = ", ".join(map(str, map(self._get_po_line_number, entries[1:])))
+                msg_id_short = re.sub(r"[\n\t]*", "", entries[0].msgid[:40]).strip()
+                if len(entries[0].msgid) > 40:
+                    msg_id_short = f"{msg_id_short}..."
+                self.checks_errors["po-duplicate-message-definition"].append(
+                    f"{self.filename_short}:{linenum} "
+                    f'Duplicate PO message definition "{msg_id_short}" '
+                    f"in lines {duplicated_str}"
+                )
 
         for model, entries in duplicated_models.items():
             if len(entries) < 2:
