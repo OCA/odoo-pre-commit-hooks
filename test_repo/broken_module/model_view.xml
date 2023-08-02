@@ -20,5 +20,7 @@
         <!-- Record without "id" -->
         <record model="ir.ui.view"/>
 
+        <!-- Also no "id" -->
+        <record id="" model="ir.ui.view"/>
     </data>
 </openerp>

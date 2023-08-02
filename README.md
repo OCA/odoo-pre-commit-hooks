@@ -161,6 +161,9 @@ be disabled.
 * Check xml-deprecated-tree-attribute
           The tree-view declaration is using a deprecated attribute.
 
+* Check xml-record-missing-id
+        Generated when a <record> tag has no id.
+
 * Check xml-duplicate-record-id
 
         If a module has duplicated record_id AKA xml_ids
@@ -363,6 +366,11 @@ options:
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.28/test_repo/test_module/website_templates.xml#L30 Consider removing the class 'oe_structure' or adding a proper id to the tag. The id must contain 'oe_structure'
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.28/test_repo/test_module/website_templates.xml#L9 Consider removing the class 'oe_structure' or adding a proper id to the tag. The id must contain 'oe_structure'
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.28/test_repo/test_module/website_templates_disable.xml#L21 Consider removing the class 'oe_structure' or adding a proper id to the tag. The id must contain 'oe_structure'
+
+ * xml-record-missing-id
+
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.28/test_repo/broken_module/model_view.xml#L21 Record has no id, add a unique one to create a new record, use an existing one to update it
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.28/test_repo/broken_module/model_view.xml#L24 Record has no id, add a unique one to create a new record, use an existing one to update it
 
  * xml-redundant-module-name
 
