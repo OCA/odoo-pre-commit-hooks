@@ -247,11 +247,12 @@ class ChecksOdooModulePO(BaseChecker):
         """
         # po_requires_module
         # Regex from https://github.com/odoo/odoo/blob/fa4f36bb631e82/odoo/tools/translate.py#L616  # noqa
-        match = re.match(r"(module[s]?): (\w+)", entry.comment)
-        if not match:
-            self.checks_errors["po-requires-module"].append(
-                f"{self.filename_short}:{entry.linenum} " "Translation entry requires comment `#. module: MODULE`"
-            )
+        if self.is_message_enabled("po-requires-module"):
+            match = re.match(r"(module[s]?): (\w+)", entry.comment)
+            if not match:
+                self.checks_errors["po-requires-module"].append(
+                    f"{self.filename_short}:{entry.linenum} " "Translation entry requires comment `#. module: MODULE`"
+                )
 
         # po_msgstr_variables
         if entry.msgstr and "python-format" in entry.flags:
@@ -262,19 +263,21 @@ class ChecksOdooModulePO(BaseChecker):
                 self.parse_printf(entry.msgid, entry.msgstr)
                 self.parse_format(entry.msgid, entry.msgstr)
             except PrintfStringParseError as str_parse_exc:
-                linenum = self._get_po_line_number(entry)
-                self.checks_errors["po-python-parse-printf"].append(
-                    f"{self.filename_short}:{linenum} "
-                    "Translation string couldn't be parsed "
-                    f"correctly using str%variables {str_parse_exc}"
-                )
+                if self.is_message_enabled("po-python-parse-printf"):
+                    linenum = self._get_po_line_number(entry)
+                    self.checks_errors["po-python-parse-printf"].append(
+                        f"{self.filename_short}:{linenum} "
+                        "Translation string couldn't be parsed "
+                        f"correctly using str%variables {str_parse_exc}"
+                    )
             except FormatStringParseError as str_parse_exc:
-                linenum = self._get_po_line_number(entry)
-                self.checks_errors["po-python-parse-format"].append(
-                    f"{self.filename_short}:{linenum} "
-                    "Translation string couldn't be parsed "
-                    f"correctly using str.format {str_parse_exc}"
-                )
+                if self.is_message_enabled("po-python-parse-format"):
+                    linenum = self._get_po_line_number(entry)
+                    self.checks_errors["po-python-parse-format"].append(
+                        f"{self.filename_short}:{linenum} "
+                        "Translation string couldn't be parsed "
+                        f"correctly using str.format {str_parse_exc}"
+                    )
 
     def check_po(self):
         """* Check po-duplicate-message-definition (message-id)
@@ -295,27 +298,28 @@ class ChecksOdooModulePO(BaseChecker):
 
             # po_duplicate_message_definition
             duplicated[hash(entry.msgid)].append(entry)
-            for meth in utils.getattr_checks(self, self.enable, self.disable, "visit_entry"):
+            for meth in utils.getattr_checks(self, "visit_entry"):
                 meth(entry)
 
-        for entries in duplicated.values():
-            if len(entries) < 2:
-                continue
-            linenum = self._get_po_line_number(entries[0])
-            duplicated_str = ", ".join(map(str, map(self._get_po_line_number, entries[1:])))
-            msg_id_short = re.sub(r"[\n\t]*", "", entries[0].msgid[:40]).strip()
-            if len(entries[0].msgid) > 40:
-                msg_id_short = f"{msg_id_short}..."
-            self.checks_errors["po-duplicate-message-definition"].append(
-                f"{self.filename_short}:{linenum} "
-                f'Duplicate PO message definition "{msg_id_short}" '
-                f"in lines {duplicated_str}"
-            )
+        if self.is_message_enabled("po-duplicate-message-definition"):
+            for entries in duplicated.values():
+                if len(entries) < 2:
+                    continue
+                linenum = self._get_po_line_number(entries[0])
+                duplicated_str = ", ".join(map(str, map(self._get_po_line_number, entries[1:])))
+                msg_id_short = re.sub(r"[\n\t]*", "", entries[0].msgid[:40]).strip()
+                if len(entries[0].msgid) > 40:
+                    msg_id_short = f"{msg_id_short}..."
+                self.checks_errors["po-duplicate-message-definition"].append(
+                    f"{self.filename_short}:{linenum} "
+                    f'Duplicate PO message definition "{msg_id_short}" '
+                    f"in lines {duplicated_str}"
+                )
 
     def run_checks(self, no_verbose):
-        for check in utils.getattr_checks(self, enable=self.enable, disable=self.disable):
+        for check in utils.getattr_checks(self):
             check()
-        utils.filter_checks_enabled_disabled(self.checks_errors, self.enable, self.disable)
+
         for check_error, msgs in self.checks_errors.items() if not no_verbose else []:
             print(f"\n****{check_error}****")
             for msg in msgs:

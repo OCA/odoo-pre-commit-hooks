@@ -54,7 +54,7 @@ class ChecksOdooModuleXML(BaseChecker):
 
     def __init__(self, manifest_datas, module_name, enable, disable):
         super().__init__(enable, disable, module_name)
-        self.manifest_datas = manifest_datas
+        self.manifest_datas = manifest_datas or []
         for manifest_data in self.manifest_datas:
             try:
                 with open(manifest_data["filename"], "rb") as f_xml:
@@ -90,11 +90,7 @@ class ChecksOdooModuleXML(BaseChecker):
 
     def getattr_checks(self, manifest_data, prefix):
         disable_node = manifest_data["disabled_checks"]
-        yield from utils.getattr_checks(self, self.enable, self.disable, prefix, disable_node)
-
-    def is_message_enabled(self, checks, manifest_data):
-        disable_node = manifest_data["disabled_checks"]
-        return utils.is_message_enabled(checks, self.enable, self.disable, disable_node)
+        yield from utils.getattr_checks(self, prefix, disable_node)
 
     @classmethod
     def _get_priority(cls, view):
@@ -139,13 +135,13 @@ class ChecksOdooModuleXML(BaseChecker):
             for record in self.xpath_record(manifest_data["node"]):
                 record_id = record.get("id")
 
-                if not record_id and self.is_message_enabled("xml-record-missing-id", manifest_data):
+                if not record_id and self.is_message_enabled("xml-record-missing-id", manifest_data["disabled_checks"]):
                     self.checks_errors["xml-record-missing-id"].append(
                         f"{manifest_data['filename_short']}:{record.sourceline} "
                         f"Record has no id, add a unique one to create a new record, use an existing one to update it"
                     )
 
-                if record_id and self.is_message_enabled("xml-duplicate-record-id", manifest_data):
+                if self.is_message_enabled("xml-duplicate-record-id", manifest_data["disabled_checks"]):
                     # xmlids_duplicated
                     xmlid_key = (
                         f"{manifest_data['data_section']}/{record_id}"
@@ -154,7 +150,7 @@ class ChecksOdooModuleXML(BaseChecker):
                     xmlids_section[xmlid_key].append((manifest_data, record))
 
                 # fields_duplicated
-                if self.is_message_enabled("xml-duplicate-fields", manifest_data):
+                if self.is_message_enabled("xml-duplicate-fields", manifest_data["disabled_checks"]):
                     for field in self.xpath_record_fields_wname(record):
                         xml_fields[(field.get("name"), field.getparent())].append((manifest_data, field))
 
@@ -231,24 +227,26 @@ class ChecksOdooModuleXML(BaseChecker):
         if record.get("model") != "ir.ui.view":
             return
         # view_dangerous_replace_low_priority
-        priority = self._get_priority(record)
-        is_replaced_field = self._is_replaced_field(record)
-        # TODO: Add self.config.min_priority instead of DFTL_MIN_PRIORITY
-        if is_replaced_field and priority < DFTL_MIN_PRIORITY:
-            self.checks_errors["xml-view-dangerous-replace-low-priority"].append(
-                f'{manifest_data["filename_short"]}:{record.sourceline} '
-                'Dangerous use of "replace" from view '
-                f"with priority {priority} < {DFTL_MIN_PRIORITY}. "
-                'Only replace as a last resort. Try position="attributes", position="move" or invisible="1" first'
-            )
+        if self.is_message_enabled("xml-view-dangerous-replace-low-priority", manifest_data["disabled_checks"]):
+            priority = self._get_priority(record)
+            is_replaced_field = self._is_replaced_field(record)
+            # TODO: Add self.config.min_priority instead of DFTL_MIN_PRIORITY
+            if is_replaced_field and priority < DFTL_MIN_PRIORITY:
+                self.checks_errors["xml-view-dangerous-replace-low-priority"].append(
+                    f'{manifest_data["filename_short"]}:{record.sourceline} '
+                    'Dangerous use of "replace" from view '
+                    f"with priority {priority} < {DFTL_MIN_PRIORITY}. "
+                    'Only replace as a last resort. Try position="attributes", position="move" or invisible="1" first'
+                )
 
         # deprecated_tree_attribute
-        for deprecate_attr_node in self.xpath_tree_deprecated(record):
-            deprecate_attr_str = ",".join(set(deprecate_attr_node.attrib.keys()) & self.tree_deprecate_attrs)
-            self.checks_errors["xml-deprecated-tree-attribute"].append(
-                f'{manifest_data["filename_short"]}:{deprecate_attr_node.sourceline} '
-                f'Deprecated "<tree {deprecate_attr_str}=..."'
-            )
+        if self.is_message_enabled("xml-deprecated-tree-attribute", manifest_data["disabled_checks"]):
+            for deprecate_attr_node in self.xpath_tree_deprecated(record):
+                deprecate_attr_str = ",".join(set(deprecate_attr_node.attrib.keys()) & self.tree_deprecate_attrs)
+                self.checks_errors["xml-deprecated-tree-attribute"].append(
+                    f'{manifest_data["filename_short"]}:{deprecate_attr_node.sourceline} '
+                    f'Deprecated "<tree {deprecate_attr_str}=..."'
+                )
 
     @utils.only_required_for_checks("xml-create-user-wo-reset-password")
     def visit_xml_record_user(self, manifest_data, record):
@@ -289,7 +287,7 @@ class ChecksOdooModuleXML(BaseChecker):
         """* Check xml-not-valid-char-link
         The resource in in src/href contains a not valid character."""
         for manifest_data in self.manifest_datas:
-            if not self.is_message_enabled("xml-not-valid-char-link", manifest_data):
+            if not self.is_message_enabled("xml-not-valid-char-link", manifest_data["disabled_checks"]):
                 continue
 
             for node in self.xpath_char_links(manifest_data["node"]):
@@ -306,7 +304,9 @@ class ChecksOdooModuleXML(BaseChecker):
         """* Check xml-dangerous-qweb-replace-low-priority
         Dangerous qweb view defined with low priority"""
         for manifest_data in self.manifest_datas:
-            if not self.is_message_enabled("xml-dangerous-qweb-replace-low-priority", manifest_data):
+            if not self.is_message_enabled(
+                "xml-dangerous-qweb-replace-low-priority", manifest_data["disabled_checks"]
+            ):
                 continue
             for template in self.xpath_template(manifest_data["node"]):
                 try:
@@ -329,7 +329,7 @@ class ChecksOdooModuleXML(BaseChecker):
         """* Check xml-deprecated-data-node
         Deprecated <data> node inside <odoo> xml node"""
         for manifest_data in self.manifest_datas:
-            if not self.is_message_enabled("xml-deprecated-data-node", manifest_data):
+            if not self.is_message_enabled("xml-deprecated-data-node", manifest_data["disabled_checks"]):
                 continue
             for data_node in self.xpath_deprecated_data(manifest_data["node"]):
                 # TODO: Add autofix option
@@ -344,7 +344,7 @@ class ChecksOdooModuleXML(BaseChecker):
         """* Check xml-deprecated-openerp-node
         deprecated <openerp> xml node"""
         for manifest_data in self.manifest_datas:
-            if not self.is_message_enabled("xml-deprecated-openerp-node", manifest_data):
+            if not self.is_message_enabled("xml-deprecated-openerp-node", manifest_data["disabled_checks"]):
                 continue
             for openerp_node in self.xpath_openerp(manifest_data["node"]):
                 # TODO: Add autofix option
@@ -357,7 +357,7 @@ class ChecksOdooModuleXML(BaseChecker):
         """* Check xml-deprecated-qweb-directive
         for use of deprecated QWeb directives t-*-options"""
         for manifest_data in self.manifest_datas:
-            if not self.is_message_enabled("xml-deprecated-qweb-directive", manifest_data):
+            if not self.is_message_enabled("xml-deprecated-qweb-directive", manifest_data["disabled_checks"]):
                 continue
             for node in self.xpath_qweb_deprecated(manifest_data["node"]):
                 directive_str = ", ".join(set(node.attrib) & self.qweb_deprecated_directives)
