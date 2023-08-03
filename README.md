@@ -117,9 +117,6 @@ be disabled.
 * Check csv-syntax-error
         Check syntax error for CSV files declared in the manifest
 
-* Check xml-dangerous-qweb-replace-low-priority
-        Dangerous qweb view defined with low priority
-
 * Check xml-deprecated-data-node
         Deprecated <data> node inside <odoo> xml node
 
@@ -179,6 +176,12 @@ be disabled.
 
 * Check xml-syntax-error
         Check syntax of XML files declared in the Odoo manifest
+
+* Check xml-dangerous-qweb-replace-low-priority
+        Dangerous qweb view defined with low priority
+
+* Check xml-duplicate-template-id
+        Triggered when two templates share the same ID
 
 * Check xml-xpath-translatable-item check `xpath` nodes using `contains(text(), 'Text translatable')`
         Since that the text could be translated so it is a mutable value.
@@ -348,6 +351,18 @@ options:
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.28/test_repo/broken_module/model_view.xml#L5 Duplicate xml record id "data/view_model_form_noupdate_0" in test_repo/broken_module/model_view_odoo.xml:5, test_repo/broken_module/model_view_odoo2.xml:5
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.28/test_repo/broken_module/model_view2.xml#L5 Duplicate xml record id "data/view_model_form2_noupdate_0" in test_repo/broken_module/model_view_odoo2.xml:17
 
+ * xml-duplicate-template-id
+
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.28/test_repo/broken_module/template1.xml#L10 Duplicate xml template id "qweb/my_template2_noupdate_0" in test_repo/broken_module/template1_copy2.xml:10
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.28/test_repo/broken_module/template1.xml#L17 Duplicate xml template id "qweb/my_template3_noupdate_0" in test_repo/broken_module/template1_copy2.xml:17
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.28/test_repo/broken_module/template1.xml#L21 Duplicate xml template id "qweb/my_template4_noupdate_0" in test_repo/broken_module/template1_copy2.xml:21
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.28/test_repo/broken_module/template1.xml#L25 Duplicate xml template id "qweb/my_template5_noupdate_0" in test_repo/broken_module/template1_copy2.xml:25
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.28/test_repo/broken_module/template1.xml#L29 Duplicate xml template id "qweb/my_duplicate_template_noupdate_0" in test_repo/broken_module/template1.xml:33
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.28/test_repo/broken_module/template1.xml#L3 Duplicate xml template id "qweb/my_template1_noupdate_0" in test_repo/broken_module/template1_copy2.xml:3
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.28/test_repo/test_module/website_templates.xml#L18 Duplicate xml template id "data/test_template_2_noupdate_0" in test_repo/test_module/website_templates_disable.xml:14
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.28/test_repo/test_module/website_templates.xml#L36 Duplicate xml template id "data/assets_backend_noupdate_0" in test_repo/test_module/website_templates_disable.xml:24
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.28/test_repo/test_module/website_templates.xml#L5 Duplicate xml template id "data/test_template_1_noupdate_0" in test_repo/test_module/website_templates_disable.xml:7
+
  * xml-not-valid-char-link
 
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.28/test_repo/test_module/website_templates.xml#L39 The resource in in src/href contains a not valid character
@@ -388,7 +403,7 @@ options:
  * xml-xpath-translatable-item
 
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.28/test_repo/broken_module/model_view.xml#L11 Use of translatable xpath `text()`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.28/test_repo/broken_module/template1.xml#L31 Use of translatable xpath `text()`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.28/test_repo/broken_module/template1.xml#L39 Use of translatable xpath `text()`
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.28/test_repo/broken_module/template1_copy.xml#L31 Use of translatable xpath `text()`
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.28/test_repo/broken_module/template1_copy2.xml#L31 Use of translatable xpath `text()`
 
