@@ -436,7 +436,6 @@ options:
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.29/test_repo/broken_module/i18n/ar_unicode.po is not formatted correctly
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.29/test_repo/broken_module/i18n/broken_module.pot is not formatted correctly
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.29/test_repo/broken_module/i18n/es.po is not formatted correctly
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.29/test_repo/broken_module/xml_semi_empty.po is not formatted correctly
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.29/test_repo/eleven_module/i18n/ugly.po is not formatted correctly
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.29/test_repo/test_module/i18n/fr.po is not formatted correctly
 

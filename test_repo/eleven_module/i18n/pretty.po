@@ -62,6 +62,8 @@ msgstr "'Imprimir insignia - %s' % (object.name).replace('/', '')"
 #: model_terms:hr.job,job_details:hr.job_trainee
 msgid "1 Onsite Interview"
 msgstr ""
+"super long translation definitively longer than 78 characters, more like 120"
+" chars, this should be wrapped ...."
 
 #. module: hr
 #: model_terms:hr.job,job_details:hr.composition

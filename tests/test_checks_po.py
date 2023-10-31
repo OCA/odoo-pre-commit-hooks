@@ -24,7 +24,7 @@ EXPECTED_ERRORS = {
     "po-python-parse-printf": 2,
     "po-requires-module": 1,
     "po-syntax-error": 2,
-    "po-pretty-format": 6,
+    "po-pretty-format": 5,
     "po-duplicate-model-definition": 7,
 }
 
@@ -47,7 +47,7 @@ class TestChecksPO(common.ChecksCommon):
     def test_non_exists_path(self):
         all_check_errors = self.checks_run(["/tmp/no_exists"], no_exit=True, no_verbose=False)
         real_errors = self.get_count_code_errors(all_check_errors)
-        self.assertDictEqual(real_errors, {"po-syntax-error": 1})
+        self.assertDictEqual(real_errors, {})
 
     def test_pretty_format_po(self):
         ugly_po = os.path.join(self.test_repo_path, "eleven_module", "i18n", "ugly.po")

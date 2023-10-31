@@ -54,7 +54,10 @@ class ChecksOdooModulePO(BaseChecker):
         self.pretty_contents = None
         self.file_error = None
         self.needs_autofix = False
-
+        self.no_odoo_po_file = False
+        if os.path.basename(os.path.dirname(po_filename)) != "i18n" and not autofix:
+            self.no_odoo_po_file = True
+            return
         try:
             with open(po_filename, encoding="UTF-8") as filename_obj:
                 # Do not use polib.pofile()
@@ -91,9 +94,8 @@ class ChecksOdooModulePO(BaseChecker):
         2. Lines are wrapped at 78 columns (same as Odoo)
         3. Clear msgstr when it is the same as msgid
         """
-        if self.file_error:
+        if self.file_error or self.no_odoo_po_file:
             return
-
         self._compute_pretty_contents()
         if self.pretty_contents != self.original_contents:
             self.needs_autofix = True
@@ -103,7 +105,7 @@ class ChecksOdooModulePO(BaseChecker):
     def check_po_syntax_error(self):
         """* Check po-syntax-error
         Check syntax of PO files from i18n* folders"""
-        if not self.file_error:
+        if not self.file_error or self.no_odoo_po_file:
             return
         msg = str(self.file_error).replace(f"{self.filename} ", "").strip()
         self.checks_errors["po-syntax-error"].append(f"{self.filename_short}:1 {msg}")
