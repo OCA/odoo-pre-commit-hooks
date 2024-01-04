@@ -22,8 +22,7 @@ def generate_changelog():
     # pylint: disable=protected-access
     changelog = git._iter_log_oneline()
     changelog = git._iter_changelog(changelog)
-    git.write_git_changelog(changelog=changelog)
-    # git.generate_authors()
+    git.write_git_changelog(changelog=filter(lambda log: not log[1].startswith("* Bump version"), changelog))
     return read(fname)
 
 
@@ -47,7 +46,7 @@ def generage_long_description():
 
 setup(
     name="oca-odoo-pre-commit-hooks",
-    version="0.0.29",
+    version="0.0.30",
     license="LGPL-3.0-or-later",
     description="odoo-pre-commit-hooks to use in pre-commit-config.yml files",
     long_description=generage_long_description(),
