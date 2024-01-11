@@ -298,12 +298,14 @@ class ChecksOdooModulePO(BaseChecker):
         duplicated = defaultdict(list)
         duplicated_models = defaultdict(list)
         for entry in self.po_data:
+            entry: polib.POEntry
             if entry.obsolete:
                 continue
 
             # po_duplicate_message_definition
             if self.is_message_enabled("po-duplicate-message-definition"):
-                duplicated[hash(entry.msgid)].append(entry)
+                for occurrence in set(entry.occurrences):
+                    duplicated[(entry.msgid, occurrence)].append(entry)
 
             if self.is_message_enabled("po-duplicate-model-definition"):
                 for occurrence in self.iter_model_occurrences(entry):
