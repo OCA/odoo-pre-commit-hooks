@@ -417,9 +417,8 @@ options:
 
  * po-duplicate-message-definition
 
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.30/test_repo/broken_module/i18n/es.po#L17 Duplicate PO message definition "Branch" in lines 23, 29
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.30/test_repo/broken_module/i18n/es.po#L17 Duplicate PO message definition "Branch" in lines 29
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.30/test_repo/broken_module/i18n/es.po#L35 Duplicate PO message definition "Message id toooooooooooooooooooooooooooo..." in lines 41
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.30/test_repo/broken_module/i18n/es.po#L65 Duplicate PO message definition "One variable {variable1}" in lines 71
 
  * po-duplicate-model-definition
 

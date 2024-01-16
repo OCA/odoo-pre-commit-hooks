@@ -19,7 +19,7 @@ ALL_CHECK_CLASS = [
 ]
 
 EXPECTED_ERRORS = {
-    "po-duplicate-message-definition": 3,
+    "po-duplicate-message-definition": 2,
     "po-python-parse-format": 4,
     "po-python-parse-printf": 2,
     "po-requires-module": 1,

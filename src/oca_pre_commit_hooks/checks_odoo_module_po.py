@@ -298,7 +298,7 @@ class ChecksOdooModulePO(BaseChecker):
         duplicated = defaultdict(list)
         duplicated_models = defaultdict(list)
         for entry in self.po_data:
-            entry: polib.POEntry
+            entry: POEntry
             if entry.obsolete:
                 continue
 
