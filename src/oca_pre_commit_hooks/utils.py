@@ -4,8 +4,11 @@ import subprocess
 import sys
 from contextlib import contextmanager
 from functools import lru_cache
+from inspect import getmembers, isfunction
 from itertools import chain
 from pathlib import Path
+
+from oca_pre_commit_hooks.base_checker import BaseChecker
 
 CHECKS_DISABLED_REGEX = re.compile(re.escape("oca-hooks:disable=") + r"([a-z\-,]+)")
 DEPRECATED_CHECKS_DISABLED_REGEX = re.compile(re.escape("pylint:disable=") + r"([a-z\-,]+)")
@@ -55,36 +58,18 @@ def only_required_for_installable():
     return store_installable
 
 
-def is_message_enabled(msg_code, enable, disable, disable_node=None):
-    if disable_node and msg_code in disable_node:
-        # If the check is disabled in the node so return early
-        # because of it could be enabled for other files except this one
-        return False
-    if disable:
-        return msg_code not in disable
-    if enable:
-        return msg_code in enable
-    return True
-
-
-def getattr_checks(obj_or_class, enable=None, disable=None, prefix="check_", disable_node=None):
+def getattr_checks(obj_or_class: BaseChecker, prefix="check_", disable_node=None):
     """Get all the attributes callables (methods)
     that start with word 'def check_*'
     Skip the methods with attribute "checks" defined if
     the check is not enable or if it is disabled"""
-    if enable is None:
-        enable = set()
-    if disable is None:
-        disable = set()
-    if disable_node is None:
-        disable_node = set()
     for attr in dir(obj_or_class):
         if not callable(getattr(obj_or_class, attr)) or not attr.startswith(prefix):
             continue
         meth = getattr(obj_or_class, attr)
         meth_checks = getattr(meth, "checks", set())
         if meth_checks and not any(
-            is_message_enabled(meth_check, enable, disable, disable_node) for meth_check in meth_checks
+            obj_or_class.is_message_enabled(meth_check, disable_node) for meth_check in meth_checks
         ):
             continue
         meth_installable = getattr(meth, "installable", None)
@@ -152,31 +137,13 @@ def walk_up(path, filenames, top):
     return walk_up(os.path.dirname(path), filenames, top)
 
 
-def filter_checks_enabled_disabled(checks_errors, enables, disables):
-    """Remove disabled checks from "check_errors" dictionary
-    It is needed since that there are checks called without option to disable them
-    e.g. syntax error checks
-
-    Remove checks not enabled only if enabled was defined
-    """
-    if not checks_errors:
-        return
-    for disable in disables or []:
-        checks_errors.pop(disable, False)
-    if not enables:
-        return
-    checks_no_enable = set(checks_errors) - enables
-    for check_no_enable in checks_no_enable:
-        checks_errors.pop(check_no_enable, False)
-
-
 def get_checks_docstring(check_classes):
     checks_docstring = ""
     checks_found = set()
     for check_class in check_classes:
         check_meths = chain(
-            getattr_checks(check_class, prefix="visit"),
-            getattr_checks(check_class, prefix="check"),
+            [member[1] for member in getmembers(check_class, predicate=isfunction) if member[0].startswith("check")],
+            [member[1] for member in getmembers(check_class, predicate=isfunction) if member[0].startswith("visit")],
         )
         # Sorted to avoid mutable checks order readme
         check_meths = sorted(

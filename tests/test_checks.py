@@ -24,7 +24,7 @@ EXPECTED_ERRORS = {
     "xml-create-user-wo-reset-password": 1,
     "xml-dangerous-filter-wo-user": 1,
     "xml-dangerous-qweb-replace-low-priority": 9,
-    "xml-deprecated-data-node": 7,
+    "xml-deprecated-data-node": 8,
     "xml-deprecated-openerp-node": 4,
     "xml-deprecated-qweb-directive": 2,
     "xml-deprecated-tree-attribute": 3,
@@ -35,6 +35,9 @@ EXPECTED_ERRORS = {
     "xml-syntax-error": 2,
     "xml-view-dangerous-replace-low-priority": 6,
     "xml-xpath-translatable-item": 4,
+    "xml-oe-structure-missing-id": 6,
+    "xml-record-missing-id": 2,
+    "xml-duplicate-template-id": 9,
 }
 
 

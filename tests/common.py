@@ -246,3 +246,12 @@ class ChecksCommon(unittest.TestCase):
         all_messages = self.checks_run([], list_msgs=True, no_exit=True, no_verbose=False)
         checks_found = re.findall(utils.RE_CHECK_DOCSTRING, all_messages)
         self.assertFalse(set(self.expected_errors) - set(checks_found), "Missing list-message of checks")
+
+    @unittest.skipUnless(os.getenv("DEBUG_TEST_CHECK"), "No message to debug was set")
+    def test_debug_check(self):
+        check_ut = os.getenv("DEBUG_TEST_CHECK")
+        if not self.expected_errors.get(check_ut):
+            return
+
+        real_errors = self.get_count_code_errors(self.checks_run(self.file_paths, enable={check_ut}, no_exit=True))
+        assertDictEqual(self, real_errors, {check_ut: self.expected_errors[check_ut]})

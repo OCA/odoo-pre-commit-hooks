@@ -6,6 +6,12 @@
         <div>
             <span t-esc="price" t-esc-options='{"widget": "monetary"}'/>
         </div>
+        <section class="oe_structure">
+            <p>Customize this! It is missing an ID</p>
+        </section>
+        <div class="oe_structure_gotcha"/>
+        <main class="oe_structure oe_hello"/>
+        <div class="d-flex fake_oe_structure"/>
     </template>
 
     <!-- Deprecated QWeb directive "t-field-options". -->
@@ -13,6 +19,18 @@
         <div>
             <span t-field="line.image" t-field-options='{"widget": "image"}'/>
         </div>
+        <div id="id_oe_structure" class="oe_structure"/>
+        <body>
+            <div class="oe_structure px-1 py-2">
+                <span>Hello. Please add an ID on this!!</span>
+            </div>
+            <div class="oe_structure"/>
+            <div id="oe_structure_div_2" class="oe_structure"/>
+            <div id="unique_id_oe_structure" class="oe_structure"/>
+            <div id="_id_with_children" class="oe_structure">
+                <span>Invalid ID :(</span>
+            </div>
+        </body>
     </template>
 
     <template id="assets_backend" name="test_module_widget" inherit_id="web.assets_backend">

@@ -6,6 +6,7 @@ import sys
 from collections import defaultdict
 
 from oca_pre_commit_hooks import checks_odoo_module_csv, checks_odoo_module_xml, utils
+from oca_pre_commit_hooks.base_checker import BaseChecker
 
 DFTL_README_TMPL_URL = "https://github.com/OCA/maintainer-tools/blob/master/template/module/README.rst"  # noqa: B950
 DFTL_README_FILES = ["README.md", "README.txt", "README.rst"]
@@ -13,16 +14,15 @@ DFTL_MANIFEST_DATA_KEYS = ["data", "demo", "demo_xml", "init_xml", "qweb", "test
 MANIFEST_NAMES = ("__openerp__.py", "__manifest__.py")
 
 
-class ChecksOdooModule:
-    def __init__(self, manifest_path, enable, disable, changed=None, verbose=True):
+class ChecksOdooModule(BaseChecker):
+    def __init__(self, manifest_path, enable, disable, changed=None, verbose=True, autofix=False):
+        super().__init__(enable, disable, autofix=autofix)
         if not os.path.isfile(manifest_path) or os.path.basename(manifest_path) not in MANIFEST_NAMES:
             raise UserWarning(  # pragma: no cover
                 f"Not valid manifest file name {manifest_path} file expected {MANIFEST_NAMES}"
             )
         self.manifest_path = manifest_path
         self.changed = changed if changed is not None else []
-        self.enable = enable
-        self.disable = disable
         self.verbose = verbose
         self.odoo_addon_path = os.path.dirname(self.manifest_path)
         self.manifest_top_path = utils.top_path(self.odoo_addon_path)
@@ -129,7 +129,7 @@ class ChecksOdooModule:
         checks_obj = checks_odoo_module_xml.ChecksOdooModuleXML(
             manifest_datas, self.odoo_addon_name, self.enable, self.disable
         )
-        for check_meth in utils.getattr_checks(checks_obj, self.enable, self.disable):
+        for check_meth in utils.getattr_checks(checks_obj):
             check_meth()
         self.checks_errors.update(checks_obj.checks_errors)
 
@@ -141,7 +141,7 @@ class ChecksOdooModule:
         checks_obj = checks_odoo_module_csv.ChecksOdooModuleCSV(
             manifest_datas, self.odoo_addon_name, self.enable, self.disable
         )
-        for check_meth in utils.getattr_checks(checks_obj, self.enable, self.disable):
+        for check_meth in utils.getattr_checks(checks_obj):
             check_meth()
         self.checks_errors.update(checks_obj.checks_errors)
 
@@ -169,7 +169,7 @@ def lookup_manifest_paths(filenames_or_modules):
     return odoo_module_files_changed
 
 
-def run(files_or_modules, enable=None, disable=None, no_verbose=False, no_exit=False, list_msgs=False):
+def run(files_or_modules, enable=None, disable=None, no_verbose=False, no_exit=False, list_msgs=False, autofix=False):
     if list_msgs:
         _, checks_docstring = utils.get_checks_docstring(
             [ChecksOdooModule, checks_odoo_module_csv.ChecksOdooModuleCSV, checks_odoo_module_xml.ChecksOdooModuleXML]
@@ -194,11 +194,10 @@ def run(files_or_modules, enable=None, disable=None, no_verbose=False, no_exit=F
         if not manifest_path:
             continue
         checks_obj = ChecksOdooModule(
-            os.path.realpath(manifest_path), enable, disable, changed=changed, verbose=not no_verbose
+            os.path.realpath(manifest_path), enable, disable, changed=changed, verbose=not no_verbose, autofix=autofix
         )
-        for check in utils.getattr_checks(checks_obj, enable=enable, disable=disable):
+        for check in utils.getattr_checks(checks_obj):
             check()
-        utils.filter_checks_enabled_disabled(checks_obj.checks_errors, enable, disable)
         if checks_obj.checks_errors:
             all_check_errors.append(checks_obj.checks_errors)
             exit_status = 1

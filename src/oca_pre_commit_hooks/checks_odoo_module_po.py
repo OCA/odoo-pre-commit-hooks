@@ -4,9 +4,10 @@ import string
 import sys
 from collections import defaultdict
 
-import polib
+from polib import POEntry, pofile
 
 from oca_pre_commit_hooks import utils
+from oca_pre_commit_hooks.base_checker import BaseChecker
 
 # Regex used from https://github.com/translate/translate/blob/9de0d72437/translate/filters/checks.py#L50-L62  # noqa
 PRINTF_PATTERN = re.compile(
@@ -39,51 +40,73 @@ class FormatStringParseError(StringParseError):
     pass
 
 
-class ChecksOdooModulePO:
-    def __init__(self, po_filename, enable, disable):
-        self.enable = enable
-        self.disable = disable
-        self.checks_errors = defaultdict(list)
-        po_filename = utils.full_norm_path(po_filename)
-        top_path = utils.top_path(os.path.dirname(po_filename))
-        self.po_data = {
-            "filename": po_filename,
-            "filename_short": os.path.relpath(po_filename, top_path),
-            "data_section": os.path.basename(os.path.dirname(po_filename)),  # i18n or i18n_extra
-            "top_path": top_path,
-        }
+class ChecksOdooModulePO(BaseChecker):
+    def __init__(self, po_filename, enable, disable, autofix):
+        super().__init__(enable, disable, autofix=autofix)
+
+        self.top_path = utils.top_path(os.path.dirname(po_filename))
+        self.filename = utils.full_norm_path(po_filename)
+        self.filename_short = os.path.relpath(self.filename, self.top_path)
+        self.data_section = os.path.basename(os.path.dirname(self.filename))
+
+        self.po_data = []
+        self.original_contents = None
+        self.pretty_contents = None
+        self.file_error = None
+        self.needs_autofix = False
+
         try:
             with open(po_filename, encoding="UTF-8") as filename_obj:
-                # Do not use polib.pofile(self.po_data["filename"])
+                # Do not use polib.pofile()
                 # because raise the following error for PO files with syntax error:
                 # pytest.PytestUnraisableExceptionWarning: Exception ignored in: <_io.FileIO [closed]>
                 # Traceback (most recent call last):
                 #     File "../polib.py", line 1474, in add
                 #     action = getattr(self, 'handle_%s' % next_state)
                 # ResourceWarning: unclosed file <_io.FileIO name='..' mode='rb' closefd=True>
-                polib_entries = polib.pofile(filename_obj.read())
-            self.po_data.update(
-                {
-                    "po": polib_entries,
-                    "file_error": None,
-                }
-            )
+                self.original_contents = filename_obj.read()
+
+            self.po_data = pofile(self.original_contents)
         except (OSError, UnicodeDecodeError) as po_err:
-            self.po_data.update(
-                {
-                    "po": [],
-                    "file_error": po_err,
-                }
-            )
+            self.file_error = po_err
+
+    def _compute_pretty_contents(self):
+        self.po_data.sort(key=lambda entry: entry.msgid)
+        for entry in self.po_data:
+            if entry.msgid == entry.msgstr:
+                entry.msgstr = ""
+
+        self.pretty_contents = str(self.po_data)
+
+    def perform_autofix(self):
+        print(f"Fixing {self.filename_short} ⚒")
+        with open(self.filename, "w", encoding="utf-8") as po_fd:
+            po_fd.write(self.pretty_contents)
+
+    @utils.only_required_for_checks("po-pretty-format")
+    def check_po_pretty_format(self):
+        """* Check po-pretty-format
+        Check the following:
+        1. Entries sorted alphabetically
+        2. Lines are wrapped at 78 columns (same as Odoo)
+        3. Clear msgstr when it is the same as msgid
+        """
+        if self.file_error:
+            return
+
+        self._compute_pretty_contents()
+        if self.pretty_contents != self.original_contents:
+            self.needs_autofix = True
+            self.checks_errors["po-pretty-format"].append(f"{self.filename_short} is not formatted correctly")
 
     @utils.only_required_for_checks("po-syntax-error")
     def check_po_syntax_error(self):
         """* Check po-syntax-error
         Check syntax of PO files from i18n* folders"""
-        if not self.po_data["file_error"]:
+        if not self.file_error:
             return
-        msg = str(self.po_data["file_error"]).replace(f'{self.po_data["filename"]} ', "").strip()
-        self.checks_errors["po-syntax-error"].append(f'{self.po_data["filename_short"]}:1 {msg}')
+        msg = str(self.file_error).replace(f"{self.filename} ", "").strip()
+        self.checks_errors["po-syntax-error"].append(f"{self.filename_short}:1 {msg}")
 
     @staticmethod
     def parse_printf(main_str, secondary_str):
@@ -224,12 +247,12 @@ class ChecksOdooModulePO:
         """
         # po_requires_module
         # Regex from https://github.com/odoo/odoo/blob/fa4f36bb631e82/odoo/tools/translate.py#L616  # noqa
-        match = re.match(r"(module[s]?): (\w+)", entry.comment)
-        if not match:
-            self.checks_errors["po-requires-module"].append(
-                f'{self.po_data["filename_short"]}:{entry.linenum} '
-                "Translation entry requires comment `#. module: MODULE`"
-            )
+        if self.is_message_enabled("po-requires-module"):
+            match = re.match(r"(module[s]?): (\w+)", entry.comment)
+            if not match:
+                self.checks_errors["po-requires-module"].append(
+                    f"{self.filename_short}:{entry.linenum} " "Translation entry requires comment `#. module: MODULE`"
+                )
 
         # po_msgstr_variables
         if entry.msgstr and "python-format" in entry.flags:
@@ -240,71 +263,96 @@ class ChecksOdooModulePO:
                 self.parse_printf(entry.msgid, entry.msgstr)
                 self.parse_format(entry.msgid, entry.msgstr)
             except PrintfStringParseError as str_parse_exc:
-                linenum = self._get_po_line_number(entry)
-                self.checks_errors["po-python-parse-printf"].append(
-                    f'{self.po_data["filename_short"]}:{linenum} '
-                    "Translation string couldn't be parsed "
-                    f"correctly using str%variables {str_parse_exc}"
-                )
+                if self.is_message_enabled("po-python-parse-printf"):
+                    linenum = self._get_po_line_number(entry)
+                    self.checks_errors["po-python-parse-printf"].append(
+                        f"{self.filename_short}:{linenum} "
+                        "Translation string couldn't be parsed "
+                        f"correctly using str%variables {str_parse_exc}"
+                    )
             except FormatStringParseError as str_parse_exc:
-                linenum = self._get_po_line_number(entry)
-                self.checks_errors["po-python-parse-format"].append(
-                    f'{self.po_data["filename_short"]}:{linenum} '
-                    "Translation string couldn't be parsed "
-                    f"correctly using str.format {str_parse_exc}"
-                )
+                if self.is_message_enabled("po-python-parse-format"):
+                    linenum = self._get_po_line_number(entry)
+                    self.checks_errors["po-python-parse-format"].append(
+                        f"{self.filename_short}:{linenum} "
+                        "Translation string couldn't be parsed "
+                        f"correctly using str.format {str_parse_exc}"
+                    )
+
+    @staticmethod
+    def iter_model_occurrences(entry: POEntry):
+        for occurrence in entry.occurrences:
+            if occurrence[0].startswith("model:"):
+                yield occurrence[0]
 
     def check_po(self):
         """* Check po-duplicate-message-definition (message-id)
         in all entries of PO files
 
-        We are not using `check_for_duplicates` parameter of polib.pofile method
-            e.g. `polib.pofile(..., check_for_duplicates=True)`
-        Because the output is:
-            `raise ValueError('Entry "%s" already exists' % entry.msgid)`
-        It doesn't show the number of lines duplicated
-        and it shows the entire string of the message_id without truncating it
-        or replacing newlines
+        * Check po-duplicate-model-definition
+        Verify that no entries share the same 'model:' tag
         """
+
+        # Not using polib.pofile(..., check_for_duplicates=True) because the raised ValueError is missing valuable
+        # information, e.g. line number and the output is not formatted in a usable way
         duplicated = defaultdict(list)
-        for entry in self.po_data["po"]:
-            entry: polib.POEntry
+        duplicated_models = defaultdict(list)
+        for entry in self.po_data:
+            entry: POEntry
             if entry.obsolete:
                 continue
 
             # po_duplicate_message_definition
-            # Occurrences are deduplicated beforehand as it is valid for odoo to have multiple code
-            # entries, where each entry points to line 0 of a particular file.
-            for occurrence in set(entry.occurrences):
-                duplicated[(entry.msgid, occurrence)].append(entry)
-            for meth in utils.getattr_checks(self, self.enable, self.disable, "visit_entry"):
+            if self.is_message_enabled("po-duplicate-message-definition"):
+                for occurrence in set(entry.occurrences):
+                    duplicated[(entry.msgid, occurrence)].append(entry)
+
+            if self.is_message_enabled("po-duplicate-model-definition"):
+                for occurrence in self.iter_model_occurrences(entry):
+                    duplicated_models[occurrence].append(entry)
+
+            for meth in utils.getattr_checks(self, "visit_entry"):
                 meth(entry)
 
-        for entries in duplicated.values():
+        if self.is_message_enabled("po-duplicate-message-definition"):
+            for entries in duplicated.values():
+                if len(entries) < 2:
+                    continue
+                linenum = self._get_po_line_number(entries[0])
+                duplicated_str = ", ".join(map(str, map(self._get_po_line_number, entries[1:])))
+                msg_id_short = re.sub(r"[\n\t]*", "", entries[0].msgid[:40]).strip()
+                if len(entries[0].msgid) > 40:
+                    msg_id_short = f"{msg_id_short}..."
+                self.checks_errors["po-duplicate-message-definition"].append(
+                    f"{self.filename_short}:{linenum} "
+                    f'Duplicate PO message definition "{msg_id_short}" '
+                    f"in lines {duplicated_str}"
+                )
+
+        for model, entries in duplicated_models.items():
             if len(entries) < 2:
                 continue
-            linenum = self._get_po_line_number(entries[0])
-            duplicated_str = ", ".join(map(str, map(self._get_po_line_number, entries[1:])))
-            msg_id_short = re.sub(r"[\n\t]*", "", entries[0].msgid[:40]).strip()
-            if len(entries[0].msgid) > 40:
-                msg_id_short = f"{msg_id_short}..."
-            self.checks_errors["po-duplicate-message-definition"].append(
-                f'{self.po_data["filename_short"]}:{linenum} '
-                f'Duplicate PO message definition "{msg_id_short}" '
-                f"in lines {duplicated_str}"
+
+            offending_lines = ", ".join(map(str, map(self._get_po_line_number, entries[1:])))
+            self.checks_errors["po-duplicate-model-definition"].append(
+                f"{self.filename_short}:{self._get_po_line_number(entries[0])} "
+                f"Translation for {model} has been defined more than once in line(s) {offending_lines}"
             )
 
     def run_checks(self, no_verbose):
-        for check in utils.getattr_checks(self, enable=self.enable, disable=self.disable):
+        for check in utils.getattr_checks(self):
             check()
-        utils.filter_checks_enabled_disabled(self.checks_errors, self.enable, self.disable)
+
         for check_error, msgs in self.checks_errors.items() if not no_verbose else []:
             print(f"\n****{check_error}****")
             for msg in msgs:
                 print(f"{msg} - [{check_error}]")
 
+        if self.autofix and self.needs_autofix:
+            self.perform_autofix()
 
-def run(po_files, enable=None, disable=None, no_verbose=False, no_exit=False, list_msgs=False):
+
+def run(po_files, enable=None, disable=None, no_verbose=False, no_exit=False, list_msgs=False, autofix=False):
     if list_msgs:
         _, checks_docstring = utils.get_checks_docstring([ChecksOdooModulePO])
         if not no_verbose:
@@ -318,7 +366,7 @@ def run(po_files, enable=None, disable=None, no_verbose=False, no_exit=False, li
     exit_status = 0
     for po_file in po_files:
         # Use file by file in order release memory reading file early
-        checks_po_obj = ChecksOdooModulePO(po_file, enable, disable)
+        checks_po_obj = ChecksOdooModulePO(po_file, enable, disable, autofix)
         try:
             checks_po_obj.run_checks(no_verbose)
             if checks_po_obj.checks_errors:
