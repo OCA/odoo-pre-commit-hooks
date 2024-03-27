@@ -8,6 +8,12 @@ on:
   pull_request:
     branches:
       - main
+
+env:
+  CACHE_VERSION: 1
+  DEFAULT_PYTHON: "3.12"
+  PRE_COMMIT_CACHE: ~/.cache/pre-commit
+
 jobs:
   test:
     runs-on: ${{ matrix.os }}
@@ -19,16 +25,16 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
         tox_env: ["py"]
         include:
-          - python: '3.12'
+          - python: ${{ env.DEFAULT_PYTHON }}
             os: ubuntu-latest
             tox_env: 'lint'
           - python: '3.12'
             os: ubuntu-latest
             tox_env: 'update-readme'
-          - python: '3.12'
+          - python: ${{ env.DEFAULT_PYTHON }}
             os: ubuntu-latest
             tox_env: 'build'
-          - python: '3.12'
+          - python: ${{ env.DEFAULT_PYTHON }}
             os: ubuntu-latest
             tox_env: 'cprofile'
 
@@ -41,7 +47,7 @@ jobs:
       id: cache-pre-commit
       uses: actions/cache@v4
       with:
-        path: ~/.cache/pre-commit
+        path: ${{ env.PRE_COMMIT_CACHE }}
         key: ${{ runner.os }}-py${{ matrix.python }}-pre-commit
     - uses: actions/checkout@v4.1.2
       with:
