@@ -11,7 +11,6 @@ on:
 
 env:
   CACHE_VERSION: 1
-  DEFAULT_PYTHON: "3.12"
   PRE_COMMIT_CACHE: ~/.cache/pre-commit
 
 jobs:
@@ -25,16 +24,16 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
         tox_env: ["py"]
         include:
-          - python: '${{ env.DEFAULT_PYTHON }}'
+          - python: '3.12'
             os: ubuntu-latest
             tox_env: 'lint'
-          - python: '${{ env.DEFAULT_PYTHON }}'
+          - python: '3.12'
             os: ubuntu-latest
             tox_env: 'update-readme'
-          - python: '${{ env.DEFAULT_PYTHON }}'
+          - python: '3.12'
             os: ubuntu-latest
             tox_env: 'build'
-          - python: ${{ env.DEFAULT_PYTHON }}
+          - python: '3.12'
             os: ubuntu-latest
             tox_env: 'cprofile'
 
