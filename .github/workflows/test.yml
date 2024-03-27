@@ -8,6 +8,11 @@ on:
   pull_request:
     branches:
       - main
+
+env:
+  CACHE_VERSION: 1
+  PRE_COMMIT_CACHE: ~/.cache/pre-commit
+
 jobs:
   test:
     runs-on: ${{ matrix.os }}
@@ -15,20 +20,20 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python: ['3.7', '3.8', '3.9', '3.10', '3.11']
+        python: ['3.7', '3.8', '3.9', '3.10', '3.11', '3.12']
         os: [ubuntu-latest, windows-latest, macos-latest]
         tox_env: ["py"]
         include:
-          - python: '3.10'
+          - python: '3.12'
             os: ubuntu-latest
             tox_env: 'lint'
-          - python: '3.10'
+          - python: '3.12'
             os: ubuntu-latest
             tox_env: 'update-readme'
-          - python: '3.10'
+          - python: '3.12'
             os: ubuntu-latest
             tox_env: 'build'
-          - python: '3.10'
+          - python: '3.12'
             os: ubuntu-latest
             tox_env: 'cprofile'
 
@@ -39,14 +44,14 @@ jobs:
         git config --global core.autocrlf false
     - name: Cache pre-commit packages
       id: cache-pre-commit
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
-        path: ~/.cache/pre-commit
+        path: ${{ env.PRE_COMMIT_CACHE }}
         key: ${{ runner.os }}-py${{ matrix.python }}-pre-commit
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v4.1.2
       with:
         fetch-depth: 0
-    - uses: actions/setup-python@v4
+    - uses: actions/setup-python@v5.0.0
       with:
         python-version: ${{ matrix.python }}
         architecture: 'x64'
@@ -73,7 +78,7 @@ jobs:
     #       --repository-url https://test.pypi.org/legacy/ dist/* || true
     - name: codecov
       if: startsWith(matrix.tox_env, 'py')  # only coveralls in python tests
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       with:
         fail_ci_if_error: false  # TODO: Set true after fix token for win&macosx
         verbose: true

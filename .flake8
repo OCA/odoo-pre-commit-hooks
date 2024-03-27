@@ -4,9 +4,11 @@ max-complexity = 16
 # B = bugbear
 # B9 = bugbear opinionated (incl line length)
 select = C,E,F,W,B,B9
+# B036: Don't except `BaseException` unless you plan to re-raise it. (we use a lot)
+# B907: '...' is manually surrounded by quotes, consider using the `!r` conversion flag. (I don't care)
 # E203: whitespace before ':' (black behaviour)
 # E501: flake8 line length (covered by bugbear B950)
 # W503: line break before binary operator (black behaviour)
-ignore = E203,E501,W503
+ignore = B036,B907,E203,E501,W503
 per-file-ignores=
     __init__.py:F401
