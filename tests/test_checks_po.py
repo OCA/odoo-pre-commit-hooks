@@ -59,14 +59,13 @@ class TestChecksPO(common.ChecksCommon):
         errors = self.checks_run([ugly_po], enable={"po-pretty-format"}, no_exit=True, no_verbose=False)
         self.assertIn("po-pretty-format", errors[0])
 
-    @unittest.skipIf(
-        sys.platform.startswith("win"), "tmpdir may be created in a different disk, breaking relative paths"
-    )
     def test_pretty_format_po_autofix(self):
         ugly_po = os.path.join(self.test_repo_path, "eleven_module", "i18n", "ugly.po")
         autofix_po = os.path.join(self.test_repo_path, "eleven_module", "i18n", "autofixed_ugly.po")
 
         with TemporaryDirectory() as tmpdir:
+            # Compatible with top_path method that only works with .git folders
+            subprocess.check_output(["git", "init", tmpdir])
             ugly_po_cp = os.path.join(tmpdir, "ugly.po")
             copyfile(ugly_po, ugly_po_cp)
 
