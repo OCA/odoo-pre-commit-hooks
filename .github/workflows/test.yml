@@ -25,13 +25,13 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
         tox_env: ["py"]
         include:
-          - python: ${{ env.DEFAULT_PYTHON }}
+          - python: '${{ env.DEFAULT_PYTHON }}'
             os: ubuntu-latest
             tox_env: 'lint'
-          - python: '3.12'
+          - python: '${{ env.DEFAULT_PYTHON }}'
             os: ubuntu-latest
             tox_env: 'update-readme'
-          - python: ${{ env.DEFAULT_PYTHON }}
+          - python: '${{ env.DEFAULT_PYTHON }}'
             os: ubuntu-latest
             tox_env: 'build'
           - python: ${{ env.DEFAULT_PYTHON }}
