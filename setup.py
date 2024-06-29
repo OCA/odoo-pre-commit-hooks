@@ -94,6 +94,7 @@ setup(
         "console_scripts": [
             "oca-checks-odoo-module = oca_pre_commit_hooks.cli:main",
             "oca-checks-po = oca_pre_commit_hooks.cli_po:main",
+            "oca-checks-file = oca_pre_commit_hooks.cli_file:main",
         ]
     },
 )

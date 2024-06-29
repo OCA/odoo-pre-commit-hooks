@@ -224,6 +224,15 @@ be disabled.
 
 [//]: # (end-checks-po)
 
+[//]: # (start-checks-file)
+
+# Checks file
+
+* Check space-in-filename
+        Verify that all files do not contain spaces in their name
+
+[//]: # (end-checks-file)
+
 
 [//]: # (start-help)
 
