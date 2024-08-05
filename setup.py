@@ -46,7 +46,7 @@ def generage_long_description():
 
 setup(
     name="oca-odoo-pre-commit-hooks",
-    version="0.0.30",
+    version="0.0.31",
     license="LGPL-3.0-or-later",
     description="odoo-pre-commit-hooks to use in pre-commit-config.yml files",
     long_description=generage_long_description(),
@@ -75,6 +75,7 @@ setup(
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
         "Topic :: Utilities",
     ],
     project_urls={

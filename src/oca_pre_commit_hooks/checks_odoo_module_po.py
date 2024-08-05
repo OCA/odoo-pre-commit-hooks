@@ -171,7 +171,7 @@ class ChecksOdooModulePO(BaseChecker):
             except ValueError:
                 continue
             for placeholder in placeholders:
-                if placeholder == "":
+                if not placeholder:
                     # unnumbered "{} {}"
                     # append 0 to use max(0, 0, ...) == 0
                     # and identify that all args are unnumbered vs numbered
@@ -185,7 +185,7 @@ class ChecksOdooModulePO(BaseChecker):
                     # named "{var0} {var1} {var2} {var0}"
                     format_str_kwargs[placeholder] = 0
         if format_str_args:
-            format_str_args = range(len(format_str_args)) if max(format_str_args) == 0 else range(max(format_str_args))
+            format_str_args = range(len(format_str_args)) if not max(format_str_args) else range(max(format_str_args))
         return format_str_args, format_str_kwargs
 
     @staticmethod

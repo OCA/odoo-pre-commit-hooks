@@ -105,6 +105,9 @@ def top_path(path):
 
     It is using lru_cache in order to re-use top level path values
     if multiple files are sharing the same path
+
+    Notice it is not compatible with TemporaryDirectory since that it needs to have a .git folder
+    but you can fix it using "git init"
     """
     try:
         with chdir(path):
