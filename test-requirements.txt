@@ -9,3 +9,4 @@ pytest-xdist
 tox
 twine
 wheel
+setuptools >=42
