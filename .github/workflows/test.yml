@@ -52,7 +52,7 @@ jobs:
       uses: actions/cache@v4
       with:
         path: ${{ env.PRE_COMMIT_CACHE }}
-        key: ${{ runner.os }}-py${{ matrix.python }}-pre-commit
+        key: ${{ runner.os }}-${{ runner.arch }}-py${{ matrix.python }}-pre-commit
     - uses: actions/checkout@v4.1.2
       with:
         fetch-depth: 0
