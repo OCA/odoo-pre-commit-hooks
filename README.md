@@ -399,6 +399,7 @@ options:
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.31/test_repo/broken_module/model_view2.xml#L47 Dangerous use of "replace" from view with priority 0 < 99. Only replace as a last resort. Try position="attributes", position="move" or invisible="1" first
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.31/test_repo/broken_module/model_view2.xml#L70 Dangerous use of "replace" from view with priority 10 < 99. Only replace as a last resort. Try position="attributes", position="move" or invisible="1" first
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.31/test_repo/broken_module/model_view2.xml#L92 Dangerous use of "replace" from view with priority 10 < 99. Only replace as a last resort. Try position="attributes", position="move" or invisible="1" first
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.31/test_repo/broken_module/skip_xml_check_3.xml#L15 Dangerous use of "replace" from view with priority 0 < 99. Only replace as a last resort. Try position="attributes", position="move" or invisible="1" first
 
  * xml-xpath-translatable-item
 

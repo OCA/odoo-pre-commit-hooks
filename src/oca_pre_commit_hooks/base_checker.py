@@ -13,8 +13,8 @@ class BaseChecker:
         self.needs_autofix = False
 
     def is_message_enabled(self, message: str, extra_disable: Union[Set, None] = None):
-        if extra_disable:
-            return message not in extra_disable
+        if extra_disable and message in extra_disable:
+            return False
         if self.enable:
             return message in self.enable
         if self.disable:

@@ -11,5 +11,14 @@
             <field name="name">view.model.form80</field>
             <field name="model">test.model</field>
         </record>
+        <!-- the check xml-dangerous-view-replace-low-priority is not disabled, so it must fail -->
+        <record id="view_model_skip_but_checked" model="ir.ui.view">
+            <field name="name">view.model.form80</field>
+            <field name="model">test.model</field>
+            <field name="inherit_id" ref="module.template"/>
+            <field name="arch" type="xml">
+                <field name="address" position="replace"/>
+            </field>
+        </record>
     </data>
 </odoo>
