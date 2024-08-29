@@ -33,7 +33,7 @@ EXPECTED_ERRORS = {
     "xml-not-valid-char-link": 2,
     "xml-redundant-module-name": 1,
     "xml-syntax-error": 2,
-    "xml-view-dangerous-replace-low-priority": 6,
+    "xml-view-dangerous-replace-low-priority": 7,
     "xml-xpath-translatable-item": 4,
     "xml-oe-structure-missing-id": 6,
     "xml-record-missing-id": 2,
