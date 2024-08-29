@@ -42,19 +42,16 @@ class ChecksCommon(unittest.TestCase):
         os.environ.pop(ENABLE_ENV_VAR, None)
 
     @staticmethod
-    def get_all_code_errors(all_check_errors):
-        check_errors_keys = set()
-        for check_errors in all_check_errors:
-            check_errors_keys |= set(check_errors.keys())
-        return check_errors_keys
+    def get_grouped_errors(all_check_errors):
+        grouped_errors = defaultdict(list)
+        for check_error in all_check_errors:
+            grouped_errors[check_error.code].append(check_error)
+        return grouped_errors
 
     @staticmethod
     def get_count_code_errors(all_check_errors):
-        check_errors_count = defaultdict(int)
-        for check_errors in all_check_errors:
-            for check, errors in check_errors.items():
-                check_errors_count[check] += len(errors)
-        return check_errors_count
+        grouped_errors = ChecksCommon.get_grouped_errors(all_check_errors)
+        return {code: len(errors) for code, errors in grouped_errors.items()}
 
     @staticmethod
     def re_replace(sub_start, sub_end, substitution, content):
@@ -255,3 +252,8 @@ class ChecksCommon(unittest.TestCase):
 
         real_errors = self.get_count_code_errors(self.checks_run(self.file_paths, enable={check_ut}, no_exit=True))
         assertDictEqual(self, real_errors, {check_ut: self.expected_errors[check_ut]})
+
+    def test_checks_as_string(self):
+        all_check_errors = self.checks_run(self.file_paths, no_exit=True, no_verbose=False)
+        for check_error in all_check_errors:
+            self.assertTrue(str(check_error).count(check_error.code) == 1)

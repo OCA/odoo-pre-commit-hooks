@@ -5,8 +5,12 @@ import os
 import sys
 from collections import defaultdict
 
+from colorama import init as colorama_init
+
 from oca_pre_commit_hooks import checks_odoo_module_csv, checks_odoo_module_xml, utils
 from oca_pre_commit_hooks.base_checker import BaseChecker
+
+colorama_init(autoreset=True)
 
 DFTL_README_TMPL_URL = "https://github.com/OCA/maintainer-tools/blob/master/template/module/README.rst"  # noqa: B950
 DFTL_README_FILES = ["README.md", "README.txt", "README.rst"]
@@ -31,11 +35,12 @@ class ChecksOdooModule(BaseChecker):
         self.manifest_dict = self._manifest2dict()
         self.is_module_installable = self._is_installable()
         self.manifest_referenced_files = self._referenced_files_by_extension()
-        self.checks_errors = defaultdict(list)
+        self.checks_errors = []
 
     def _manifest2dict(self):
         if not os.path.isfile(os.path.join(self.odoo_addon_path, "__init__.py")):
-            self.print(f"The path {self.manifest_path} does not have __init__.py file")
+            if self.verbose:
+                print(f"[bold]{self.manifest_path}[/bold]: missing `__init__.py` file")
             return {}
         with open(self.manifest_path, encoding="UTF-8") as f_manifest:
             try:
@@ -117,8 +122,12 @@ class ChecksOdooModule(BaseChecker):
         """
         if not self.manifest_dict:
             manifest_path_short = os.path.relpath(self.manifest_path, self.manifest_top_path)
-            self.checks_errors["manifest-syntax-error"].append(
-                f"{manifest_path_short}:1 could not be loaded {self.error}".strip()
+            self.register_error(
+                code="manifest-syntax-error",
+                message="Manifest could not be loaded",
+                info=self.error,
+                filepath=manifest_path_short,
+                line=1,
             )
 
     @utils.only_required_for_installable()
@@ -131,7 +140,7 @@ class ChecksOdooModule(BaseChecker):
         )
         for check_meth in utils.getattr_checks(checks_obj):
             check_meth()
-        self.checks_errors.update(checks_obj.checks_errors)
+        self.checks_errors.extend(checks_obj.checks_errors)
 
     @utils.only_required_for_installable()
     def check_csv(self):
@@ -143,12 +152,7 @@ class ChecksOdooModule(BaseChecker):
         )
         for check_meth in utils.getattr_checks(checks_obj):
             check_meth()
-        self.checks_errors.update(checks_obj.checks_errors)
-
-    def print(self, object2print):
-        if not self.verbose:
-            return
-        print(object2print)
+        self.checks_errors.extend(checks_obj.checks_errors)
 
 
 def lookup_manifest_paths(filenames_or_modules):
@@ -199,12 +203,14 @@ def run(files_or_modules, enable=None, disable=None, no_verbose=False, no_exit=F
         for check in utils.getattr_checks(checks_obj):
             check()
         if checks_obj.checks_errors:
-            all_check_errors.append(checks_obj.checks_errors)
+            all_check_errors.extend(checks_obj.checks_errors)
             exit_status = 1
-        for check_error, msgs in checks_obj.checks_errors.items() if not no_verbose else {}:
-            checks_obj.print(f"\n****{check_error}****")
-            for msg in msgs:
-                checks_obj.print(f"{msg} - [{check_error}]")
+    # Sort errors by filepath, line, column and code
+    all_check_errors.sort(key=lambda x: (x.filepath, x.line or 0, x.column or 0, x.code))
+    # Print errors
+    if not no_verbose:
+        for error in all_check_errors:
+            print(error)
     if no_exit:
         return all_check_errors
     sys.exit(exit_status)

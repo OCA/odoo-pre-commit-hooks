@@ -4,7 +4,6 @@ import re
 import subprocess
 import sys
 import unittest
-from collections import defaultdict
 from shutil import copyfile
 from tempfile import TemporaryDirectory
 
@@ -57,7 +56,8 @@ class TestChecksPO(common.ChecksCommon):
         self.assertFalse(errors)
 
         errors = self.checks_run([ugly_po], enable={"po-pretty-format"}, no_exit=True, no_verbose=False)
-        self.assertIn("po-pretty-format", errors[0])
+        real_errors = self.get_count_code_errors(errors)
+        self.assertIn("po-pretty-format", real_errors)
 
     def test_pretty_format_po_autofix(self):
         ugly_po = os.path.join(self.test_repo_path, "eleven_module", "i18n", "ugly.po")
@@ -103,19 +103,19 @@ class TestChecksPO(common.ChecksCommon):
         help_content = re.sub(r"( )+", " ", help_content)
         new_readme = self.re_replace("[//]: # (start-help-po)", "[//]: # (end-help-po)", help_content, new_readme)
 
-        all_check_errors = self.checks_run(self.file_paths, no_exit=True, no_verbose=False)
-
-        all_check_errors_merged = defaultdict(list)
-        for check_errors in all_check_errors:
-            for check_error, msgs in check_errors.items():
-                all_check_errors_merged[check_error].extend(msgs)
+        all_check_errors = self.checks_run(sorted(self.file_paths), no_exit=True, no_verbose=False)
+        all_check_errors_by_code = self.get_grouped_errors(all_check_errors)
 
         version = oca_pre_commit_hooks.__version__
         check_example_content = ""
-        for check_error, msgs in sorted(all_check_errors_merged.items(), key=lambda a: a[0]):
-            check_example_content += f"\n\n * {check_error}\n"
-            for msg in sorted(msgs):
-                msg = msg.replace(":", "#L", 1)
+        for code in sorted(all_check_errors_by_code):
+            check_example_content += f"\n\n * {code}\n"
+            for check_error in all_check_errors_by_code[code]:
+                msg = f"{check_error.filepath}"
+                if check_error.line:
+                    msg += f"#L{check_error.line}"
+                if check_error.message:
+                    msg += f" {check_error.message}"
                 check_example_content += f"\n    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v{version}/{msg}"
         check_example_content = f"# Examples PO\n{check_example_content}"
         new_readme = self.re_replace(
@@ -128,5 +128,4 @@ class TestChecksPO(common.ChecksCommon):
             new_readme,
             "The README was updated! Don't panic only failing for CI purposes. Run the same test again.",
         )
-
         self.assertFalse(set(self.expected_errors) - checks_found, "Missing docstring of checks tested")

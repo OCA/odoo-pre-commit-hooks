@@ -52,14 +52,20 @@ class ChecksOdooModuleCSV(BaseChecker):
                         )
             except (FileNotFoundError, csv.Error, UnicodeDecodeError) as csv_err:
                 if self.is_message_enabled("csv-syntax-error"):
-                    self.checks_errors["csv-syntax-error"].append(f'{manifest_data["filename_short"]}:1 {csv_err}')
+                    self.register_error(
+                        code="csv-syntax-error",
+                        message=str(csv_err),
+                        filepath=manifest_data["filename_short"],
+                        line=1,
+                    )
 
         if self.is_message_enabled("csv-duplicate-record-id"):
             for csvid, records in csvids.items():
                 if len(records) < 2:
                     continue
-                self.checks_errors["csv-duplicate-record-id"].append(
-                    f"{records[0][0]}:{records[0][1]} "
-                    f'Duplicate CSV record id "{csvid}" in '
-                    f'{", ".join(f"{record[0]}:{record[1]}" for record in records[1:])}'
+                self.register_error(
+                    code="csv-duplicate-record-id",
+                    message=f"Duplicate CSV record `{csvid}`",
+                    filepath=records[0][0],
+                    line=records[0][1],
                 )
