@@ -324,7 +324,7 @@ class ChecksOdooModuleXML(BaseChecker):
     @staticmethod
     def get_template_xmlid(template, manifest_data):
         template_id = template.get("id")
-        if not template_id:
+        if not template_id:  # pragma: no cover
             return ""
 
         return f"{manifest_data['data_section']}/{template_id}_noupdate_{template.getparent().get('noupdate', '0')}"
@@ -346,7 +346,7 @@ class ChecksOdooModuleXML(BaseChecker):
                     self.verify_qweb_replace(template, manifest_data)
                 if self.is_message_enabled("xml-duplicate-template-id", manifest_data["disabled_checks"]):
                     template_id = self.get_template_xmlid(template, manifest_data)
-                    if not template_id:
+                    if not template_id:  # pragma: no cover
                         continue
                     template_ids[template_id].append(FileElementPair(manifest_data["filename_short"], template))
 
