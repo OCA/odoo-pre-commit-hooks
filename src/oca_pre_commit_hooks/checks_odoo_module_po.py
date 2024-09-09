@@ -113,11 +113,20 @@ class ChecksOdooModulePO(BaseChecker):
         if not self.file_error:
             return
         msg = str(self.file_error).replace(f"{self.filename} ", "").strip()
+        line_no = 1
+
+        def replace_and_extract(match):
+            """Edit the original line_no variable and remove the string matched"""
+            nonlocal line_no
+            line_no = int(match.group(1))
+            return ""
+
+        msg = re.sub(r" \(line (\d+)\)", replace_and_extract, msg)
         self.register_error(
             code="po-syntax-error",
             message=msg,
             filepath=self.filename_short,
-            line=1,
+            line=line_no,
         )
 
     @staticmethod

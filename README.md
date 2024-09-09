@@ -459,8 +459,8 @@ options:
 
  * po-syntax-error
 
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.32/test_repo/broken_module2/i18n/en.po#L1 Syntax error in po file (line 1)
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.32/test_repo/syntax_err_module/i18n/es.po#L1 Syntax error in po file (line 19)
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.32/test_repo/broken_module2/i18n/en.po#L1 Syntax error in po file
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.0.32/test_repo/syntax_err_module/i18n/es.po#L19 Syntax error in po file
 
 [//]: # (end-example-po)
 
