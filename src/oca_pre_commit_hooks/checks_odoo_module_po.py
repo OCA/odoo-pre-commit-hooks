@@ -109,11 +109,12 @@ class ChecksOdooModulePO(BaseChecker):
     @staticmethod
     def extract_line_no(error_msg):
         """Removes (line n) from the message error and returns n with the new message"""
-        line_regex = re.search(r" \(line (\d+)\)", error_msg)
-        line_no = None
+        error_regex = re.compile(r" \(line (\d+)\)")
+        line_regex = error_regex.search(error_msg)
+        line_no = 1
         if line_regex:
             line_no = int(line_regex.group(1))
-            error_msg = error_msg[: line_regex.start()] + error_msg[line_regex.end() :]
+            error_msg = error_regex.sub("", error_msg)
         return line_no, error_msg
 
     @utils.only_required_for_checks("po-syntax-error")
