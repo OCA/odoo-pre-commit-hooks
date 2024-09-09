@@ -4,10 +4,13 @@ import string
 import sys
 from collections import defaultdict
 
+from colorama import init as colorama_init
 from polib import POEntry, pofile
 
 from oca_pre_commit_hooks import utils
 from oca_pre_commit_hooks.base_checker import BaseChecker
+
+colorama_init(autoreset=True)
 
 # Regex used from https://github.com/translate/translate/blob/9de0d72437/translate/filters/checks.py#L50-L62  # noqa
 PRINTF_PATTERN = re.compile(
@@ -97,7 +100,11 @@ class ChecksOdooModulePO(BaseChecker):
         self._compute_pretty_contents()
         if self.pretty_contents != self.original_contents:
             self.needs_autofix = True
-            self.checks_errors["po-pretty-format"].append(f"{self.filename_short} is not formatted correctly")
+            self.register_error(
+                code="po-pretty-format",
+                message="Wrong formatting",
+                filepath=self.filename_short,
+            )
 
     @utils.only_required_for_checks("po-syntax-error")
     def check_po_syntax_error(self):
@@ -106,7 +113,12 @@ class ChecksOdooModulePO(BaseChecker):
         if not self.file_error:
             return
         msg = str(self.file_error).replace(f"{self.filename} ", "").strip()
-        self.checks_errors["po-syntax-error"].append(f"{self.filename_short}:1 {msg}")
+        self.register_error(
+            code="po-syntax-error",
+            message=msg,
+            filepath=self.filename_short,
+            line=1,
+        )
 
     @staticmethod
     def parse_printf(main_str, secondary_str):
@@ -250,8 +262,11 @@ class ChecksOdooModulePO(BaseChecker):
         if self.is_message_enabled("po-requires-module"):
             match = re.match(r"(module[s]?): (\w+)", entry.comment)
             if not match:
-                self.checks_errors["po-requires-module"].append(
-                    f"{self.filename_short}:{entry.linenum} " "Translation entry requires comment `#. module: MODULE`"
+                self.register_error(
+                    code="po-requires-module",
+                    message="Translation entry requires comment `#. module: MODULE`",
+                    filepath=self.filename_short,
+                    line=entry.linenum,
                 )
 
         # po_msgstr_variables
@@ -265,18 +280,21 @@ class ChecksOdooModulePO(BaseChecker):
             except PrintfStringParseError as str_parse_exc:
                 if self.is_message_enabled("po-python-parse-printf"):
                     linenum = self._get_po_line_number(entry)
-                    self.checks_errors["po-python-parse-printf"].append(
-                        f"{self.filename_short}:{linenum} "
-                        "Translation string couldn't be parsed "
-                        f"correctly using str%variables {str_parse_exc}"
+                    self.register_error(
+                        code="po-python-parse-printf",
+                        message="Translation string couldn't be parsed "
+                        f"correctly using str%variables {str_parse_exc}",
+                        filepath=self.filename_short,
+                        line=linenum,
                     )
             except FormatStringParseError as str_parse_exc:
                 if self.is_message_enabled("po-python-parse-format"):
                     linenum = self._get_po_line_number(entry)
-                    self.checks_errors["po-python-parse-format"].append(
-                        f"{self.filename_short}:{linenum} "
-                        "Translation string couldn't be parsed "
-                        f"correctly using str.format {str_parse_exc}"
+                    self.register_error(
+                        code="po-python-parse-format",
+                        message="Translation string couldn't be parsed " f"correctly using str.format {str_parse_exc}",
+                        filepath=self.filename_short,
+                        line=linenum,
                     )
 
     @staticmethod
@@ -316,15 +334,15 @@ class ChecksOdooModulePO(BaseChecker):
             for entries in duplicated.values():
                 if len(entries) < 2:
                     continue
-                linenum = self._get_po_line_number(entries[0])
                 duplicated_str = ", ".join(map(str, map(self._get_po_line_number, entries[1:])))
                 msg_id_short = re.sub(r"[\n\t]*", "", entries[0].msgid[:40]).strip()
                 if len(entries[0].msgid) > 40:
                     msg_id_short = f"{msg_id_short}..."
-                self.checks_errors["po-duplicate-message-definition"].append(
-                    f"{self.filename_short}:{linenum} "
-                    f'Duplicate PO message definition "{msg_id_short}" '
-                    f"in lines {duplicated_str}"
+                self.register_error(
+                    code="po-duplicate-message-definition",
+                    message=f"Duplicate PO message definition `{msg_id_short}` in lines {duplicated_str}",
+                    filepath=self.filename_short,
+                    line=self._get_po_line_number(entries[0]),
                 )
 
         for model, entries in duplicated_models.items():
@@ -332,19 +350,16 @@ class ChecksOdooModulePO(BaseChecker):
                 continue
 
             offending_lines = ", ".join(map(str, map(self._get_po_line_number, entries[1:])))
-            self.checks_errors["po-duplicate-model-definition"].append(
-                f"{self.filename_short}:{self._get_po_line_number(entries[0])} "
-                f"Translation for {model} has been defined more than once in line(s) {offending_lines}"
+            self.register_error(
+                code="po-duplicate-model-definition",
+                message=f"Translation for {model} has been defined more than once in line(s) {offending_lines}",
+                filepath=self.filename_short,
+                line=self._get_po_line_number(entries[0]),
             )
 
-    def run_checks(self, no_verbose):
+    def run_checks(self):
         for check in utils.getattr_checks(self):
             check()
-
-        for check_error, msgs in self.checks_errors.items() if not no_verbose else []:
-            print(f"\n****{check_error}****")
-            for msg in msgs:
-                print(f"{msg} - [{check_error}]")
 
         if self.autofix and self.needs_autofix:
             self.perform_autofix()
@@ -366,12 +381,18 @@ def run(po_files, enable=None, disable=None, no_verbose=False, no_exit=False, li
         # Use file by file in order release memory reading file early
         checks_po_obj = ChecksOdooModulePO(po_file, enable, disable, autofix)
         try:
-            checks_po_obj.run_checks(no_verbose)
+            checks_po_obj.run_checks()
             if checks_po_obj.checks_errors:
                 exit_status = 1
-                all_check_errors.append(checks_po_obj.checks_errors)
+                all_check_errors.extend(checks_po_obj.checks_errors)
         finally:
             del checks_po_obj
+    # Sort errors by filepath, line, column and code
+    all_check_errors.sort(key=lambda x: (x.filepath, x.line or 0, x.column or 0, x.code))
+    # Print errors
+    if not no_verbose:
+        for error in all_check_errors:
+            print(error)
     if no_exit:
         return all_check_errors
     sys.exit(exit_status)

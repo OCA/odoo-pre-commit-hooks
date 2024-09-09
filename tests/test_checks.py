@@ -5,7 +5,6 @@ import re
 import subprocess
 import sys
 import unittest
-from collections import defaultdict
 
 import oca_pre_commit_hooks
 from . import common
@@ -105,18 +104,18 @@ class TestChecksWithFiles(common.ChecksCommon):
         new_readme = self.re_replace("[//]: # (start-help)", "[//]: # (end-help)", help_content, new_readme)
 
         all_check_errors = self.checks_run(sorted(self.file_paths), no_exit=True, no_verbose=False)
-
-        all_check_errors_merged = defaultdict(list)
-        for check_errors in all_check_errors:
-            for check_error, msgs in check_errors.items():
-                all_check_errors_merged[check_error].extend(msgs)
+        all_check_errors_by_code = self.get_grouped_errors(all_check_errors)
 
         version = oca_pre_commit_hooks.__version__
         check_example_content = ""
-        for check_error, msgs in sorted(all_check_errors_merged.items(), key=lambda a: a[0]):
-            check_example_content += f"\n\n * {check_error}\n"
-            for msg in sorted(msgs):
-                msg = msg.replace(":", "#L", 1)
+        for code in sorted(all_check_errors_by_code):
+            check_example_content += f"\n\n * {code}\n"
+            for check_error in all_check_errors_by_code[code]:
+                msg = f"{check_error.filepath}"
+                if check_error.line:
+                    msg += f"#L{check_error.line}"
+                if check_error.message:
+                    msg += f" {check_error.message}"
                 check_example_content += f"\n    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v{version}/{msg}"
         check_example_content = f"# Examples\n{check_example_content}"
         new_readme = self.re_replace(

@@ -1,13 +1,9 @@
 import os
-import re
 import subprocess
 import sys
 import unittest
-from collections import Counter
 
 from . import common, test_checks, test_checks_po
-
-RE_CHECK_OUTPUT = r"\- \[(?P<check>[\w|-]+)\]"
 
 
 def run_cmd(cmd):
@@ -55,10 +51,9 @@ repos:
         self.pre_commit_cmd.append("oca-checks-odoo-module")
         returncode, output, cmd_str = run_cmd(self.pre_commit_cmd)
         self.assertTrue(returncode, f"The process exited with code zero {returncode} {output}")
-        checks_found = re.findall(RE_CHECK_OUTPUT, output)
-        real_errors = dict(Counter(checks_found))
+        errors_count = {code: output.count(code) for code in self.expected_errors}
         common.assertDictEqual(
-            self, real_errors, self.expected_errors, f"Different result than expected for\n{cmd_str}\n{output}"
+            self, errors_count, self.expected_errors, f"Different result than expected for\n{cmd_str}\n{output}"
         )
 
     def test_checks_hook_po(self):
@@ -66,8 +61,7 @@ repos:
         self.pre_commit_cmd.append("oca-checks-po")
         returncode, output, cmd_str = run_cmd(self.pre_commit_cmd)
         self.assertTrue(returncode, f"The process exited with code zero {returncode} {output}")
-        checks_found = re.findall(RE_CHECK_OUTPUT, output)
-        real_errors = dict(Counter(checks_found))
+        errors_count = {code: output.count(code) for code in self.expected_errors}
         common.assertDictEqual(
-            self, real_errors, self.expected_errors, f"Different result than expected for\n{cmd_str}\n{output}"
+            self, errors_count, self.expected_errors, f"Different result than expected for\n{cmd_str}\n{output}"
         )
