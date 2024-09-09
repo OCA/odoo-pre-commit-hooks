@@ -106,17 +106,6 @@ class ChecksOdooModulePO(BaseChecker):
                 filepath=self.filename_short,
             )
 
-    @staticmethod
-    def extract_line_no(error_msg):
-        """Removes (line n) from the message error and returns n with the new message"""
-        error_regex = re.compile(r" \(line (\d+)\)")
-        line_regex = error_regex.search(error_msg)
-        line_no = 1
-        if line_regex:
-            line_no = int(line_regex.group(1))
-            error_msg = error_regex.sub("", error_msg)
-        return line_no, error_msg
-
     @utils.only_required_for_checks("po-syntax-error")
     def check_po_syntax_error(self):
         """* Check po-syntax-error
@@ -124,7 +113,13 @@ class ChecksOdooModulePO(BaseChecker):
         if not self.file_error:
             return
         msg = str(self.file_error).replace(f"{self.filename} ", "").strip()
-        line_no, msg = self.extract_line_no(msg)
+        line_no = 1
+        def replace_and_extract(match):
+            """Edit the original line_no variable and remove the string matched"""
+            nonlocal line_no
+            line_no = int(match.group(1))
+            return ""
+        msg = re.sub(r" \(line (\d+)\)", replace_and_extract, msg)
         self.register_error(
             code="po-syntax-error",
             message=msg,
