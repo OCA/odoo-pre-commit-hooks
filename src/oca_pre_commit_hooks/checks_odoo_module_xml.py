@@ -167,12 +167,12 @@ class ChecksOdooModuleXML(BaseChecker):
                     meth(manifest_data, record)
 
         # xmlids_duplicated (empty dict if check is not enabled)
-        for xmlid_key, records in xmlids_section.items():
+        for __, records in xmlids_section.items():
             if len(records) < 2:
                 continue
             self.register_error(
                 code="xml-duplicate-record-id",
-                message=f"Duplicate xml record id `{xmlid_key}`",
+                message=f"Duplicate xml record id `{records[0].element.get('id')}`",
                 info="\n".join(f"{record.filename}:{record.element.sourceline}" for record in records[1:]),
                 filepath=records[0].filename,
                 line=records[0].element.sourceline,
