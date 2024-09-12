@@ -47,7 +47,7 @@ class ChecksOdooModuleCSV(BaseChecker):
                             (
                                 manifest_data["filename_short"],
                                 csv_r.line_num,
-                                manifest_data["model"],
+                                record_id,
                             )
                         )
             except (FileNotFoundError, csv.Error, UnicodeDecodeError) as csv_err:
@@ -60,12 +60,14 @@ class ChecksOdooModuleCSV(BaseChecker):
                     )
 
         if self.is_message_enabled("csv-duplicate-record-id"):
-            for csvid, records in csvids.items():
+            for __, records in csvids.items():
                 if len(records) < 2:
                     continue
+                filepath, line, record_id = records[0]
                 self.register_error(
                     code="csv-duplicate-record-id",
-                    message=f"Duplicate CSV record `{csvid}`",
-                    filepath=records[0][0],
-                    line=records[0][1],
+                    message=f"Duplicate CSV record `{record_id}`",
+                    info="\n".join(f"{other_filepath}:{other_line}" for other_filepath, other_line, __ in records[1:]),
+                    filepath=filepath,
+                    line=line,
                 )
