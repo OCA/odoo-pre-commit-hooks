@@ -397,11 +397,12 @@ def run(po_files, enable=None, disable=None, no_verbose=False, no_exit=False, li
         finally:
             del checks_po_obj
     # Sort errors by filepath, line, column and code
-    all_check_errors.sort(key=lambda x: (x.filepath, x.line or 0, x.column or 0, x.code))
+    all_check_errors.sort()
     # Print errors
     if not no_verbose:
         for error in all_check_errors:
             print(error)
+            print("")
     if no_exit:
         return all_check_errors
     sys.exit(exit_status)

@@ -206,11 +206,12 @@ def run(files_or_modules, enable=None, disable=None, no_verbose=False, no_exit=F
             all_check_errors.extend(checks_obj.checks_errors)
             exit_status = 1
     # Sort errors by filepath, line, column and code
-    all_check_errors.sort(key=lambda x: (x.filepath, x.line or 0, x.column or 0, x.code))
+    all_check_errors.sort()
     # Print errors
     if not no_verbose:
         for error in all_check_errors:
             print(error)
+            print("")
     if no_exit:
         return all_check_errors
     sys.exit(exit_status)

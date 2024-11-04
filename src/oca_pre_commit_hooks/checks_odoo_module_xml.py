@@ -173,9 +173,9 @@ class ChecksOdooModuleXML(BaseChecker):
             self.register_error(
                 code="xml-duplicate-record-id",
                 message=f"Duplicate xml record id `{records[0].element.get('id')}`",
-                info="\n".join(f"{record.filename}:{record.element.sourceline}" for record in records[1:]),
                 filepath=records[0].filename,
                 line=records[0].element.sourceline,
+                extra_positions=[(record.filename, record.element.sourceline) for record in records[1:]],
             )
 
         # fields_duplicated (empty dict if check is not enabled)
@@ -185,9 +185,9 @@ class ChecksOdooModuleXML(BaseChecker):
             self.register_error(
                 code="xml-duplicate-fields",
                 message=f"Duplicate xml field `{field_key[0]}`",
-                info="\n".join(f"{field[0]['filename_short']}:{field[1].sourceline}" for field in fields[1:]),
                 filepath=fields[0][0]["filename_short"],
                 line=fields[0][1].sourceline,
+                extra_positions=[(field[0]["filename_short"], field[1].sourceline) for field in fields[1:]],
             )
 
     @utils.only_required_for_checks("xml-syntax-error")
@@ -376,9 +376,9 @@ class ChecksOdooModuleXML(BaseChecker):
             self.register_error(
                 code="xml-duplicate-template-id",
                 message=f"Duplicate xml template id `{xmlid_key}`",
-                info="\n".join(f"{record.filename}:{record.element.sourceline}" for record in records[1:]),
                 filepath=records[0].filename,
                 line=records[0].element.sourceline,
+                extra_positions=[(record.filename, record.element.sourceline) for record in records[1:]],
             )
 
     @utils.only_required_for_checks("xml-deprecated-data-node")

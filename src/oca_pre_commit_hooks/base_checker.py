@@ -1,40 +1,52 @@
-from typing import Set, Union
+from typing import List, NamedTuple, Set, Tuple, Union
 
 from colorama import Fore, Style
 
 
-class CheckerError:
-    def __init__(
-        self,
-        code: str,
-        message: str,
-        filepath: str,
-        line: Union[int, None] = None,
-        column: Union[int, None] = None,
-        info: Union[str, None] = None,
-    ):
-        self.code = code
-        self.message = message
-        self.filepath = filepath
-        self.line = line
-        self.column = column
-        self.info = info
+class FilePosition(NamedTuple):
+    filepath: str
+    line: int = 0
+    column: int = 0
+
+    def to_string(self, separator: str = ":") -> str:
+        return separator.join(str(x) for x in iter(self) if x)
+
+    def __str__(self):
+        return self.to_string()
+
+
+class CheckerError(NamedTuple):
+    position: FilePosition
+    code: str
+    message: str
+    info: Union[str, None] = None
+    extra_positions: Union[List[FilePosition], None] = None
 
     def to_string(self):
-        res = Style.BRIGHT + Fore.RESET + self.filepath + Style.RESET_ALL
-        if self.line is not None:
-            res += Fore.CYAN + ":" + Style.RESET_ALL + str(self.line)
-        if self.column is not None:  # pragma: no cover
-            res += Fore.CYAN + ":" + Style.RESET_ALL + str(self.column)
-        if not self.code and not self.message:  # pragma: no cover
-            return res
+        # File position with a styled separator
+        res = Style.BRIGHT + Fore.RESET
+        res += self.position.to_string(separator=Fore.CYAN + ":" + Style.RESET_ALL)
+        res += Style.RESET_ALL
+        # Extra styled separator
         res += Fore.CYAN + ":" + Style.RESET_ALL
-        if self.code:
-            res += " "
-            res += Style.BRIGHT + Fore.RED + self.code + Style.RESET_ALL
-        if self.message:
-            res += " "
-            res += self.message
+        # Code
+        res += " "
+        res += Style.BRIGHT + Fore.RED + self.code + Style.RESET_ALL
+        # Message
+        res += " "
+        res += self.message
+        # Extra positions
+        if self.extra_positions:
+            res += "\n"
+            res += Fore.YELLOW
+            res += "\n".join(str(x) for x in iter(self.extra_positions))
+            res += Style.RESET_ALL
+        # Optional info
+        if self.info:
+            res += "\n"
+            res += Style.DIM
+            res += self.info
+            res += Style.RESET_ALL
         return res
 
     def __str__(self):
@@ -72,17 +84,17 @@ class BaseChecker:
         code: str,
         message: str,
         filepath: str,
-        line: Union[int, None] = None,
-        column: Union[int, None] = None,
+        line: int = 0,
+        column: int = 0,
         info: Union[str, None] = None,
+        extra_positions: Union[List[Tuple[str, int, int]], None] = None,
     ):
         self.checks_errors.append(
             CheckerError(
+                position=FilePosition(filepath, line, column),
                 code=code,
                 message=message,
-                filepath=filepath,
-                line=line,
-                column=column,
                 info=info,
+                extra_positions=[FilePosition(*x) for x in extra_positions] if extra_positions else None,
             )
         )
