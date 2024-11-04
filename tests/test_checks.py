@@ -111,9 +111,9 @@ class TestChecksWithFiles(common.ChecksCommon):
         for code in sorted(all_check_errors_by_code):
             check_example_content += f"\n\n * {code}\n"
             for check_error in all_check_errors_by_code[code]:
-                msg = f"{check_error.filepath}"
-                if check_error.line:
-                    msg += f"#L{check_error.line}"
+                msg = f"{check_error.position.filepath}"
+                if check_error.position.line:
+                    msg += f"#L{check_error.position.line}"
                 if check_error.message:
                     msg += f" {check_error.message}"
                 check_example_content += f"\n    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v{version}/{msg}"

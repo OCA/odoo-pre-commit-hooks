@@ -67,7 +67,7 @@ class ChecksOdooModuleCSV(BaseChecker):
                 self.register_error(
                     code="csv-duplicate-record-id",
                     message=f"Duplicate CSV record `{record_id}`",
-                    info="\n".join(f"{other_filepath}:{other_line}" for other_filepath, other_line, __ in records[1:]),
                     filepath=filepath,
                     line=line,
+                    extra_positions=[(other_filepath, other_line) for other_filepath, other_line, __ in records[1:]],
                 )
