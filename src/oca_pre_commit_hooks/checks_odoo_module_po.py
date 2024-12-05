@@ -75,9 +75,11 @@ class ChecksOdooModulePO(BaseChecker):
 
     def _compute_pretty_contents(self):
         self.po_data.sort(key=lambda entry: entry.msgid)
-        for entry in self.po_data:
-            if entry.msgid == entry.msgstr:
-                entry.msgstr = ""
+        # Ignore i18n_extra https://github.com/OCA/odoo-pre-commit-hooks/issues/100
+        if self.data_section != "i18n_extra":
+            for entry in self.po_data:
+                if entry.msgid == entry.msgstr:
+                    entry.msgstr = ""
 
         self.pretty_contents = str(self.po_data)
 
