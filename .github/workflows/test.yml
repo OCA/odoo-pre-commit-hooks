@@ -73,7 +73,7 @@ jobs:
         cache: 'pip'
     - name: install dependencies
       run: |
-        # python -mpip install --progress-bar=off -r test-requirements.txt
+        python -mpip install --progress-bar=off -r test-requirements.txt
         pip --version
         pip list --format=freeze
     - name: Test
