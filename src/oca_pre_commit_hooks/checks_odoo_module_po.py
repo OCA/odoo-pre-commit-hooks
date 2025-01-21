@@ -84,7 +84,7 @@ class ChecksOdooModulePO(BaseChecker):
         self.pretty_contents = str(self.po_data)
 
     def perform_autofix(self):
-        print(f"Fixing {self.filename_short} ⚒")
+        print(f"Fixing {self.filename_short}")
         with open(self.filename, "w", encoding="utf-8") as po_fd:
             po_fd.write(self.pretty_contents)
 
