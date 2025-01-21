@@ -1,0 +1,29 @@
+name: Reproduce UnicodeEncodeError
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Force cp1252 encoding
+        run: |
+          chcp 1252
+          set PYTHONIOENCODING=cp1252
+          echo "PYTHONIOENCODING=cp1252" >> $GITHUB_ENV
+
+      - name: Run Python script
+        run: |
+          python -c "import os;print(f'encoding py: %s %s' % (os.environ.get('PYTHONENCODING'), os.environ.get('PYTHONIOENCODING')))"
+          python -c "print('Fixing example ⚒')"
