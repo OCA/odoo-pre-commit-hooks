@@ -12,7 +12,6 @@ on:
 env:
   CACHE_VERSION: 1
   PRE_COMMIT_CACHE: ~/.cache/pre-commit
-  PYTHONIOENCODING: cp1252  # Reproduce errors with windows terminal default codecs
 
 jobs:
   test:
@@ -52,7 +51,7 @@ jobs:
             os: macos-latest
 
     steps:
-    - name: Set git to not change EoL
+    - name: Set git to not change EoL and use coding "cp1252" (similar to windows default)
       if: runner.os == 'Windows'
       run: |
         git config --global core.autocrlf false
