@@ -142,7 +142,7 @@ class ChecksOdooModule(BaseChecker):
             check_meth()
         self.checks_errors.extend(checks_obj.checks_errors)
 
-        if self.autofix and self.needs_autofix:
+        if self.autofix:
             checks_obj.perform_autofix()
 
     @utils.only_required_for_installable()
