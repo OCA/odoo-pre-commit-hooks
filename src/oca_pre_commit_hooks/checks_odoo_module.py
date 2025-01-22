@@ -136,11 +136,14 @@ class ChecksOdooModule(BaseChecker):
         if not manifest_datas:
             return
         checks_obj = checks_odoo_module_xml.ChecksOdooModuleXML(
-            manifest_datas, self.odoo_addon_name, self.enable, self.disable
+            manifest_datas, self.odoo_addon_name, self.enable, self.disable, self.autofix
         )
         for check_meth in utils.getattr_checks(checks_obj):
             check_meth()
         self.checks_errors.extend(checks_obj.checks_errors)
+
+        if self.autofix:
+            checks_obj.perform_autofix()
 
     @utils.only_required_for_installable()
     def check_csv(self):

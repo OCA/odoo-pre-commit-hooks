@@ -257,3 +257,20 @@ class ChecksCommon(unittest.TestCase):
         all_check_errors = self.checks_run(self.file_paths, no_exit=True, no_verbose=False)
         for check_error in all_check_errors:
             self.assertTrue(str(check_error).count(check_error.code) == 1)
+
+    def test_checks_autofix(self):
+        # TODO: Create a new tmp folder in oder to avoid generating changes in the original files
+        all_check_errors = self.checks_run(
+            self.file_paths,
+            no_exit=True,
+            no_verbose=False,
+            enable="xml-id-position-first,xml-redundant-module-name",
+            autofix=True,
+        )
+        real_errors = self.get_count_code_errors(all_check_errors)
+        expected_errors = {
+            key: val
+            for key, val in self.expected_errors.items()
+            if key in ["xml-redundant-module-name", "xml-id-position-first"]
+        }
+        assertDictEqual(self, real_errors, expected_errors)

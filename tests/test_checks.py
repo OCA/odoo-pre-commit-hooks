@@ -29,6 +29,7 @@ EXPECTED_ERRORS = {
     "xml-deprecated-tree-attribute": 3,
     "xml-duplicate-fields": 3,
     "xml-duplicate-record-id": 2,
+    "xml-id-position-first": 2,
     "xml-not-valid-char-link": 2,
     "xml-redundant-module-name": 1,
     "xml-syntax-error": 2,
