@@ -196,11 +196,10 @@ class ChecksOdooModuleXML(BaseChecker):
         for manifest_data in self.manifest_datas:
             if not manifest_data["needs_autofix"]:
                 continue
-            updated_content = etree.tostring(manifest_data["node"], pretty_print=True, encoding="UTF-8")
-            # TODO: Store the change
-            print("change file", manifest_data["filename"])
-            print(updated_content.decode("UTF-8"))
-            print()
+            updated_content = etree.tostring(manifest_data["node"], pretty_print=True, xml_declaration=True, encoding="UTF-8")
+            with open(manifest_data["filename"], "wb") as file_obj:
+                file_obj.write(updated_content)
+            print(f"Changed file {manifest_data['filename']}")
 
     @utils.only_required_for_checks("xml-syntax-error")
     def check_xml_syntax_error(self):
