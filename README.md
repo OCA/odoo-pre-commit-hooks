@@ -109,83 +109,83 @@ be disabled.
 # Checks
 
 * Check manifest-syntax-error
-        Check if the manifest file has syntax error
+Check if the manifest file has syntax error
 
 * Check csv-duplicate-record-id
-        duplicate CSV "id" AKA xmlid but for CSV files
+duplicate CSV "id" AKA xmlid but for CSV files
 
 * Check csv-syntax-error
-        Check syntax error for CSV files declared in the manifest
+Check syntax error for CSV files declared in the manifest
 
 * Check xml-deprecated-data-node
-        Deprecated <data> node inside <odoo> xml node
+Deprecated <data> node inside <odoo> xml node
 
 * Check xml-deprecated-openerp-node
-        deprecated <openerp> xml node
+deprecated <openerp> xml node
 
 * Check xml-deprecated-qweb-directive
-        for use of deprecated QWeb directives t-*-options
+for use of deprecated QWeb directives t-*-options
 
 * Check xml-not-valid-char-link
-        The resource in in src/href contains a not valid character.
+The resource in in src/href contains a not valid character.
 
 * Check xml-oe-structure-missing-id
 
-        Ensure all tags with class 'oe_structure' have an ID. For more information on the rationale, see:
-        https://github.com/OCA/odoo-pre-commit-hooks/issues/27
+Ensure all tags with class 'oe_structure' have an ID. For more information on the rationale, see:
+https://github.com/OCA/odoo-pre-commit-hooks/issues/27
 
 * Check xml-redundant-module-name
 
-        If the module is called "module_a" and the xmlid is
-        `<record id="module_a.xmlid_name1" ...`
+If the module is called "module_a" and the xmlid is
+`<record id="module_a.xmlid_name1" ...`
 
-        The "module_a." is redundant it could be replaced to only
-        `<record id="xmlid_name1" ...`
+The "module_a." is redundant it could be replaced to only
+`<record id="xmlid_name1" ...`
 
 * Check xml-dangerous-filter-wo-user
-        Check dangerous filter without a user assigned.
+Check dangerous filter without a user assigned.
 
 * Check xml-create-user-wo-reset-password
-        records of user without `context="{'no_reset_password': True}"`
-        This context avoid send email and mail log warning
+records of user without `context="{'no_reset_password': True}"`
+This context avoid send email and mail log warning
 
 * Check xml-view-dangerous-replace-low-priority in ir.ui.view
 
-            <field name="priority" eval="10"/>
-            ...
-                <field name="name" position="replace"/>
+    <field name="priority" eval="10"/>
+    ...
+        <field name="name" position="replace"/>
 
 * Check xml-deprecated-tree-attribute
-          The tree-view declaration is using a deprecated attribute.
+  The tree-view declaration is using a deprecated attribute.
 
 * Check xml-record-missing-id
-        Generated when a <record> tag has no id.
+Generated when a <record> tag has no id.
 
 * Check xml-duplicate-record-id
 
-        If a module has duplicated record_id AKA xml_ids
-        file1.xml
-            <record id="xmlid_name1"
-        file2.xml
-            <record id="xmlid_name1"
+If a module has duplicated record_id AKA xml_ids
+file1.xml
+    <record id="xmlid_name1"
+file2.xml
+    <record id="xmlid_name1"
 
 * Check xml-duplicate-fields in all record nodes
-            <record id="xmlid_name1"...
-                <field name="field_name1"...
-                <field name="field_name1"...
+    <record id="xmlid_name1"...
+        <field name="field_name1"...
+        <field name="field_name1"...
 
 * Check xml-syntax-error
-        Check syntax of XML files declared in the Odoo manifest
+Check syntax of XML files declared in the Odoo manifest
 
 * Check xml-dangerous-qweb-replace-low-priority
-        Dangerous qweb view defined with low priority
+Dangerous qweb view defined with low priority
 
 * Check xml-duplicate-template-id
-        Triggered when two templates share the same ID
+Triggered when two templates share the same ID
 
 * Check xml-xpath-translatable-item check `xpath` nodes using `contains(text(), 'Text translatable')`
-        Since that the text could be translated so it is a mutable value.
-        It could raise `ValueError` exception if the language is changed.
+Since that the text could be translated so it is a mutable value.
+It could raise `ValueError` exception if the language is changed.
 
 
 [//]: # (end-checks)
@@ -196,30 +196,30 @@ be disabled.
 # Checks PO
 
 * Check po-requires-module
-        Translation entry requires comment `#. module: MODULE`
+Translation entry requires comment `#. module: MODULE`
 
 * Check po-python-parse-printf
-        Check if `msgid` is using `str` variables like `%s`
-        So translation `msgstr` must be the same number of variables too
+Check if `msgid` is using `str` variables like `%s`
+So translation `msgstr` must be the same number of variables too
 
 * Check po-python-parse-format
-        Check if `msgid` is using `str` variables like `{}`
-        So translation `msgstr` must be the same number of variables too
+Check if `msgid` is using `str` variables like `{}`
+So translation `msgstr` must be the same number of variables too
 
 * Check po-duplicate-message-definition (message-id)
-        in all entries of PO files
+in all entries of PO files
 
 * Check po-duplicate-model-definition
-        Verify that no entries share the same 'model:' tag
+Verify that no entries share the same 'model:' tag
 
 * Check po-pretty-format
-        Check the following:
-        1. Entries sorted alphabetically
-        2. Lines are wrapped at 78 columns (same as Odoo)
-        3. Clear msgstr when it is the same as msgid
+Check the following:
+1. Entries sorted alphabetically
+2. Lines are wrapped at 78 columns (same as Odoo)
+3. Clear msgstr when it is the same as msgid
 
 * Check po-syntax-error
-        Check syntax of PO files from i18n* folders
+Check syntax of PO files from i18n* folders
 
 
 [//]: # (end-checks-po)
@@ -238,9 +238,9 @@ options:
  -h, --help show this help message and exit
  --no-verbose If enabled so disable verbose mode.
  --no-exit If enabled so it will not call exit.
- --disable DISABLE, -d DISABLE Disable the checker with the given 'check-name', separated by commas.
- --enable ENABLE, -e ENABLE Enable the checker with the given 'check-name', separated by commas. Default: All checks are enabled by default
- --config CONFIG, -c CONFIG Path to a configuration file (default: .oca_hooks.cfg)
+ --disable, -d DISABLE Disable the checker with the given 'check-name', separated by commas.
+ --enable, -e ENABLE Enable the checker with the given 'check-name', separated by commas. Default: All checks are enabled by default
+ --config, -c CONFIG Path to a configuration file (default: .oca_hooks.cfg)
  --list-msgs List all currently enabled messages.
  --fix Automatically fix files when possible
 
@@ -262,9 +262,9 @@ options:
  -h, --help show this help message and exit
  --no-verbose If enabled so disable verbose mode.
  --no-exit If enabled so it will not call exit.
- --disable DISABLE, -d DISABLE Disable the checker with the given 'check-name', separated by commas.
- --enable ENABLE, -e ENABLE Enable the checker with the given 'check-name', separated by commas. Default: All checks are enabled by default
- --config CONFIG, -c CONFIG Path to a configuration file (default: .oca_hooks.cfg)
+ --disable, -d DISABLE Disable the checker with the given 'check-name', separated by commas.
+ --enable, -e ENABLE Enable the checker with the given 'check-name', separated by commas. Default: All checks are enabled by default
+ --config, -c CONFIG Path to a configuration file (default: .oca_hooks.cfg)
  --list-msgs List all currently enabled messages.
  --fix Automatically fix files when possible
 
