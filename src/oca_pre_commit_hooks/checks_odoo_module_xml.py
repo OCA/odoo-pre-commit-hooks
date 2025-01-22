@@ -56,8 +56,8 @@ class ChecksOdooModuleXML(BaseChecker):
         f"/odoo//template//*[{qweb_deprecated_attrs}] | " f"/openerp//template//*[{qweb_deprecated_attrs}]"
     )
 
-    def __init__(self, manifest_datas, module_name, enable, disable):
-        super().__init__(enable, disable, module_name)
+    def __init__(self, manifest_datas, module_name, enable, disable, autofix):
+        super().__init__(enable, disable, module_name, autofix)
         self.manifest_datas = manifest_datas or []
         for manifest_data in self.manifest_datas:
             try:
@@ -68,6 +68,7 @@ class ChecksOdooModuleXML(BaseChecker):
                             "node": node,
                             "file_error": None,
                             "disabled_checks": self._get_disabled_checks(node),
+                            "needs_autofix": False,
                         }
                     )
             except (FileNotFoundError, etree.XMLSyntaxError, UnicodeDecodeError) as xml_err:
@@ -76,6 +77,7 @@ class ChecksOdooModuleXML(BaseChecker):
                         "node": etree.Element("__empty__"),
                         "file_error": str(xml_err).replace(manifest_data["filename"], ""),
                         "disabled_checks": set(),
+                        "needs_autofix": False,
                     }
                 )
 
@@ -190,6 +192,16 @@ class ChecksOdooModuleXML(BaseChecker):
                 extra_positions=[(field[0]["filename_short"], field[1].sourceline) for field in fields[1:]],
             )
 
+    def perform_autofix(self):
+        for manifest_data in self.manifest_datas:
+            if not manifest_data["needs_autofix"]:
+                continue
+            updated_content = etree.tostring(manifest_data["node"], pretty_print=True, encoding="UTF-8")
+            # TODO: Store the change
+            print("change file", manifest_data["filename"])
+            print(updated_content.decode("UTF-8"))
+            print()
+
     @utils.only_required_for_checks("xml-syntax-error")
     def check_xml_syntax_error(self):
         """* Check xml-syntax-error
@@ -204,7 +216,7 @@ class ChecksOdooModuleXML(BaseChecker):
                 line=1,
             )
 
-    @utils.only_required_for_checks("xml-redundant-module-name")
+    @utils.only_required_for_checks("xml-redundant-module-name", "xml-id-position-first")
     def visit_xml_record(self, manifest_data, record):
         """* Check xml-redundant-module-name
 
@@ -213,15 +225,41 @@ class ChecksOdooModuleXML(BaseChecker):
 
         The "module_a." is redundant it could be replaced to only
         `<record id="xmlid_name1" ...`
+
+        * Check xml-id-position-first
+
+        If the record id is not in the first position
+        `<record ... id="xmlid_name1"`
+
+        It should be the first
+        `<record id="xmlid_name1" ...`
         """
         # redundant_module_name
         record_id = record.get("id")
         if not record_id:
             return
+        first_attr = record.keys()[0]
+        if first_attr != "id" and self.is_message_enabled("xml-id-position-first", manifest_data["disabled_checks"]):
+            self.register_error(
+                code="xml-id-position-first",
+                message=f'The "id" attribute must be first `<record id="{record_id}" {first_attr}=... />`',
+                info=f'Use `<record id="{record_id}"  {first_attr}=... />` instead',
+                filepath=manifest_data["filename_short"],
+                line=record.sourceline,
+            )
+            if self.autofix:
+                manifest_data["needs_autofix"] = True
+                attributes_dict = dict(record.items())
+                id_value = attributes_dict.pop("id")
+                record.attrib.clear()
+                record.set("id", id_value)
+                for key, val in attributes_dict.items():
+                    record.set(key, val)
 
         xmlid_module, xmlid_name = record_id.split(".") if "." in record_id else ["", record_id]
-        if xmlid_module == self.module_name:
-            # TODO: Add autofix option
+        if xmlid_module == self.module_name and self.is_message_enabled(
+            "xml-redundant-module-name", manifest_data["disabled_checks"]
+        ):
             self.register_error(
                 code="xml-redundant-module-name",
                 message=f'Redundant module name `<record id="{record_id}" />`',
@@ -229,6 +267,9 @@ class ChecksOdooModuleXML(BaseChecker):
                 filepath=manifest_data["filename_short"],
                 line=record.sourceline,
             )
+            if self.autofix:
+                manifest_data["needs_autofix"] = True
+                record.attrib["id"] = record.attrib["id"].replace(f"{xmlid_module}.", "")
 
     @utils.only_required_for_checks("xml-view-dangerous-replace-low-priority", "xml-deprecated-tree-attribute")
     def visit_xml_record_view(self, manifest_data, record):
