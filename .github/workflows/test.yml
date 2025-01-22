@@ -20,29 +20,23 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python: ['3.7', '3.8', '3.9', '3.10', '3.11', '3.12']
+        python: ['3.9', '3.10', '3.11', '3.12', '3.13']
         os: [ubuntu-latest, windows-latest, macos-13, macos-latest]
         tox_env: ["py"]
         include:
-          - python: '3.12'
+          - python: '3.13'
             os: ubuntu-latest
             tox_env: 'lint'
-          - python: '3.12'
+          - python: '3.13'
             os: ubuntu-latest
             tox_env: 'update-readme'
-          - python: '3.12'
+          - python: '3.13'
             os: ubuntu-latest
             tox_env: 'build'
-          - python: '3.12'
+          - python: '3.13'
             os: ubuntu-latest
             tox_env: 'cprofile'
         exclude:
-          # macos-14 AKA macos-latest has switched to being an ARM runner, only supporting newer versions of Python
-          # https://github.com/actions/setup-python/issues/825#issuecomment-2096792396
-          - python: '3.7'
-            os: macos-latest
-          - python: '3.8'
-            os: macos-latest
           - python: '3.9'
             os: macos-latest
           - python: '3.10'
