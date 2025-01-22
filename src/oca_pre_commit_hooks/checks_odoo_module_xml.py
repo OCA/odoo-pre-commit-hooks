@@ -1,5 +1,6 @@
 import os
 import re
+import shutil
 from collections import defaultdict, namedtuple
 from typing import Dict, List
 
@@ -62,13 +63,15 @@ class ChecksOdooModuleXML(BaseChecker):
         for manifest_data in self.manifest_datas:
             try:
                 with open(manifest_data["filename"], "rb") as f_xml:
-                    node = etree.parse(f_xml)
+                    xml_parser = etree.XMLParser(remove_blank_text=False)
+                    node = etree.parse(f_xml, xml_parser)
                     manifest_data.update(
                         {
                             "node": node,
                             "file_error": None,
                             "disabled_checks": self._get_disabled_checks(node),
                             "needs_autofix": False,
+                            "changes": []
                         }
                     )
             except (FileNotFoundError, etree.XMLSyntaxError, UnicodeDecodeError) as xml_err:
@@ -78,6 +81,7 @@ class ChecksOdooModuleXML(BaseChecker):
                         "file_error": str(xml_err).replace(manifest_data["filename"], ""),
                         "disabled_checks": set(),
                         "needs_autofix": False,
+                        "changes": []
                     }
                 )
 
@@ -94,6 +98,15 @@ class ChecksOdooModuleXML(BaseChecker):
                 print(f"{node.docinfo.URL}:{comment_node.sourceline} WARNING. DEPRECATED. Use oca-disable instead.")
         return all_checks_disabled
 
+    def read_line(self, filename, line):
+        """Return the content of the file only for the number of line
+        It avoid to load the whole file in memory
+        """
+        with open(filename) as f_content:
+            for current_line, content in enumerate(f_content, start=1):
+                if line == current_line:
+                    return content
+                
     def getattr_checks(self, manifest_data, prefix):
         disable_node = manifest_data["disabled_checks"]
         yield from utils.getattr_checks(self, prefix, disable_node)
@@ -196,10 +209,23 @@ class ChecksOdooModuleXML(BaseChecker):
         for manifest_data in self.manifest_datas:
             if not manifest_data["needs_autofix"]:
                 continue
-            updated_content = etree.tostring(manifest_data["node"], pretty_print=True, xml_declaration=True, encoding="UTF-8")
-            with open(manifest_data["filename"], "wb") as file_obj:
-                file_obj.write(updated_content)
-            print(f"Changed file {manifest_data['filename']}")
+            xml_tmp = manifest_data["filename"] + ".bkp"
+            with open(xml_tmp, "w") as xml_file_tmp, open(manifest_data["filename"], "r") as xml_file:
+                for no_line, line in enumerate(xml_file, start=1):
+                    for change in manifest_data["changes"]:
+                        if change["sourceline"] != no_line:
+                            continue
+                        line = change["new_content"]
+                        # TODO: Check what about if more than one change is required for the same line of code
+                    xml_file_tmp.write(line)
+            shutil.move(xml_tmp, manifest_data["filename"])
+
+            # THIS SOLUTION MODIFY A LOT THE ORIGINAL FILE
+            # updated_content = etree.tostring(manifest_data["node"], pretty_print=False, xml_declaration=True, encoding="UTF-8")
+            # with open(manifest_data["filename"], "wb") as file_obj:
+            #     file_obj.write(updated_content)
+
+            print(f"File changed {manifest_data['filename']}")
 
     @utils.only_required_for_checks("xml-syntax-error")
     def check_xml_syntax_error(self):
@@ -247,13 +273,24 @@ class ChecksOdooModuleXML(BaseChecker):
                 line=record.sourceline,
             )
             if self.autofix:
+                old_content = self.read_line(manifest_data["filename"], record.sourceline)
                 manifest_data["needs_autofix"] = True
-                attributes_dict = dict(record.items())
-                id_value = attributes_dict.pop("id")
-                record.attrib.clear()
-                record.set("id", id_value)
-                for key, val in attributes_dict.items():
-                    record.set(key, val)
+                # TODO: Use the same for menuitem
+                pattern = r'(<(\w+)\s+)([^>]*?)\b(id="[^"]*")([^>]*)'
+                def reorder_attributes(match):
+                    start = match.group(1)  # Tag: <record o <menuitem
+                    tag_name = match.group(2)  # Tag name
+                    before_id = match.group(3)  # Attributes before id
+                    id_attr = match.group(4)  # id attribute
+                    after_id = match.group(5)  # Attributes after id
+                    # Re-order using the id first
+                    return f'{start}{id_attr} {before_id.strip()} {after_id.strip()}'.rstrip()
+                new_content = re.sub(pattern, reorder_attributes, old_content)
+                manifest_data["changes"].append({
+                    "sourceline": record.sourceline,
+                    "old_content": old_content,
+                    "new_content": new_content,
+                })
 
         xmlid_module, xmlid_name = record_id.split(".") if "." in record_id else ["", record_id]
         if xmlid_module == self.module_name and self.is_message_enabled(
@@ -268,7 +305,13 @@ class ChecksOdooModuleXML(BaseChecker):
             )
             if self.autofix:
                 manifest_data["needs_autofix"] = True
-                record.attrib["id"] = record.attrib["id"].replace(f"{xmlid_module}.", "")
+                old_content = self.read_line(manifest_data["filename"], record.sourceline)
+                new_content = old_content.replace(f"{xmlid_module}.", "")
+                manifest_data["changes"].append({
+                    "sourceline": record.sourceline,
+                    "old_content": old_content,
+                    "new_content": new_content,
+                })
 
     @utils.only_required_for_checks("xml-view-dangerous-replace-low-priority", "xml-deprecated-tree-attribute")
     def visit_xml_record_view(self, manifest_data, record):
