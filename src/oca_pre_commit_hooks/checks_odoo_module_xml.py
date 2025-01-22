@@ -71,7 +71,7 @@ class ChecksOdooModuleXML(BaseChecker):
                             "file_error": None,
                             "disabled_checks": self._get_disabled_checks(node),
                             "needs_autofix": False,
-                            "changes": []
+                            "changes": [],
                         }
                     )
             except (FileNotFoundError, etree.XMLSyntaxError, UnicodeDecodeError) as xml_err:
@@ -81,7 +81,7 @@ class ChecksOdooModuleXML(BaseChecker):
                         "file_error": str(xml_err).replace(manifest_data["filename"], ""),
                         "disabled_checks": set(),
                         "needs_autofix": False,
-                        "changes": []
+                        "changes": [],
                     }
                 )
 
@@ -106,7 +106,7 @@ class ChecksOdooModuleXML(BaseChecker):
             for current_line, content in enumerate(f_content, start=1):
                 if line == current_line:
                     return content
-                
+
     def getattr_checks(self, manifest_data, prefix):
         disable_node = manifest_data["disabled_checks"]
         yield from utils.getattr_checks(self, prefix, disable_node)
@@ -210,18 +210,18 @@ class ChecksOdooModuleXML(BaseChecker):
             if not manifest_data["needs_autofix"]:
                 continue
             xml_tmp = manifest_data["filename"] + ".bkp"
-            with open(xml_tmp, "w") as xml_file_tmp, open(manifest_data["filename"], "r") as xml_file:
+            with open(xml_tmp, "w") as xml_file_tmp, open(manifest_data["filename"]) as xml_file:
                 for no_line, line in enumerate(xml_file, start=1):
                     for change in manifest_data["changes"]:
                         if change["sourceline"] != no_line:
                             continue
                         line = change["new_content"]
-                        # TODO: Check what about if more than one change is required for the same line of code
+                        # TODO: Check what about if more than one change is required for the same line of code
                     xml_file_tmp.write(line)
             shutil.move(xml_tmp, manifest_data["filename"])
 
             # THIS SOLUTION MODIFY A LOT THE ORIGINAL FILE
-            # updated_content = etree.tostring(manifest_data["node"], pretty_print=False, xml_declaration=True, encoding="UTF-8")
+            # updated_content = etree.tostring(manifest_data["node"], pretty_print=False, xml_declaration=True, encoding="UTF-8")
             # with open(manifest_data["filename"], "wb") as file_obj:
             #     file_obj.write(updated_content)
 
@@ -275,8 +275,9 @@ class ChecksOdooModuleXML(BaseChecker):
             if self.autofix:
                 old_content = self.read_line(manifest_data["filename"], record.sourceline)
                 manifest_data["needs_autofix"] = True
-                # TODO: Use the same for menuitem
+                # TODO: Use the same for menuitem
                 pattern = r'(<(\w+)\s+)([^>]*?)\b(id="[^"]*")([^>]*)'
+
                 def reorder_attributes(match):
                     start = match.group(1)  # Tag: <record o <menuitem
                     tag_name = match.group(2)  # Tag name
@@ -284,13 +285,16 @@ class ChecksOdooModuleXML(BaseChecker):
                     id_attr = match.group(4)  # id attribute
                     after_id = match.group(5)  # Attributes after id
                     # Re-order using the id first
-                    return f'{start}{id_attr} {before_id.strip()} {after_id.strip()}'.rstrip()
+                    return f"{start}{id_attr} {before_id.strip()} {after_id.strip()}".rstrip()
+
                 new_content = re.sub(pattern, reorder_attributes, old_content)
-                manifest_data["changes"].append({
-                    "sourceline": record.sourceline,
-                    "old_content": old_content,
-                    "new_content": new_content,
-                })
+                manifest_data["changes"].append(
+                    {
+                        "sourceline": record.sourceline,
+                        "old_content": old_content,
+                        "new_content": new_content,
+                    }
+                )
 
         xmlid_module, xmlid_name = record_id.split(".") if "." in record_id else ["", record_id]
         if xmlid_module == self.module_name and self.is_message_enabled(
@@ -307,11 +311,13 @@ class ChecksOdooModuleXML(BaseChecker):
                 manifest_data["needs_autofix"] = True
                 old_content = self.read_line(manifest_data["filename"], record.sourceline)
                 new_content = old_content.replace(f"{xmlid_module}.", "")
-                manifest_data["changes"].append({
-                    "sourceline": record.sourceline,
-                    "old_content": old_content,
-                    "new_content": new_content,
-                })
+                manifest_data["changes"].append(
+                    {
+                        "sourceline": record.sourceline,
+                        "old_content": old_content,
+                        "new_content": new_content,
+                    }
+                )
 
     @utils.only_required_for_checks("xml-view-dangerous-replace-low-priority", "xml-deprecated-tree-attribute")
     def visit_xml_record_view(self, manifest_data, record):
