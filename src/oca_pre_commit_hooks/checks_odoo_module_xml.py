@@ -13,6 +13,124 @@ from oca_pre_commit_hooks.base_checker import BaseChecker
 DFTL_MIN_PRIORITY = 99
 DFLT_DEPRECATED_TREE_ATTRS = ["colors", "fonts", "string"]
 
+import difflib
+import re
+
+
+# def generate_regex_from_diff(original, modified):
+#     # Paso 1: Encuentra diferencias
+#     diff = list(difflib.ndiff(original.split(), modified.split()))
+
+#     # Paso 2: Identificar los tokens que cambiaron
+#     removed = [token[2:] for token in diff if token.startswith('- ')]
+#     added = [token[2:] for token in diff if token.startswith('+ ')]
+
+#     # Paso 3: Construir patrón dinámico basado en las diferencias
+#     # Asumimos que el formato básico del XML es consistente
+#     if len(removed) == len(added):
+#         # Crear el patrón regex para identificar la línea original
+#         pattern_parts = []
+#         for token in original.split():
+#             if token in removed:
+#                 # Usa grupos de captura para los valores que cambian
+#                 pattern_parts.append(r'([^"]+)')
+#             else:
+#                 pattern_parts.append(re.escape(token))
+#         pattern = r'\s+'.join(pattern_parts)
+
+#         # Crear la cadena de reemplazo dinámica
+#         replacement_parts = []
+#         group_index = 1
+#         for token in modified.split():
+#             if token in added:
+#                 # Reemplaza por el grupo capturado correspondiente
+#                 replacement_parts.append(rf'\{group_index}')
+#                 group_index += 1
+#             else:
+#                 replacement_parts.append(token)
+#         replacement = ' '.join(replacement_parts)
+
+#         return pattern, replacement
+#     else:
+#         raise ValueError("El diff no tiene cambios coincidentes en longitud.")
+
+# def generate_regex_from_diff(original, modified):
+#     # Paso 1: Encuentra diferencias
+#     diff = list(difflib.ndiff(original.split(), modified.split()))
+
+#     # Paso 2: Identificar los tokens que cambiaron
+#     removed = [token[2:] for token in diff if token.startswith('- ')]
+#     added = [token[2:] for token in diff if token.startswith('+ ')]
+
+#     # Paso 3: Construir patrón dinámico basado en las diferencias
+#     if len(removed) == len(added):
+#         # Crear el patrón regex para identificar la línea original
+#         pattern_parts = []
+#         for token in original.split():
+#             if token in removed:
+#                 # Usa grupos de captura para los valores que cambian
+#                 pattern_parts.append(r'([^">]+)')
+#             else:
+#                 pattern_parts.append(re.escape(token))
+#         # Permitir cualquier espacio o salto de línea entre tokens
+#         pattern = r'\s*'.join(pattern_parts)
+
+#         # Crear la cadena de reemplazo dinámica
+#         replacement_parts = []
+#         group_index = 1
+#         for token in modified.split():
+#             if token in added:
+#                 # Reemplaza por el grupo capturado correspondiente
+#                 replacement_parts.append(rf'\{group_index}')
+#                 group_index += 1
+#             else:
+#                 replacement_parts.append(token)
+#         replacement = ' '.join(replacement_parts)
+
+#         return pattern, replacement
+#     else:
+#         raise ValueError("El diff no tiene cambios coincidentes en longitud.")
+
+def generate_regex_from_diff(original, modified):
+    # Paso 1: Encuentra diferencias
+    diff = list(difflib.ndiff(original.split(), modified.split()))
+
+    # Paso 2: Identificar los tokens que cambiaron
+    removed = [token[2:] for token in diff if token.startswith('- ')]
+    added = [token[2:] for token in diff if token.startswith('+ ')]
+
+    # Paso 3: Construir patrón dinámico basado en las diferencias
+    if len(removed) == len(added):
+        # Crear el patrón regex para identificar la línea original
+        pattern_parts = []
+        capture_index = 1
+        capture_map = {}
+        
+        for token in original.split():
+            if token in removed:
+                # Usa grupos de captura para los valores que cambian
+                pattern_parts.append(r'([^">]+)')
+                capture_map[token] = f'\\{capture_index}'
+                capture_index += 1
+            else:
+                pattern_parts.append(re.escape(token))
+        # Permitir cualquier espacio o salto de línea entre tokens
+        pattern = r'\s*'.join(pattern_parts)
+
+        # Crear la cadena de reemplazo dinámica basada en los grupos
+        replacement_parts = []
+        for token in modified.split():
+            if token in added:
+                # Reorganizar usando los grupos capturados
+                replacement_parts.append(capture_map.get(token, token))
+            else:
+                replacement_parts.append(token)
+        replacement = ' '.join(replacement_parts)
+
+        return pattern, replacement
+    else:
+        raise ValueError("El diff no tiene cambios coincidentes en longitud.")
+
 
 # Same as Odoo: https://github.com/odoo/odoo/commit/9cefa76988ff94c3d590c6631b604755114d0297
 def _hasclass(context, *cls):
@@ -29,7 +147,9 @@ FileElementPair = namedtuple("FileElementPair", ["filename", "element"])
 
 xmlid_reorder_re = re.compile(r'(<(\w+)\s+)([^>]*?)\b(id="[^"]*")([^>]*)')
 
+
 def xmlid_reorder(old_content):
+    # TODO: Support multiline <record\naction="hola"\nid="name"
     def reorder(match):
         match = xmlid_reorder_re.search(old_content)
         start = match.group(1)  # Tag: <record or <menuitem
@@ -39,6 +159,7 @@ def xmlid_reorder(old_content):
         after_id = match.group(5)  # Attributes after id
         # Re-order using the id first
         return f"{start}{id_attr} {before_id.strip()} {after_id.strip()}".rstrip()
+
     return xmlid_reorder_re.sub(reorder, old_content)
 
 
@@ -59,6 +180,7 @@ class ChecksOdooModuleXML(BaseChecker):
     xpath_comment = etree.XPath("//comment()")
     xpath_openerp = etree.XPath("/openerp")
     xpath_xpath = etree.XPath("//xpath")
+    xpath_menuitem = etree.XPath("/odoo//menuitem | /openerp//menuitem")
 
     tree_deprecate_attrs = {"string", "colors", "fonts"}
     xpath_tree_deprecated = etree.XPath(f'.//tree[{"|".join(f"@{a}" for a in tree_deprecate_attrs)}]')
@@ -80,9 +202,12 @@ class ChecksOdooModuleXML(BaseChecker):
             try:
                 with open(manifest_data["filename"], "rb") as f_xml:
                     node = etree.parse(f_xml)
+                    f_xml.seek(0)
+                    node_original = etree.parse(f_xml)
                     manifest_data.update(
                         {
                             "node": node,
+                            "node_original": node_original,
                             "file_error": None,
                             "disabled_checks": self._get_disabled_checks(node),
                             "needs_autofix": False,
@@ -90,6 +215,7 @@ class ChecksOdooModuleXML(BaseChecker):
                         }
                     )
             except (FileNotFoundError, etree.XMLSyntaxError, UnicodeDecodeError) as xml_err:
+                print(f"xml error {str(xml_err)}")
                 manifest_data.update(
                     {
                         "node": etree.Element("__empty__"),
@@ -113,14 +239,18 @@ class ChecksOdooModuleXML(BaseChecker):
                 print(f"{node.docinfo.URL}:{comment_node.sourceline} WARNING. DEPRECATED. Use oca-disable instead.")
         return all_checks_disabled
 
-    def read_line(self, filename, line):
+    def read_content_start_end(self, filename, num_line_start, num_line_end):
         """Return the content of the file only for the number of line
         It avoid to load the whole file in memory
         """
+        content = ""
         with open(filename, encoding="UTF-8") as f_content:
-            for current_line, content in enumerate(f_content, start=1):
-                if line == current_line:
-                    return content
+            for num_current_line, line in enumerate(f_content, start=1):
+                if num_line_start <= num_current_line <= num_line_end:
+                    content += line
+                if num_current_line > num_line_end:
+                    break
+        return content
 
     def getattr_checks(self, manifest_data, prefix):
         disable_node = manifest_data["disabled_checks"]
@@ -147,46 +277,16 @@ class ChecksOdooModuleXML(BaseChecker):
 
     # Not set only_required_for_checks because of the calls to visit_xml_record... methods
     def check_xml_records(self):
-        """* Check xml-record-missing-id
-        Generated when a <record> tag has no id.
-
-        * Check xml-duplicate-record-id
-
-        If a module has duplicated record_id AKA xml_ids
-        file1.xml
-            <record id="xmlid_name1"
-        file2.xml
-            <record id="xmlid_name1"
-
+        """
         * Check xml-duplicate-fields in all record nodes
             <record id="xmlid_name1"...
                 <field name="field_name1"...
                 <field name="field_name1"...
         """
-        xmlids_section: Dict[str, List[FileElementPair]] = defaultdict(list)
+        self.xmlids_section: Dict[str, List[FileElementPair]] = defaultdict(list)
         xml_fields = defaultdict(list)
         for manifest_data in self.manifest_datas:
             for record in self.xpath_record(manifest_data["node"]):
-                record_id = record.get("id")
-
-                if not record_id and self.is_message_enabled(
-                    "xml-record-missing-id", manifest_data["disabled_checks"]
-                ):
-                    self.register_error(
-                        code="xml-record-missing-id",
-                        message="Record has no id, add a unique one to create a new record, use an existing one to update it",
-                        filepath=manifest_data["filename_short"],
-                        line=record.sourceline,
-                    )
-
-                if self.is_message_enabled("xml-duplicate-record-id", manifest_data["disabled_checks"]):
-                    # xmlids_duplicated
-                    xmlid_key = (
-                        f"{manifest_data['data_section']}/{record_id}"
-                        f"_noupdate_{record.getparent().get('noupdate', '0')}"
-                    )
-                    xmlids_section[xmlid_key].append(FileElementPair(manifest_data["filename_short"], record))
-
                 # fields_duplicated
                 if self.is_message_enabled("xml-duplicate-fields", manifest_data["disabled_checks"]):
                     for field in self.xpath_record_fields_wname(record):
@@ -196,8 +296,13 @@ class ChecksOdooModuleXML(BaseChecker):
                 for meth in self.getattr_checks(manifest_data, "visit_xml_record"):
                     meth(manifest_data, record)
 
+            for record in self.xpath_menuitem(manifest_data["node"]):
+                # call "visit_xml_menuitem_*" methods to re-use the same node xpath loop
+                for meth in self.getattr_checks(manifest_data, "visit_xml_menuitem"):
+                    meth(manifest_data, record)
+
         # xmlids_duplicated (empty dict if check is not enabled)
-        for __, records in xmlids_section.items():
+        for __, records in self.xmlids_section.items():
             if len(records) < 2:
                 continue
             self.register_error(
@@ -220,28 +325,64 @@ class ChecksOdooModuleXML(BaseChecker):
                 extra_positions=[(field[0]["filename_short"], field[1].sourceline) for field in fields[1:]],
             )
 
+    # def perform_autofix(self):
+    #     # Using STR REGEX STYLE
+    #     for manifest_data in self.manifest_datas:
+    #         if not manifest_data["needs_autofix"]:
+    #             continue
+    #         print(f"File changed {manifest_data['filename']}")
+    #         with (
+    #             tempfile.NamedTemporaryFile("w", delete=False, encoding="UTF-8") as xml_file_tmp,
+    #             open(manifest_data["filename"], encoding="UTF-8") as xml_file,
+    #         ):
+    #             for no_line, line in enumerate(xml_file, start=1):
+    #                 for change in manifest_data["changes"]:
+    #                     if change["sourceline"] != no_line:
+    #                         continue
+    #                     if line != change["old_content"]:
+    #                         # TODO: Improve the script to autofix more than one change in the same line
+    #                         print(
+    #                             "This file had more than one change over the same line, please, re-run the script again"
+    #                         )
+    #                         break
+    #                     line = change["new_content"]
+    #                 xml_file_tmp.write(line)
+    #         shutil.move(xml_file_tmp.name, manifest_data["filename"])
+
     def perform_autofix(self):
+        # Using LXML style
+        # The problem is that it is removing all the newlines for multi-attributes multi-line cases
         for manifest_data in self.manifest_datas:
             if not manifest_data["needs_autofix"]:
                 continue
             print(f"File changed {manifest_data['filename']}")
-            with (
-                tempfile.NamedTemporaryFile("w", delete=False, encoding="UTF-8") as xml_file_tmp,
-                open(manifest_data["filename"], encoding="UTF-8") as xml_file,
-            ):
-                for no_line, line in enumerate(xml_file, start=1):
-                    for change in manifest_data["changes"]:
-                        if change["sourceline"] != no_line:
-                            continue
-                        if line != change["old_content"]:
-                            # TODO: Improve the script to autofix more than one change in the same line
-                            print(
-                                "This file had more than one change over the same line, please, re-run the script again"
-                            )
-                            break
-                        line = change["new_content"]
-                    xml_file_tmp.write(line)
-            shutil.move(xml_file_tmp.name, manifest_data["filename"])
+
+            from difflib import unified_diff
+            # node_str_modified = etree.tostring(manifest_data["node"]).decode("UTF-8")
+            # node_str_original = etree.tostring(manifest_data["node_original"]).decode("UTF-8")
+            # diff = unified_diff(
+            #     node_str_original.splitlines(),  # Divide en líneas el nodo original
+            #     node_str_modified.splitlines(),  # Divide en líneas el nodo modificado
+            #     lineterm="",  # Para no agregar '\n' extra
+            #     fromfile="original",  # Etiqueta para el diff
+            #     tofile="modified",    # Etiqueta para el diff
+            # )
+            # print("\n".join(diff))
+            for node_original, node_modified in zip(manifest_data["node_original"].iter(), manifest_data["node"].iter()):
+                if node_modified.tag not in ("menuitem", "record"):
+                    continue
+                diff = unified_diff(
+                    etree.tostring(node_original).decode("UTF-8").strip(" \n").splitlines(),
+                    etree.tostring(node_modified).decode("UTF-8").strip(" \n").splitlines(),
+                    lineterm="",
+                    fromfile="original",
+                    tofile="modified",
+                )
+                if "view_sbd_line_out_pivot" in node_modified.attrib.get("id"):
+                    import ipdb;ipdb.set_trace()
+                print("\n".join(diff))
+                pattern, replacement = generate_regex_from_diff(etree.tostring(node_original).decode("UTF-8"), etree.tostring(node_modified).decode("UTF-8"))
+
 
     @utils.only_required_for_checks("xml-syntax-error")
     def check_xml_syntax_error(self):
@@ -257,9 +398,29 @@ class ChecksOdooModuleXML(BaseChecker):
                 line=1,
             )
 
-    @utils.only_required_for_checks("xml-redundant-module-name", "xml-id-position-first")
+    @utils.only_required_for_checks(
+        "xml-redundant-module-name", "xml-id-position-first", "xml-record-missing-id", "xml-duplicate-record-id"
+    )
+    def visit_xml_menuitem(self, manifest_data, record):
+        # Currently record has the same checks, maybe in the future it will not be like this, but for now we can re-use the same method
+        self.visit_xml_record(manifest_data, record)
+
+    @utils.only_required_for_checks(
+        "xml-redundant-module-name", "xml-id-position-first", "xml-record-missing-id", "xml-duplicate-record-id"
+    )
     def visit_xml_record(self, manifest_data, record):
-        """* Check xml-redundant-module-name
+        """* Check xml-record-missing-id
+        Generated when a <record> tag has no id.
+
+        * Check xml-duplicate-record-id
+
+        If a module has duplicated record_id AKA xml_ids
+        file1.xml
+            <record id="xmlid_name1"
+        file2.xml
+            <record id="xmlid_name1"
+
+        * Check xml-redundant-module-name
 
         If the module is called "module_a" and the xmlid is
         `<record id="module_a.xmlid_name1" ...`
@@ -275,53 +436,85 @@ class ChecksOdooModuleXML(BaseChecker):
         It should be the first
         `<record id="xmlid_name1" ...`
         """
-        # redundant_module_name
         record_id = record.get("id")
-        if not record_id:
-            return
-        first_attr = record.keys()[0]
-        if first_attr != "id" and self.is_message_enabled("xml-id-position-first", manifest_data["disabled_checks"]):
-            self.register_error(
-                code="xml-id-position-first",
-                message=f'The "id" attribute must be first',
-                info=f'Use `<record id="{record_id}" {first_attr}=...` instead',
-                filepath=manifest_data["filename_short"],
-                line=record.sourceline,
-            )
-            if self.autofix:
-                old_content = self.read_line(manifest_data["filename"], record.sourceline)
-                manifest_data["needs_autofix"] = True
-                new_content = xmlid_reorder(old_content)
-                manifest_data["changes"].append(
-                    {
-                        "sourceline": record.sourceline,
-                        "old_content": old_content,
-                        "new_content": new_content,
-                    }
-                )
 
-        xmlid_module, xmlid_name = record_id.split(".") if "." in record_id else ["", record_id]
-        if xmlid_module == self.module_name and self.is_message_enabled(
-            "xml-redundant-module-name", manifest_data["disabled_checks"]
-        ):
+        if not record_id and self.is_message_enabled("xml-record-missing-id", manifest_data["disabled_checks"]):
             self.register_error(
-                code="xml-redundant-module-name",
-                message=f'Redundant module name `<record id="{record_id}" />`',
-                info=f'Use `<record id="{xmlid_name}" />` instead',
+                code="xml-record-missing-id",
+                message="Record has no id, add a unique one to create a new record, use an existing one to update it",
                 filepath=manifest_data["filename_short"],
                 line=record.sourceline,
             )
-            if self.autofix:
-                manifest_data["needs_autofix"] = True
-                old_content = self.read_line(manifest_data["filename"], record.sourceline)
-                new_content = old_content.replace(f"{xmlid_module}.", "")
-                manifest_data["changes"].append(
-                    {
-                        "sourceline": record.sourceline,
-                        "old_content": old_content,
-                        "new_content": new_content,
-                    }
+
+        if self.is_message_enabled("xml-duplicate-record-id", manifest_data["disabled_checks"]):
+            # xmlids_duplicated
+            xmlid_key = (
+                f"{manifest_data['data_section']}/{record_id}" f"_noupdate_{record.getparent().get('noupdate', '0')}"
+            )
+            self.xmlids_section[xmlid_key].append(FileElementPair(manifest_data["filename_short"], record))
+        if record_id:
+            first_attr = record.keys()[0]
+            if first_attr != "id" and self.is_message_enabled(
+                "xml-id-position-first", manifest_data["disabled_checks"]
+            ):
+                self.register_error(
+                    code="xml-id-position-first",
+                    message=f'The "id" attribute must be first',
+                    info=f'Use `<{record.tag} id="{record_id}" {first_attr}=...` instead',
+                    filepath=manifest_data["filename_short"],
+                    line=record.sourceline,
                 )
+                if self.autofix:
+                    manifest_data["needs_autofix"] = True
+                    # if manifest_data["filename"].endswith("sbd_endorsement/wizards/change_credit_balance_views.xml"):
+                    #     import ipdb;ipdb.set_trace()
+
+                    # LXML STYLE
+                    record.attrib.pop("id")
+                    attributes = dict(record.attrib)
+                    record.attrib.clear()
+                    record.attrib.update({"id": record_id, **attributes})
+
+                    # STR REGEX STYLE
+                    # old_content = self.read_content_start_end(
+                    #     manifest_data["filename"], record.getprevious().sourceline + 1, record.sourceline
+                    # )
+                    # manifest_data["needs_autofix"] = True
+                    # new_content = xmlid_reorder(old_content)
+                    # manifest_data["changes"].append(
+                    #     {
+                    #         "sourceline": record.sourceline,
+                    #         "old_content": old_content,
+                    #         "new_content": new_content,
+                    #     }
+                    # )
+
+            xmlid_module, xmlid_name = record_id.split(".") if "." in record_id else ["", record_id]
+            if xmlid_module == self.module_name and self.is_message_enabled(
+                "xml-redundant-module-name", manifest_data["disabled_checks"]
+            ):
+                self.register_error(
+                    code="xml-redundant-module-name",
+                    message=f'Redundant module name `<{record.tag} id="{record_id}"`',
+                    info=f'Use `<{record.tag} id="{xmlid_name}"` instead',
+                    filepath=manifest_data["filename_short"],
+                    line=record.sourceline,
+                )
+                if self.autofix:
+                    manifest_data["needs_autofix"] = True
+                    # LXML STYLE
+                    record.attrib["id"] = record.attrib["id"].replace(f"{xmlid_module}.", "")
+
+                    # STR REGEX STYLE
+                    # old_content = self.read_line(manifest_data["filename"], record.sourceline)
+                    # new_content = old_content.replace(f"{xmlid_module}.", "")
+                    # manifest_data["changes"].append(
+                    #     {
+                    #         "sourceline": record.sourceline,
+                    #         "old_content": old_content,
+                    #         "new_content": new_content,
+                    #     }
+                    # )
 
     @utils.only_required_for_checks("xml-view-dangerous-replace-low-priority", "xml-deprecated-tree-attribute")
     def visit_xml_record_view(self, manifest_data, record):
