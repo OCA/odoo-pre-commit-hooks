@@ -368,6 +368,8 @@ class ChecksOdooModuleXML(BaseChecker):
             #     tofile="modified",    # Etiqueta para el diff
             # )
             # print("\n".join(diff))
+            with open(manifest_data["filename"], encoding="UTF-8") as xml_file:
+                xml_content = xml_file.read()
             for node_original, node_modified in zip(manifest_data["node_original"].iter(), manifest_data["node"].iter()):
                 if node_modified.tag not in ("menuitem", "record"):
                     continue
@@ -378,11 +380,19 @@ class ChecksOdooModuleXML(BaseChecker):
                     fromfile="original",
                     tofile="modified",
                 )
+                diff_str = "\n".join(diff)
+                if not diff_str:
+                    continue
+                print(diff_str)
+                if "foreclosed_assets/views/foreclosed_asset_appraisal_views.xml" in manifest_data["filename"]:
+                    import ipdb;ipdb.set_trace()
                 if "view_sbd_line_out_pivot" in node_modified.attrib.get("id"):
                     import ipdb;ipdb.set_trace()
-                print("\n".join(diff))
                 pattern, replacement = generate_regex_from_diff(etree.tostring(node_original).decode("UTF-8"), etree.tostring(node_modified).decode("UTF-8"))
-
+                xml_content = re.sub(pattern, replacement, xml_content)
+            with tempfile.NamedTemporaryFile("w", delete=False, encoding="UTF-8") as xml_file_tmp:
+                xml_file_tmp.write(xml_content)
+            shutil.move(xml_file_tmp.name, manifest_data["filename"])
 
     @utils.only_required_for_checks("xml-syntax-error")
     def check_xml_syntax_error(self):
