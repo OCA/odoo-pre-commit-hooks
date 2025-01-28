@@ -16,7 +16,6 @@ DFLT_DEPRECATED_TREE_ATTRS = ["colors", "fonts", "string"]
 import difflib
 import re
 
-
 # def generate_regex_from_diff(original, modified):
 #     # Paso 1: Encuentra diferencias
 #     diff = list(difflib.ndiff(original.split(), modified.split()))
@@ -91,13 +90,14 @@ import re
 #     else:
 #         raise ValueError("El diff no tiene cambios coincidentes en longitud.")
 
+
 def generate_regex_from_diff(original, modified):
     # Paso 1: Encuentra diferencias
     diff = list(difflib.ndiff(original.split(), modified.split()))
 
     # Paso 2: Identificar los tokens que cambiaron
-    removed = [token[2:] for token in diff if token.startswith('- ')]
-    added = [token[2:] for token in diff if token.startswith('+ ')]
+    removed = [token[2:] for token in diff if token.startswith("- ")]
+    added = [token[2:] for token in diff if token.startswith("+ ")]
 
     # Paso 3: Construir patrón dinámico basado en las diferencias
     if len(removed) == len(added):
@@ -105,17 +105,17 @@ def generate_regex_from_diff(original, modified):
         pattern_parts = []
         capture_index = 1
         capture_map = {}
-        
+
         for token in original.split():
             if token in removed:
                 # Usa grupos de captura para los valores que cambian
                 pattern_parts.append(r'([^">]+)')
-                capture_map[token] = f'\\{capture_index}'
+                capture_map[token] = f"\\{capture_index}"
                 capture_index += 1
             else:
                 pattern_parts.append(re.escape(token))
         # Permitir cualquier espacio o salto de línea entre tokens
-        pattern = r'\s*'.join(pattern_parts)
+        pattern = r"\s*".join(pattern_parts)
 
         # Crear la cadena de reemplazo dinámica basada en los grupos
         replacement_parts = []
@@ -125,7 +125,7 @@ def generate_regex_from_diff(original, modified):
                 replacement_parts.append(capture_map.get(token, token))
             else:
                 replacement_parts.append(token)
-        replacement = ' '.join(replacement_parts)
+        replacement = " ".join(replacement_parts)
 
         return pattern, replacement
     else:
@@ -145,7 +145,7 @@ etree.FunctionNamespace(None)["hasclass"] = _hasclass
 FileElementPair = namedtuple("FileElementPair", ["filename", "element"])
 
 
-xmlid_reorder_re = re.compile(r'(<(\w+)\s+)([^>]*?)\b(id="[^"]*")([^>]*)')
+xmlid_reorder_re = re.compile(r'(<(\w+)\s+)([^>]*?)\b(id="[^"]*")([^>]*)', flags=re.DOTALL)
 
 
 def xmlid_reorder(old_content):
@@ -158,7 +158,7 @@ def xmlid_reorder(old_content):
         id_attr = match.group(4)  # id attribute
         after_id = match.group(5)  # Attributes after id
         # Re-order using the id first
-        return f"{start}{id_attr} {before_id.strip()} {after_id.strip()}".rstrip()
+        return f"{start}{id_attr} {before_id} {after_id}".rstrip()
 
     return xmlid_reorder_re.sub(reorder, old_content)
 
@@ -351,13 +351,14 @@ class ChecksOdooModuleXML(BaseChecker):
 
     def perform_autofix(self):
         # Using LXML style
-        # The problem is that it is removing all the newlines for multi-attributes multi-line cases
+        # The problem is that it is removing all the newlines for multi-attributes multi-line cases
         for manifest_data in self.manifest_datas:
             if not manifest_data["needs_autofix"]:
                 continue
             print(f"File changed {manifest_data['filename']}")
 
             from difflib import unified_diff
+
             # node_str_modified = etree.tostring(manifest_data["node"]).decode("UTF-8")
             # node_str_original = etree.tostring(manifest_data["node_original"]).decode("UTF-8")
             # diff = unified_diff(
@@ -370,7 +371,9 @@ class ChecksOdooModuleXML(BaseChecker):
             # print("\n".join(diff))
             with open(manifest_data["filename"], encoding="UTF-8") as xml_file:
                 xml_content = xml_file.read()
-            for node_original, node_modified in zip(manifest_data["node_original"].iter(), manifest_data["node"].iter()):
+            for node_original, node_modified in zip(
+                manifest_data["node_original"].iter(), manifest_data["node"].iter()
+            ):
                 if node_modified.tag not in ("menuitem", "record"):
                     continue
                 diff = unified_diff(
@@ -384,11 +387,10 @@ class ChecksOdooModuleXML(BaseChecker):
                 if not diff_str:
                     continue
                 print(diff_str)
-                if "foreclosed_assets/views/foreclosed_asset_appraisal_views.xml" in manifest_data["filename"]:
-                    import ipdb;ipdb.set_trace()
-                if "view_sbd_line_out_pivot" in node_modified.attrib.get("id"):
-                    import ipdb;ipdb.set_trace()
-                pattern, replacement = generate_regex_from_diff(etree.tostring(node_original).decode("UTF-8"), etree.tostring(node_modified).decode("UTF-8"))
+
+                pattern, replacement = generate_regex_from_diff(
+                    etree.tostring(node_original).decode("UTF-8"), etree.tostring(node_modified).decode("UTF-8")
+                )
                 xml_content = re.sub(pattern, replacement, xml_content)
             with tempfile.NamedTemporaryFile("w", delete=False, encoding="UTF-8") as xml_file_tmp:
                 xml_file_tmp.write(xml_content)
@@ -476,8 +478,6 @@ class ChecksOdooModuleXML(BaseChecker):
                 )
                 if self.autofix:
                     manifest_data["needs_autofix"] = True
-                    # if manifest_data["filename"].endswith("sbd_endorsement/wizards/change_credit_balance_views.xml"):
-                    #     import ipdb;ipdb.set_trace()
 
                     # LXML STYLE
                     record.attrib.pop("id")
