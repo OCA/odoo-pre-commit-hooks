@@ -418,9 +418,9 @@ options:
 
  * po-duplicate-message-definition
 
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.0/test_repo/broken_module/i18n/es.po#L17 Duplicate PO message definition `Branch` in lines 23, 29
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.0/test_repo/broken_module/i18n/es.po#L35 Duplicate PO message definition `Message id toooooooooooooooooooooooooooo...` in lines 41
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.0/test_repo/broken_module/i18n/es.po#L65 Duplicate PO message definition `One variable {variable1}` in lines 71
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.0/test_repo/broken_module/i18n/es.po#L17 Duplicate PO message definition `Branch` in lines 23, 29. Odoo exports these items by msgid and delete one of them. Use the `i18n_extra` folder instead of `i18n` to ignore this message.
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.0/test_repo/broken_module/i18n/es.po#L35 Duplicate PO message definition `Message id toooooooooooooooooooooooooooo...` in lines 41. Odoo exports these items by msgid and delete one of them. Use the `i18n_extra` folder instead of `i18n` to ignore this message.
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.0/test_repo/broken_module/i18n/es.po#L65 Duplicate PO message definition `One variable {variable1}` in lines 71. Odoo exports these items by msgid and delete one of them. Use the `i18n_extra` folder instead of `i18n` to ignore this message.
 
  * po-duplicate-model-definition
 

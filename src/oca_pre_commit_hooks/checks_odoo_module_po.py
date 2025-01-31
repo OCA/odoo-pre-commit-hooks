@@ -330,8 +330,8 @@ class ChecksOdooModulePO(BaseChecker):
             if entry.obsolete:
                 continue
 
-            # po_duplicate_message_definition
-            if self.is_message_enabled("po-duplicate-message-definition"):
+            # Ignore i18n_extra https://github.com/OCA/odoo-pre-commit-hooks/issues/122
+            if self.is_message_enabled("po-duplicate-message-definition") and self.data_section != "i18n_extra":
                 duplicated[hash(entry.msgid)].append(entry)
 
             if self.is_message_enabled("po-duplicate-model-definition"):
@@ -351,7 +351,9 @@ class ChecksOdooModulePO(BaseChecker):
                     msg_id_short = f"{msg_id_short}..."
                 self.register_error(
                     code="po-duplicate-message-definition",
-                    message=f"Duplicate PO message definition `{msg_id_short}` in lines {duplicated_str}",
+                    message=f"Duplicate PO message definition `{msg_id_short}` in lines {duplicated_str}. "
+                    "Odoo exports these items by msgid and delete one of them. "
+                    "Use the `i18n_extra` folder instead of `i18n` to ignore this message.",
                     filepath=self.filename_short,
                     line=self._get_po_line_number(entries[0]),
                 )
