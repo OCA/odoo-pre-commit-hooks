@@ -59,12 +59,14 @@ class BaseChecker:
         enable: Set[str],
         disable: Set[str],
         module_name: Union[str, None] = None,
+        module_version: Union[str, None] = None,
         autofix: bool = False,
     ):
         self.enable = enable
         self.disable = disable
         self.autofix = autofix
         self.module_name = module_name
+        self.module_version = module_version
 
         self.checks_errors = []
         self.needs_autofix = False

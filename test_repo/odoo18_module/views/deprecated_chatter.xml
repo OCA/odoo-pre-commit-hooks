@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<record id="deprecated_chatter" model="ir.ui.view">
+    <field name="name">deprecated.chatter.view</field>
+    <field name="model">random.model</field>
+    <field name="arch" type="xml">
+        <div class="oe_chatter">
+            <field name="message_follower_ids" groups="base.group_user"/>
+            <field name="message_ids"/>
+        </div>
+    </field>
+</record>

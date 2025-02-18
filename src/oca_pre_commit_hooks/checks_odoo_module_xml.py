@@ -4,6 +4,7 @@ from collections import defaultdict, namedtuple
 from typing import Dict, List
 
 from lxml import etree
+from packaging.version import Version
 
 from oca_pre_commit_hooks import utils
 from oca_pre_commit_hooks.base_checker import BaseChecker
@@ -42,6 +43,7 @@ class ChecksOdooModuleXML(BaseChecker):
     xpath_comment = etree.XPath("//comment()")
     xpath_openerp = etree.XPath("/openerp")
     xpath_xpath = etree.XPath("//xpath")
+    xpath_oe_chatter = etree.XPath("//div[hasclass('oe_chatter')]")
 
     tree_deprecate_attrs = {"string", "colors", "fonts"}
     xpath_tree_deprecated = etree.XPath(f'.//tree[{"|".join(f"@{a}" for a in tree_deprecate_attrs)}]')
@@ -56,8 +58,8 @@ class ChecksOdooModuleXML(BaseChecker):
         f"/odoo//template//*[{qweb_deprecated_attrs}] | " f"/openerp//template//*[{qweb_deprecated_attrs}]"
     )
 
-    def __init__(self, manifest_datas, module_name, enable, disable):
-        super().__init__(enable, disable, module_name)
+    def __init__(self, manifest_datas, module_name, enable, disable, module_version):
+        super().__init__(enable, disable, module_name, module_version)
         self.manifest_datas = manifest_datas or []
         for manifest_data in self.manifest_datas:
             try:
@@ -463,6 +465,26 @@ class ChecksOdooModuleXML(BaseChecker):
                         "Consider removing the class `oe_structure` or adding a proper "
                         "id to the tag. The id must contain `oe_structure`"
                     ),
+                    filepath=manifest_data["filename_short"],
+                    line=xpath_node.sourceline,
+                )
+
+    @utils.only_required_for_checks("xml-deprecated-oe-chatter")
+    def check_xml_deprecated_oe_chatter(self):
+        """* Check xml-deprecated-oe-chatter
+
+        Odoo 18 introduced a new XML tag `<chatter/>` which replaces the old way to declare
+        chatters on form views. For more information, see:
+        https://github.com/odoo/odoo/pull/156463
+        """
+        if not self.module_version or (self.module_version and self.module_version < Version("18")):
+            return
+
+        for manifest_data in self.manifest_datas:
+            for xpath_node in self.xpath_oe_chatter(manifest_data["node"]):
+                self.register_error(
+                    code="xml-deprecated-oe-chatter",
+                    message=("Please replace old style chatters with the new tag <chatter/>."),
                     filepath=manifest_data["filename_short"],
                     line=xpath_node.sourceline,
                 )
