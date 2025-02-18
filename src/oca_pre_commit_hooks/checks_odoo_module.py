@@ -20,7 +20,7 @@ MANIFEST_NAMES = ("__openerp__.py", "__manifest__.py")
 
 class ChecksOdooModule(BaseChecker):
     def __init__(self, manifest_path, enable, disable, changed=None, verbose=True, autofix=False):
-        super().__init__(enable, disable, autofix=autofix)
+        super().__init__(enable, disable, autofix=autofix, module_version=utils.manifest_version(manifest_path))
         if not os.path.isfile(manifest_path) or os.path.basename(manifest_path) not in MANIFEST_NAMES:
             raise UserWarning(  # pragma: no cover
                 f"Not valid manifest file name {manifest_path} file expected {MANIFEST_NAMES}"
@@ -136,7 +136,7 @@ class ChecksOdooModule(BaseChecker):
         if not manifest_datas:
             return
         checks_obj = checks_odoo_module_xml.ChecksOdooModuleXML(
-            manifest_datas, self.odoo_addon_name, self.enable, self.disable
+            manifest_datas, self.odoo_addon_name, self.enable, self.disable, module_version=self.module_version
         )
         for check_meth in utils.getattr_checks(checks_obj):
             check_meth()

@@ -120,6 +120,12 @@ Check syntax error for CSV files declared in the manifest
 * Check xml-deprecated-data-node
 Deprecated <data> node inside <odoo> xml node
 
+* Check xml-deprecated-oe-chatter
+
+Odoo 18 introduced a new XML tag `<chatter/>` which replaces the old way to declare
+chatters on form views. For more information, see:
+https://github.com/odoo/odoo/pull/156463
+
 * Check xml-deprecated-openerp-node
 deprecated <openerp> xml node
 
@@ -322,6 +328,10 @@ options:
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.1/test_repo/broken_module/skip_xml_check_2.xml#L3 Deprecated `<data>` node
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.1/test_repo/test_module/model_view.xml#L3 Deprecated `<data>` node
 
+ * xml-deprecated-oe-chatter
+
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.1/test_repo/odoo18_module/views/deprecated_chatter.xml#L6 Please replace old style chatters with the new tag <chatter/>.
+
  * xml-deprecated-openerp-node
 
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.1/test_repo/broken_module/model_view.xml#L2 Deprecated `<openerp>` xml node
@@ -379,8 +389,8 @@ options:
 
  * xml-record-missing-id
 
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.1/test_repo/broken_module/model_view.xml#L21 Record has no id, add a unique one to create a new record, use an existing one to update it
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.1/test_repo/broken_module/model_view.xml#L24 Record has no id, add a unique one to create a new record, use an existing one to update it
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.1/test_repo/broken_module/model_view.xml#L25 Record has no id, add a unique one to create a new record, use an existing one to update it
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.1/test_repo/broken_module/model_view.xml#L28 Record has no id, add a unique one to create a new record, use an existing one to update it
 
  * xml-redundant-module-name
 

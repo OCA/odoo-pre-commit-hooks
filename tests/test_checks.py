@@ -37,6 +37,7 @@ EXPECTED_ERRORS = {
     "xml-oe-structure-missing-id": 6,
     "xml-record-missing-id": 2,
     "xml-duplicate-template-id": 9,
+    "xml-deprecated-oe-chatter": 1,
 }
 
 
