@@ -2,11 +2,14 @@ import os
 import re
 import subprocess
 import sys
+from ast import literal_eval
 from contextlib import contextmanager
 from functools import lru_cache
 from inspect import getmembers, isfunction
 from itertools import chain
 from pathlib import Path
+
+from packaging.version import InvalidVersion, Version
 
 from oca_pre_commit_hooks.base_checker import BaseChecker
 
@@ -159,3 +162,16 @@ def get_checks_docstring(check_classes):
             checks_found |= set(re.findall(RE_CHECK_DOCSTRING, checks_docstring))
             checks_docstring = re.sub(r"( )+\*", "*", checks_docstring)
     return checks_found, checks_docstring
+
+
+def manifest_version(manifest_path):
+    with open(manifest_path, encoding="utf-8") as manifest_fd:
+        try:
+            manifest = literal_eval(manifest_fd.read())
+        except (ValueError, SyntaxError):
+            return None
+
+        try:
+            return Version(manifest.get("version"))
+        except InvalidVersion:
+            return None
