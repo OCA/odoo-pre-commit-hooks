@@ -173,5 +173,5 @@ def manifest_version(manifest_path):
 
         try:
             return Version(manifest.get("version"))
-        except InvalidVersion:
+        except (InvalidVersion, TypeError):
             return None
