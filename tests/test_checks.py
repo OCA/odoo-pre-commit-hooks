@@ -19,6 +19,7 @@ ALL_CHECK_CLASS = [
 EXPECTED_ERRORS = {
     "csv-duplicate-record-id": 1,
     "csv-syntax-error": 1,
+    "file-not-used": 1,
     "manifest-syntax-error": 2,
     "xml-create-user-wo-reset-password": 1,
     "xml-dangerous-filter-wo-user": 1,
