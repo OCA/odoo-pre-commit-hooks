@@ -130,6 +130,59 @@ class ChecksOdooModule(BaseChecker):
                 line=1,
             )
 
+    @staticmethod
+    def _get_files(path):
+        dirnames2include = [
+            "data",
+            "datas",
+            "demo",
+            "demos",
+            "report",
+            "reports",
+            "security",
+            "template",
+            "templates",
+            "view",
+            "views",
+            "wizard",
+            "wizards",
+        ]
+        manifest_data_extensions = [
+            ".csv",
+            ".xml",
+        ]
+        paths = set()
+        for root, _dirs, file_names in os.walk(path):
+            subfolders = os.path.relpath(root, path).split(os.sep)
+            if subfolders and subfolders[0] not in dirnames2include:
+                continue
+            for file_name in file_names:
+                if os.path.splitext(file_name)[1].lower() not in manifest_data_extensions:
+                    continue
+                full_path = os.path.join(root, file_name)
+                paths.add(full_path)
+        # TODO: Exclude files based on os.environ, config, disable comment or something else
+        return paths
+
+    @utils.only_required_for_checks("file-not-used")
+    def check_file_not_used(self):
+        """* Check file-not-used
+        Check if there is a file created but not referenced from __manifest__.py
+        """
+        manifest_files = set()
+        for _ext, manifest_referenced_files in self.manifest_referenced_files.items():
+            for manifest_referenced_file in manifest_referenced_files:
+                manifest_files.add(manifest_referenced_file["filename"])
+        addon_files = self._get_files(self.odoo_addon_path)
+        for file_not_used in addon_files - manifest_files:
+            self.register_error(
+                code="file-not-used",
+                message=f"File not used {file_not_used}",
+                info=self.error,
+                filepath=self.manifest_path,
+                line=1,
+            )
+
     @utils.only_required_for_installable()
     def check_xml(self):
         manifest_datas = self.manifest_referenced_files[".xml"]
