@@ -163,7 +163,7 @@ class ChecksOdooModule(BaseChecker):
                 or subpath_obj.suffix.lower() not in MANIFEST_DATA_EXTS  # only valid ext
             ):
                 continue
-            fnames.add(subpath_obj.relative_to(module_root_path_obj).as_posix().lower())
+            fnames.add(subpath_obj.relative_to(module_root_path_obj).as_posix())
         return fnames
 
     @utils.only_required_for_checks("file-not-used")
@@ -175,7 +175,7 @@ class ChecksOdooModule(BaseChecker):
         for _ext, manifest_referenced_files in self.manifest_referenced_files.items():
             for manifest_referenced_file in manifest_referenced_files:
                 filename_obj = Path(manifest_referenced_file["filename"]).resolve()
-                manifest_files.add(filename_obj.relative_to(self.odoo_addon_path).as_posix().lower())
+                manifest_files.add(filename_obj.relative_to(self.odoo_addon_path).as_posix())
         addon_files = self._get_module_data_files(self.odoo_addon_path)
         manifest_path_short = os.path.relpath(self.manifest_path, self.manifest_top_path)
         for file_not_used in addon_files - manifest_files:
