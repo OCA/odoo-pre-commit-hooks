@@ -5,3 +5,4 @@ lxml>=4.2.3
 polib<=1.2.0
 
 colorama
+packaging
