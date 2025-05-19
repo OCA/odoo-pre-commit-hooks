@@ -108,6 +108,9 @@ be disabled.
 
 # Checks
 
+* Check file-not-used
+Check if there is a file created but not referenced from __manifest__.py
+
 * Check manifest-syntax-error
 Check if the manifest file has syntax error
 
@@ -291,6 +294,10 @@ options:
  * csv-syntax-error
 
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.1/test_repo/syntax_err_module/ir.model.access.csv#L1 'utf-8' codec can't decode byte 0xf1 in position 47: invalid continuation byte
+
+ * file-not-used
+
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.1/test_repo/broken_module/__openerp__.py#L1 File not used report/test_report.xml
 
  * manifest-syntax-error
 

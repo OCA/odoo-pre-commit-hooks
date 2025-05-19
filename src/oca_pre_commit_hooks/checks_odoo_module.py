@@ -4,6 +4,7 @@ import glob
 import os
 import sys
 from collections import defaultdict
+from pathlib import Path
 
 from colorama import init as colorama_init
 
@@ -16,6 +17,25 @@ DFTL_README_TMPL_URL = "https://github.com/OCA/maintainer-tools/blob/master/temp
 DFTL_README_FILES = ["README.md", "README.txt", "README.rst"]
 DFTL_MANIFEST_DATA_KEYS = ["data", "demo", "demo_xml", "init_xml", "qweb", "test", "update_xml"]
 MANIFEST_NAMES = ("__openerp__.py", "__manifest__.py")
+MANIFEST_DATA_DIRS = [
+    "data",
+    "datas",
+    "demo",
+    "demos",
+    "report",
+    "reports",
+    "security",
+    "template",
+    "templates",
+    "view",
+    "views",
+    "wizard",
+    "wizards",
+]
+MANIFEST_DATA_EXTS = [
+    ".csv",
+    ".xml",
+]
 
 
 class ChecksOdooModule(BaseChecker):
@@ -125,6 +145,43 @@ class ChecksOdooModule(BaseChecker):
             self.register_error(
                 code="manifest-syntax-error",
                 message="Manifest could not be loaded",
+                info=self.error,
+                filepath=manifest_path_short,
+                line=1,
+            )
+
+    @staticmethod
+    def _get_module_data_files(module_root_path):
+        module_root_path_obj = Path(module_root_path).resolve()
+        fnames = set()
+        for subpath_obj in module_root_path_obj.rglob("*"):
+            parts = subpath_obj.relative_to(module_root_path_obj).parts
+            if (
+                not subpath_obj.is_file()  # is file
+                or len(parts) != 2  # only depth 2
+                or parts[0].lower() not in MANIFEST_DATA_DIRS  # only valid dir
+                or subpath_obj.suffix.lower() not in MANIFEST_DATA_EXTS  # only valid ext
+            ):
+                continue
+            fnames.add(subpath_obj.relative_to(module_root_path_obj).as_posix())
+        return fnames
+
+    @utils.only_required_for_checks("file-not-used")
+    def check_file_not_used(self):
+        """* Check file-not-used
+        Check if there is a file created but not referenced from __manifest__.py
+        """
+        manifest_files = set()
+        for _ext, manifest_referenced_files in self.manifest_referenced_files.items():
+            for manifest_referenced_file in manifest_referenced_files:
+                filename_obj = Path(manifest_referenced_file["filename"]).resolve()
+                manifest_files.add(filename_obj.relative_to(self.odoo_addon_path).as_posix())
+        addon_files = self._get_module_data_files(self.odoo_addon_path)
+        manifest_path_short = os.path.relpath(self.manifest_path, self.manifest_top_path)
+        for file_not_used in addon_files - manifest_files:
+            self.register_error(
+                code="file-not-used",
+                message=f"File not used {file_not_used}",
                 info=self.error,
                 filepath=manifest_path_short,
                 line=1,
