@@ -297,7 +297,7 @@ options:
 
  * file-not-used
 
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.3/test_repo/broken_module/__openerp__.py#L1 File not used report/test_report.xml
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.3/test_repo/broken_module/__openerp__.py#L1 File "broken_module/report/test_report.xml" is not referenced in the manifest.
 
  * manifest-syntax-error
 
