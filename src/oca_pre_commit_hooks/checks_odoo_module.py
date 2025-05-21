@@ -36,6 +36,9 @@ MANIFEST_DATA_EXTS = [
     ".csv",
     ".xml",
 ]
+DATA_MANUAL_KEY = "oca_data_manual"
+BLUE_PILL = "\033[94m🔵\033[0m"
+RED_PILL = "\033[91m🔴\033[0m"
 
 
 class ChecksOdooModule(BaseChecker):
@@ -178,11 +181,22 @@ class ChecksOdooModule(BaseChecker):
                 manifest_files.add(filename_obj.relative_to(self.odoo_addon_path).as_posix())
         addon_files = self._get_module_data_files(self.odoo_addon_path)
         manifest_path_short = os.path.relpath(self.manifest_path, self.manifest_top_path)
+        manual_files = self.manifest_dict.get(DATA_MANUAL_KEY) or []
         for file_not_used in addon_files - manifest_files:
+            if file_not_used in manual_files:
+                # Ignore data files imported manually
+                # e.g. Imported from "post_init_hook" script instead of __manifest__.py "data" key
+                continue
+            file_not_used_short = os.path.join(self.odoo_addon_name, file_not_used)
             self.register_error(
                 code="file-not-used",
-                message=f"File not used {file_not_used}",
-                info=self.error,
+                message=f'File "{file_not_used_short}" is not referenced in the manifest.',
+                info=(
+                    f"{RED_PILL} If it is loaded from another source (e.g. a post_init_hook script),"
+                    " just add it under the section "
+                    f'"{DATA_MANUAL_KEY}": ["{file_not_used}",] to be considered. '
+                    f"{BLUE_PILL} Otherwise, you might want to remove it."
+                ),
                 filepath=manifest_path_short,
                 line=1,
             )
