@@ -51,7 +51,7 @@ class GlobalParser(argparse.ArgumentParser):
         self.add_argument(
             "--config",
             "-c",
-            type=argparse.FileType("r"),
+            type=str,
             help=f"Path to a configuration file (default: {CONFIG_NAME})",
         )
         self.add_argument(
@@ -76,16 +76,15 @@ class GlobalParser(argparse.ArgumentParser):
 
         if not res.config:
             if isfile(join(getcwd(), CONFIG_NAME)):
-                res.config = open(join(getcwd(), CONFIG_NAME), encoding="UTF-8")
+                res.config = join(getcwd(), CONFIG_NAME)
             elif isfile(join(top_path(getcwd()), CONFIG_NAME)):
                 # TODO: Add unittest creating a new git repo
-                res.config = open(  # pragma: no cover # pylint:disable=consider-using-with
-                    join(top_path(getcwd()), CONFIG_NAME), encoding="UTF-8"
-                )
+                res.config = join(top_path(getcwd()), CONFIG_NAME)  # pragma: no cover
 
         if res.config:
             conf = configparser.ConfigParser()
-            conf.read_file(res.config)
+            with open(res.config, encoding="UTF-8") as f_cfg:
+                conf.read_file(f_cfg)
 
             if conf.has_section(MSG_CTRL):
                 message_conf = conf[MSG_CTRL]
@@ -94,8 +93,6 @@ class GlobalParser(argparse.ArgumentParser):
                     res.enable = parse_csv(message_conf.get("enable"))
                 if not res.disable and message_conf.get("disable"):
                     res.disable = parse_csv(message_conf.get("disable"))
-
-            res.config.close()
 
         # Not expected/used by any other program component as of now.
         delattr(res, "config")
