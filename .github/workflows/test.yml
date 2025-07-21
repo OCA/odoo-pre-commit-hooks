@@ -53,10 +53,10 @@ jobs:
       with:
         path: ${{ env.PRE_COMMIT_CACHE }}
         key: ${{ runner.os }}-${{ runner.arch }}-py${{ matrix.python }}-pre-commit
-    - uses: actions/checkout@v4.1.2
+    - uses: actions/checkout@v4
       with:
         fetch-depth: 0
-    - uses: actions/setup-python@v5.0.0
+    - uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python }}
         architecture: 'x64'
@@ -83,7 +83,8 @@ jobs:
     #       --repository-url https://test.pypi.org/legacy/ dist/* || true
     - name: codecov
       if: startsWith(matrix.tox_env, 'py')  # only coveralls in python tests
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@v5
       with:
-        fail_ci_if_error: false  # TODO: Set true after fix token for win&macosx
+        fail_ci_if_error: true
         verbose: true
+        token: ${{ secrets.CODECOV_TOKEN }}
