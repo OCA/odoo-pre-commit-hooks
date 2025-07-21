@@ -21,5 +21,5 @@
   # The command "identify-cli file.pot"
   # returns "text"
   types_or: ["text"]
-  files: \.(po|pot)$
+  files: (?i)\.(po|pot)$
   require_serial: false

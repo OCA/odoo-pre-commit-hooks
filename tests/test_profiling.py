@@ -1,3 +1,4 @@
+import os
 import sys
 from contextlib import contextmanager
 from cProfile import Profile
@@ -38,10 +39,10 @@ class TestProfiling(TestCase):
 
     @staticmethod
     def pofiles_from_repo(repo: str):
-        po_glob_pattern = join(repo, "**", "*.po")
-        pot_glob_pattern = f"{po_glob_pattern}t"
+        po_glob_pattern = join(repo, "**", "*")
 
-        return glob(po_glob_pattern, recursive=True) + glob(pot_glob_pattern, recursive=True)
+        all_files = glob(po_glob_pattern, recursive=True)
+        return [f for f in all_files if os.path.isfile(f) and os.path.splitext(f)[1].lower() in (".po", ".pot")]
 
     @classmethod
     def setUpClass(cls):

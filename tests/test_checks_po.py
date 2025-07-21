@@ -33,9 +33,11 @@ class TestChecksPO(common.ChecksCommon):
     def setUpClass(cls):
         super().setUpClass()
         cls.test_repo_path = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "test_repo")
-        po_glob_pattern = os.path.join(cls.test_repo_path, "**", "*.po")
-        pot_glob_pattern = f"{po_glob_pattern}t"
-        cls.file_paths = glob.glob(po_glob_pattern, recursive=True) + glob.glob(pot_glob_pattern, recursive=True)
+
+        all_files = glob.glob(os.path.join(cls.test_repo_path, "**", "*"), recursive=True)
+        cls.file_paths = [
+            f for f in all_files if os.path.isfile(f) and os.path.splitext(f)[1].lower() in (".po", ".pot")
+        ]
 
     def setUp(self):
         super().setUp()
@@ -49,7 +51,7 @@ class TestChecksPO(common.ChecksCommon):
         self.assertDictEqual(real_errors, {"po-syntax-error": 1})
 
     def test_pretty_format_po(self):
-        ugly_po = os.path.join(self.test_repo_path, "eleven_module", "i18n", "ugly.po")
+        ugly_po = os.path.join(self.test_repo_path, "eleven_module", "i18n", "ugly.PO")
         pretty_po = os.path.join(self.test_repo_path, "eleven_module", "i18n", "pretty.po")
 
         errors = self.checks_run([pretty_po], enable={"po-pretty-format"}, no_exit=True, no_verbose=False)
@@ -60,13 +62,13 @@ class TestChecksPO(common.ChecksCommon):
         self.assertIn("po-pretty-format", real_errors)
 
     def test_pretty_format_po_autofix(self):
-        ugly_po = os.path.join(self.test_repo_path, "eleven_module", "i18n", "ugly.po")
+        ugly_po = os.path.join(self.test_repo_path, "eleven_module", "i18n", "ugly.PO")
         autofix_po = os.path.join(self.test_repo_path, "eleven_module", "i18n", "autofixed_ugly.po")
 
         with TemporaryDirectory() as tmpdir:
             # Compatible with top_path method that only works with .git folders
             subprocess.check_output(["git", "init", tmpdir])
-            ugly_po_cp = os.path.join(tmpdir, "ugly.po")
+            ugly_po_cp = os.path.join(tmpdir, "ugly.PO")
             copyfile(ugly_po, ugly_po_cp)
 
             self.checks_run([ugly_po_cp], enable={"po-pretty-format"}, no_exit=True, no_verbose=False, autofix=False)
@@ -111,7 +113,7 @@ class TestChecksPO(common.ChecksCommon):
         for code in sorted(all_check_errors_by_code):
             check_example_content += f"\n\n * {code}\n"
             for check_error in all_check_errors_by_code[code]:
-                msg = f"{check_error.position.filepath}"
+                msg = f"{check_error.position.filepath.lower()}"
                 if check_error.position.line:
                     msg += f"#L{check_error.position.line}"
                 if check_error.message:
