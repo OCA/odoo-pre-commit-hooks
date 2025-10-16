@@ -196,6 +196,23 @@ Triggered when two templates share the same ID
 Since that the text could be translated so it is a mutable value.
 It could raise `ValueError` exception if the language is changed.
 
+** Special fixit checks
+
+* Check manifest-superfluous-key
+Identifies and removes
+Identifies from Odoo manifest files (__manifest__.py) superfluous keys
+(if they have the same as the default value) should be omitted for simplicity
+
+e.g. 'installable': True
+`True` is the default value for installable key
+
+e.g. 'data': []
+`[]` is the default value for 'data' key
+
+* Check prefer-env-translation
+Replace `_('text')` with `self.env._('text')` only if '_' comes from 'odoo._'
+and only for modules >=18.0
+
 
 [//]: # (end-checks)
 
@@ -299,10 +316,22 @@ options:
 
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.6/test_repo/broken_module/__openerp__.py#L1 File "broken_module/report/test_report.xml" is not referenced in the manifest.
 
+ * manifest-superfluous-key
+
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.6/test_repo/broken_module/__openerp__.py#L31 Delete default values (has autofix)
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.6/test_repo/broken_module/__openerp__.py#L33 Delete default values (has autofix)
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.6/test_repo/woversion_module/__manifest__.py#L8 Delete empty values. (has autofix)
+
  * manifest-syntax-error
 
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.6/test_repo/manifest_werror/__manifest__.py#L1 Manifest could not be loaded
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.6/test_repo/woinit_module/__manifest__.py#L1 Manifest could not be loaded
+
+ * prefer-env-translation
+
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.6/test_repo/broken_module/models/broken_model.py#L76 Use self.env._(...) instead of _(…) directly inside Odoo model methods. (has autofix)
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.6/test_repo/broken_module/models/broken_model.py#L86 Use self.env._(...) instead of _(…) directly inside Odoo model methods. (has autofix)
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.6/test_repo/broken_module/models/broken_model.py#L243 Use self.env._(...) instead of _(…) directly inside Odoo model methods. (has autofix)
 
  * xml-create-user-wo-reset-password
 
@@ -317,23 +346,12 @@ options:
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.6/test_repo/broken_module/template1.xml#L4 Dangerous use of `replace` from view with priority 0 < 99
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.6/test_repo/broken_module/template1.xml#L7 Dangerous use of `replace` from view with priority 0 < 99
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.6/test_repo/broken_module/template1.xml#L18 Dangerous use of `replace` from view with priority 0 < 99
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.6/test_repo/broken_module/template1_copy.xml#L4 Dangerous use of `replace` from view with priority 0 < 99
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.6/test_repo/broken_module/template1_copy.xml#L7 Dangerous use of `replace` from view with priority 0 < 99
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.6/test_repo/broken_module/template1_copy.xml#L18 Dangerous use of `replace` from view with priority 0 < 99
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.6/test_repo/broken_module/template1_copy2.xml#L4 Dangerous use of `replace` from view with priority 0 < 99
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.6/test_repo/broken_module/template1_copy2.xml#L7 Dangerous use of `replace` from view with priority 0 < 99
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.6/test_repo/broken_module/template1_copy2.xml#L18 Dangerous use of `replace` from view with priority 0 < 99
 
  * xml-deprecated-data-node
 
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.6/test_repo/broken_module/demo/duplicated_id_demo.xml#L3 Deprecated `<data>` node
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.6/test_repo/broken_module/model_view.xml#L3 Deprecated `<data>` node
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.6/test_repo/broken_module/model_view2.xml#L3 Deprecated `<data>` node
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.6/test_repo/broken_module/model_view_odoo.xml#L3 Deprecated `<data>` node
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.6/test_repo/broken_module/model_view_odoo2.xml#L3 Deprecated `<data>` node
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.6/test_repo/broken_module/skip_xml_check.xml#L5 Deprecated `<data>` node
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.6/test_repo/broken_module/skip_xml_check_2.xml#L3 Deprecated `<data>` node
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.6/test_repo/test_module/model_view.xml#L3 Deprecated `<data>` node
 
  * xml-deprecated-oe-chatter
 
@@ -344,7 +362,6 @@ options:
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.6/test_repo/broken_module/model_view.xml#L2 Deprecated `<openerp>` xml node
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.6/test_repo/broken_module/model_view2.xml#L2 Deprecated `<openerp>` xml node
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.6/test_repo/test_module/model_view.xml#L2 Deprecated `<openerp>` xml node
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.6/test_repo/test_module/res_users.xml#L2 Deprecated `<openerp>` xml node
 
  * xml-deprecated-qweb-directive
 
@@ -373,12 +390,6 @@ options:
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.6/test_repo/broken_module/template1.xml#L3 Duplicate xml template id `qweb/my_template1_noupdate_0`
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.6/test_repo/broken_module/template1.xml#L10 Duplicate xml template id `qweb/my_template2_noupdate_0`
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.6/test_repo/broken_module/template1.xml#L17 Duplicate xml template id `qweb/my_template3_noupdate_0`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.6/test_repo/broken_module/template1.xml#L21 Duplicate xml template id `qweb/my_template4_noupdate_0`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.6/test_repo/broken_module/template1.xml#L25 Duplicate xml template id `qweb/my_template5_noupdate_0`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.6/test_repo/broken_module/template1.xml#L29 Duplicate xml template id `qweb/my_duplicate_template_noupdate_0`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.6/test_repo/test_module/website_templates.xml#L5 Duplicate xml template id `data/test_template_1_noupdate_0`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.6/test_repo/test_module/website_templates.xml#L18 Duplicate xml template id `data/test_template_2_noupdate_0`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.6/test_repo/test_module/website_templates.xml#L36 Duplicate xml template id `data/assets_backend_noupdate_0`
 
  * xml-not-valid-char-link
 
@@ -390,9 +401,6 @@ options:
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.6/test_repo/test_module/website_templates.xml#L9 Consider removing the class `oe_structure` or adding a proper id to the tag. The id must contain `oe_structure`
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.6/test_repo/test_module/website_templates.xml#L13 Consider removing the class `oe_structure` or adding a proper id to the tag. The id must contain `oe_structure`
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.6/test_repo/test_module/website_templates.xml#L24 Consider removing the class `oe_structure` or adding a proper id to the tag. The id must contain `oe_structure`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.6/test_repo/test_module/website_templates.xml#L27 Consider removing the class `oe_structure` or adding a proper id to the tag. The id must contain `oe_structure`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.6/test_repo/test_module/website_templates.xml#L30 Consider removing the class `oe_structure` or adding a proper id to the tag. The id must contain `oe_structure`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.6/test_repo/test_module/website_templates_disable.xml#L21 Consider removing the class `oe_structure` or adding a proper id to the tag. The id must contain `oe_structure`
 
  * xml-record-missing-id
 
@@ -413,17 +421,12 @@ options:
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.6/test_repo/broken_module/model_view2.xml#L25 Dangerous use of `replace` from view with priority 0 < 99
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.6/test_repo/broken_module/model_view2.xml#L37 Dangerous use of `replace` from view with priority 0 < 99
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.6/test_repo/broken_module/model_view2.xml#L47 Dangerous use of `replace` from view with priority 0 < 99
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.6/test_repo/broken_module/model_view2.xml#L70 Dangerous use of `replace` from view with priority 10 < 99
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.6/test_repo/broken_module/model_view2.xml#L92 Dangerous use of `replace` from view with priority 10 < 99
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.6/test_repo/broken_module/model_view2.xml#L108 Dangerous use of `replace` from view with priority 10 < 99
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.6/test_repo/broken_module/skip_xml_check_3.xml#L15 Dangerous use of `replace` from view with priority 0 < 99
 
  * xml-xpath-translatable-item
 
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.6/test_repo/broken_module/model_view.xml#L11 Use of translatable xpath `text()`
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.6/test_repo/broken_module/template1.xml#L39 Use of translatable xpath `text()`
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.6/test_repo/broken_module/template1_copy.xml#L31 Use of translatable xpath `text()`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.6/test_repo/broken_module/template1_copy2.xml#L31 Use of translatable xpath `text()`
 
 [//]: # (end-example)
 

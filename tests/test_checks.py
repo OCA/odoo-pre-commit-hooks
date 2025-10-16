@@ -20,7 +20,9 @@ EXPECTED_ERRORS = {
     "csv-duplicate-record-id": 1,
     "csv-syntax-error": 1,
     "file-not-used": 1,
+    "manifest-superfluous-key": 3,
     "manifest-syntax-error": 2,
+    "prefer-env-translation": 41,
     "xml-create-user-wo-reset-password": 1,
     "xml-dangerous-filter-wo-user": 1,
     "xml-dangerous-qweb-replace-low-priority": 9,
@@ -76,7 +78,6 @@ class TestChecksWithFiles(common.ChecksCommon):
 
     @unittest.skipIf(not os.environ.get("BUILD_README"), "BUILD_README environment variable not enabled")
     def test_build_docstring(self):
-
         # Run "tox -e update-readme"
         # Why this here?
         # The unittest are isolated using "tox" virtualenv with all test-requirements installed
@@ -112,7 +113,7 @@ class TestChecksWithFiles(common.ChecksCommon):
         check_example_content = ""
         for code in sorted(all_check_errors_by_code):
             check_example_content += f"\n\n * {code}\n"
-            for check_error in all_check_errors_by_code[code]:
+            for check_error in sorted(all_check_errors_by_code[code])[:3]:
                 msg = f"{check_error.position.filepath}"
                 if check_error.position.line:
                     msg += f"#L{check_error.position.line}"

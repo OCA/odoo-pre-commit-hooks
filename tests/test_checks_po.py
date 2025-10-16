@@ -79,7 +79,6 @@ class TestChecksPO(common.ChecksCommon):
 
     @unittest.skipIf(not os.environ.get("BUILD_README"), "BUILD_README environment variable not enabled")
     def test_build_docstring(self):
-
         checks_found, checks_docstring = oca_pre_commit_hooks.utils.get_checks_docstring(
             [oca_pre_commit_hooks.checks_odoo_module_po.ChecksOdooModulePO]
         )

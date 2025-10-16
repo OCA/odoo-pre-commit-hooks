@@ -7,6 +7,9 @@ from collections import defaultdict
 from pathlib import Path
 
 from colorama import init as colorama_init
+from fixit.api import fixit_paths
+from fixit.config import collect_rules, parse_rule
+from fixit.ftypes import Config, Options
 
 from oca_pre_commit_hooks import checks_odoo_module_csv, checks_odoo_module_xml, utils
 from oca_pre_commit_hooks.base_checker import BaseChecker
@@ -224,6 +227,46 @@ class ChecksOdooModule(BaseChecker):
         for check_meth in utils.getattr_checks(checks_obj):
             check_meth()
         self.checks_errors.extend(checks_obj.checks_errors)
+
+    @utils.only_required_for_installable()
+    def check_py(self):
+        """Run fixit"""
+        os.environ["FIXIT_ODOO_VERSION"] = str(self.module_version) or os.getenv("VERSION") or "18.0"
+        rule = parse_rule(".checks_odoo_module_fixit", Path(os.path.dirname(os.path.abspath(__file__))))
+        lint_rules = collect_rules(Config(enable=[rule], disable=[], python_version=None))
+        lint_rules_enabled = [
+            parse_rule(
+                f"{lint_rule.__module__.replace('fixit.local', '')}", Path(os.path.dirname(os.path.abspath(__file__)))
+            )
+            for lint_rule in lint_rules
+            if self.is_message_enabled(lint_rule.name)
+        ]
+        options = Options(debug=False, output_format="vscode", rules=lint_rules_enabled)
+        results = fixit_paths(
+            paths=[Path(self.odoo_addon_path)],
+            options=options,
+            autofix=self.autofix,
+            parallel=False,
+        )
+        for result in results:
+            if not result.violation:
+                continue
+            message = result.violation.message
+            if result.violation.autofixable and not self.autofix:
+                message += " (has autofix)"
+            filename_short = os.path.relpath(result.path.as_posix(), self.manifest_top_path)
+            self.register_error(
+                code=result.violation.rule_name,
+                message=message,
+                info=(self.error or "")
+                + (
+                    "You can disable this check by adding the following comment to the "
+                    f"affected line or just above it `# lint-ignore: {result.violation.rule_name}`"
+                ),
+                filepath=filename_short,
+                line=result.violation.range.start.line,
+                column=result.violation.range.start.column,
+            )
 
 
 def lookup_manifest_paths(filenames_or_modules):
