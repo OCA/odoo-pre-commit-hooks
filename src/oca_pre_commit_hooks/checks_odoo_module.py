@@ -4,9 +4,14 @@ import glob
 import os
 import sys
 from collections import defaultdict
+from functools import lru_cache
+from itertools import chain
 from pathlib import Path
 
 from colorama import init as colorama_init
+from fixit.api import fixit_paths
+from fixit.config import collect_rules, parse_rule
+from fixit.ftypes import Config, Options
 
 from oca_pre_commit_hooks import checks_odoo_module_csv, checks_odoo_module_xml, utils
 from oca_pre_commit_hooks.base_checker import BaseChecker
@@ -229,6 +234,82 @@ class ChecksOdooModule(BaseChecker):
         for check_meth in utils.getattr_checks(checks_obj):
             check_meth()
         self.checks_errors.extend(checks_obj.checks_errors)
+
+    @staticmethod
+    @lru_cache(maxsize=32)
+    def _get_fixit_rules(manifest_rule):
+        rule = parse_rule(".checks_odoo_module_fixit", Path(os.path.dirname(os.path.abspath(__file__))))
+        lint_rules = collect_rules(Config(enable=[rule], disable=[], python_version=None))
+        return [
+            (
+                parse_rule(
+                    f"{lint_rule.__module__.replace('fixit.local', '')}",
+                    Path(os.path.dirname(os.path.abspath(__file__))),
+                ),
+                lint_rule.name,
+            )
+            for lint_rule in lint_rules
+            if (
+                manifest_rule
+                and lint_rule.name.startswith("manifest-")
+                or not manifest_rule
+                and not lint_rule.name.startswith("manifest-")
+            )
+        ]
+
+    def _get_fixit_enabled_rules(self, manifest_rule):
+        lint_rules = self._get_fixit_rules(manifest_rule)
+        return [lint_rule for lint_rule, lint_rule_name in lint_rules if self.is_message_enabled(lint_rule_name)]
+
+    @utils.only_required_for_installable()
+    def check_py(self):
+        """Run fixit"""
+        os.environ["FIXIT_ODOO_VERSION"] = str(self.module_version) or os.getenv("VERSION") or "18.0"
+        os.environ["FIXIT_AUTOFIX"] = str(self.autofix)
+        lint_rules_enabled_all = self._get_fixit_enabled_rules(manifest_rule=False)
+        lint_rules_enabled_manifest = self._get_fixit_enabled_rules(manifest_rule=True)
+        if not (lint_rules_enabled_all or lint_rules_enabled_manifest):
+            return
+        results = []
+        if lint_rules_enabled_manifest:
+            manifest_options = Options(debug=False, output_format="vscode", rules=lint_rules_enabled_manifest)
+            results.append(
+                fixit_paths(
+                    paths=[Path(self.manifest_path)],
+                    options=manifest_options,
+                    autofix=self.autofix,
+                    parallel=False,
+                )
+            )
+        if lint_rules_enabled_all:
+            all_options = Options(debug=False, output_format="vscode", rules=lint_rules_enabled_all)
+            results.append(
+                fixit_paths(
+                    paths=[Path(self.odoo_addon_path)],
+                    options=all_options,
+                    autofix=self.autofix,
+                    parallel=False,
+                )
+            )
+        for result in chain.from_iterable(results):
+            if not result.violation:
+                continue
+            message = result.violation.message
+            if result.violation.autofixable and not self.autofix:
+                message += " (has autofix)"
+            filename_short = os.path.relpath(result.path.as_posix(), self.manifest_top_path)
+            self.register_error(
+                code=result.violation.rule_name,
+                message=message,
+                info=(self.error or "")
+                + (
+                    "You can disable this check by adding the following comment to the "
+                    f"affected line or just above it `# lint-ignore: {result.violation.rule_name}`"
+                ),
+                filepath=filename_short,
+                line=result.violation.range.start.line,
+                column=result.violation.range.start.column,
+            )
 
 
 def lookup_manifest_paths(filenames_or_modules):

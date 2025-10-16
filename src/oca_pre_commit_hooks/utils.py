@@ -11,6 +11,8 @@ from inspect import getmembers, isfunction
 from itertools import chain
 from pathlib import Path
 
+from fixit.config import collect_rules, parse_rule
+from fixit.ftypes import Config
 from packaging.version import InvalidVersion, Version
 
 from oca_pre_commit_hooks.base_checker import BaseChecker
@@ -163,7 +165,25 @@ def get_checks_docstring(check_classes):
             checks_docstring += "\n" + check_meth.__doc__.strip(" \n") + "\n"
             checks_found |= set(re.findall(RE_CHECK_DOCSTRING, checks_docstring))
             checks_docstring = re.sub(r"( )+\*", "*", checks_docstring)
+    rule = parse_rule(
+        ".checks_odoo_module_fixit",
+        Path(__file__).resolve().parent,
+    )
+    if "ChecksOdooModule" in [check_class.__name__ for check_class in check_classes]:
+        checks_docstring += "\n** Special fixit checks\n"
+        lint_rules = collect_rules(Config(enable=[rule], disable=[], python_version=None))
+        for lint_rule in sorted(lint_rules, key=lambda r: r.name):
+            checks_found |= {lint_rule.name}
+            rule_doc = lint_rule.__doc__.strip("\n ")
+            checks_docstring += f"\n* Check {lint_rule.name}\n{rule_doc}\n"
     return checks_found, checks_docstring
+
+
+def str2version(version_str):
+    try:
+        return Version(version_str)
+    except (InvalidVersion, TypeError):
+        return None
 
 
 def manifest_version(manifest_path):
@@ -172,11 +192,7 @@ def manifest_version(manifest_path):
             manifest = literal_eval(manifest_fd.read())
         except (ValueError, SyntaxError):
             return None
-
-        try:
-            return Version(manifest.get("version"))
-        except (InvalidVersion, TypeError):
-            return None
+    return str2version(manifest.get("version"))
 
 
 def perform_fix(file_path, new_content):

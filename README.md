@@ -199,6 +199,23 @@ Triggered when two templates share the same ID
 Since that the text could be translated so it is a mutable value.
 It could raise `ValueError` exception if the language is changed.
 
+** Special fixit checks
+
+* Check manifest-superfluous-key
+Identifies and removes
+Identifies from Odoo manifest files (__manifest__.py) superfluous keys
+(if they have the same as the default value) should be omitted for simplicity
+
+e.g. 'installable': True
+`True` is the default value for installable key
+
+e.g. 'data': []
+`[]` is the default value for 'data' key
+
+* Check prefer-env-translation
+Replace `_('text')` with `self.env._('text')` only if '_' comes from 'odoo._'
+and only for modules >=18.0
+
 
 [//]: # (end-checks)
 
@@ -302,10 +319,22 @@ options:
 
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.8/test_repo/broken_module/__openerp__.py#L1 File "broken_module/report/test_report.xml" is not referenced in the manifest.
 
+ * manifest-superfluous-key
+
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.8/test_repo/broken_module/__openerp__.py#L32 Delete empty values.
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.8/test_repo/broken_module/__openerp__.py#L34 Delete empty values.
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.8/test_repo/woversion_module/__manifest__.py#L8 Delete empty values.
+
  * manifest-syntax-error
 
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.8/test_repo/manifest_werror/__manifest__.py#L1 Manifest could not be loaded
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.8/test_repo/woinit_module/__manifest__.py#L1 Manifest could not be loaded
+
+ * prefer-env-translation
+
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.8/test_repo/broken_module/models/broken_model.py#L76 Use self.env._(...) instead of _(…) directly inside Odoo model methods.
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.8/test_repo/broken_module/models/broken_model.py#L86 Use self.env._(...) instead of _(…) directly inside Odoo model methods.
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.8/test_repo/broken_module/models/broken_model.py#L243 Use self.env._(...) instead of _(…) directly inside Odoo model methods.
 
  * xml-create-user-wo-reset-password
 

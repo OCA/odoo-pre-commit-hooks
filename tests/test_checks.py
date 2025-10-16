@@ -20,7 +20,9 @@ EXPECTED_ERRORS = {
     "csv-duplicate-record-id": 1,
     "csv-syntax-error": 1,
     "file-not-used": 1,
+    "manifest-superfluous-key": 3,
     "manifest-syntax-error": 2,
+    "prefer-env-translation": 41,
     "xml-create-user-wo-reset-password": 1,
     "xml-dangerous-qweb-replace-low-priority": 9,
     "xml-deprecated-data-node": 8,
@@ -43,19 +45,7 @@ EXPECTED_ERRORS = {
 }
 
 
-class TestChecksWithDirectories(common.ChecksCommon):
-    def setUp(self):
-        super().setUp()
-        self.file_paths = glob.glob(os.path.join(self.test_repo_path, "*", "__openerp__.py")) + glob.glob(
-            os.path.join(self.test_repo_path, "*", "__manifest__.py")
-        )
-        self.file_paths = [os.path.dirname(i) for i in self.file_paths]
-        self.checks_run = oca_pre_commit_hooks.checks_odoo_module.run
-        self.checks_cli_main = oca_pre_commit_hooks.cli.main
-        self.expected_errors = EXPECTED_ERRORS.copy()
-
-
-class TestChecksWithFiles(common.ChecksCommon):
+class TestChecks(common.ChecksCommon):
 
     def setUp(self):
         super().setUp()

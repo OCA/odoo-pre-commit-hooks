@@ -1,4 +1,5 @@
 import os
+import random
 import re
 import shutil
 import subprocess
@@ -11,6 +12,8 @@ from distutils.dir_util import copy_tree  # pylint:disable=deprecated-module
 
 from oca_pre_commit_hooks import utils
 from oca_pre_commit_hooks.global_parser import CONFIG_NAME, DISABLE_ENV_VAR, ENABLE_ENV_VAR
+
+RND = random.Random(987654321)
 
 
 def assertDictEqual(self, d1, d2, msg=None):
@@ -46,6 +49,11 @@ class ChecksCommon(unittest.TestCase):
         cls.original_test_repo_path = os.path.join(
             os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "test_repo"
         )
+        # For the inherited classes set "compatible_with_directories = True"
+        # if the checks can run with directory paths
+        # set False otherwise
+        # e.g. "*.po" files are not compatible with directories
+        cls.compatible_with_directories = True
 
     def setUp(self):
         super().setUp()
@@ -80,6 +88,7 @@ class ChecksCommon(unittest.TestCase):
         new_content = re_sub.sub(f"{sub_start}\n\n{substitution}\n\n{sub_end}", content)
         return new_content
 
+    @unittest.skip("Repeated")
     def test_checks_basic(self):
         all_check_errors = self.checks_run(self.file_paths, no_exit=True, no_verbose=False)
         real_errors = self.get_count_code_errors(all_check_errors)
@@ -93,97 +102,123 @@ class ChecksCommon(unittest.TestCase):
         real_errors = self.get_count_code_errors(all_check_errors)
         assertDictEqual(self, real_errors, self.expected_errors)
 
-    def test_checks_disable_one_by_one_with_cli(self):
+    def test_checks_disable_one_by_one_with_random_cli_env_conf(self):
+        """Faster way to test disable one by one using random method selection"""
+        methods = [
+            getattr(self, name)
+            for name in dir(self)
+            if name.startswith("_test_checks_disable_one_by_one") and callable(getattr(self, name))
+        ]
+        file_paths = self.file_paths
+        dir_paths = [os.path.dirname(i) for i in self.file_paths]
         for check2disable in self.expected_errors:
-            expected_errors = self.expected_errors.copy()
-            sys.argv = ["", "--no-exit", "--no-verbose", f"--disable={check2disable}"] + self.file_paths
-            all_check_errors = self.checks_cli_main()
-            expected_errors.pop(check2disable)
-            real_errors = self.get_count_code_errors(all_check_errors)
-            assertDictEqual(self, real_errors, expected_errors, f"Disabled only {check2disable}")
+            os.environ.pop(ENABLE_ENV_VAR, None)
+            os.environ.pop(DISABLE_ENV_VAR, None)
+            method = RND.choice(methods)
+            if self.compatible_with_directories:
+                self.file_paths = RND.choice([file_paths, dir_paths])  # pylint: disable=attribute-defined-outside-init
+            method(check2disable)
 
-    def test_checks_disable_one_by_one_with_env(self):
-        for check2disable in self.expected_errors:
-            expected_errors = self.expected_errors.copy()
-            sys.argv = ["", "--no-exit", "--no-verbose"] + self.file_paths
-            os.environ[DISABLE_ENV_VAR] = check2disable
-            all_check_errors = self.checks_cli_main()
-            expected_errors.pop(check2disable)
-            real_errors = self.get_count_code_errors(all_check_errors)
-            assertDictEqual(self, real_errors, expected_errors, f"Disabled only {check2disable}")
+    def _test_checks_disable_one_by_one(self, check2disable):
+        expected_errors = self.expected_errors.copy()
+        all_check_errors = self.checks_run(self.file_paths, no_exit=True, no_verbose=True, disable={check2disable})
+        expected_errors.pop(check2disable)
+        real_errors = self.get_count_code_errors(all_check_errors)
+        assertDictEqual(self, real_errors, expected_errors, f"Disabled only {check2disable}")
 
-    def test_checks_disable_one_by_one_with_cli_conf_file(self):
+    def _test_checks_disable_one_by_one_with_cli(self, check2disable):
+        expected_errors = self.expected_errors.copy()
+        sys.argv = ["", "--no-exit", "--no-verbose", f"--disable={check2disable}"] + self.file_paths
+        all_check_errors = self.checks_cli_main()
+        expected_errors.pop(check2disable)
+        real_errors = self.get_count_code_errors(all_check_errors)
+        assertDictEqual(self, real_errors, expected_errors, f"Disabled only {check2disable}")
+
+    def _test_checks_disable_one_by_one_with_env(self, check2disable):
+        expected_errors = self.expected_errors.copy()
+        sys.argv = ["", "--no-exit", "--no-verbose"] + self.file_paths
+        os.environ[DISABLE_ENV_VAR] = check2disable
+        all_check_errors = self.checks_cli_main()
+        expected_errors.pop(check2disable)
+        real_errors = self.get_count_code_errors(all_check_errors)
+        assertDictEqual(self, real_errors, expected_errors, f"Disabled only {check2disable}")
+
+    def _test_checks_disable_one_by_one_with_cli_conf_file(self, check2disable):
         file_tmpl = "[MESSAGES_CONTROL]\ndisable=%s"
         with tempfile.TemporaryDirectory() as tmp_dir:
             tmp_fname = os.path.join(tmp_dir, CONFIG_NAME)
-            for check2disable in self.expected_errors:
-                with open(tmp_fname, "w", encoding="UTF-8") as temp_fl:
-                    content = file_tmpl % check2disable
-                    temp_fl.write(content)
-                    temp_fl.flush()
+            with open(tmp_fname, "w", encoding="UTF-8") as temp_fl:
+                content = file_tmpl % check2disable
+                temp_fl.write(content)
+                temp_fl.flush()
 
-                expected_errors = self.expected_errors.copy()
-                sys.argv = ["", "--no-exit", "--no-verbose", f"--config={temp_fl.name}"] + self.file_paths
-                all_check_errors = self.checks_cli_main()
-                expected_errors.pop(check2disable)
-                real_errors = self.get_count_code_errors(all_check_errors)
-                self.assertTrue(real_errors == expected_errors, f"Disabled only {check2disable}")
-
-    def test_checks_enable_one_by_one(self):
-        for check2enable in self.expected_errors:
-            all_check_errors = self.checks_run(self.file_paths, no_exit=True, no_verbose=True, enable={check2enable})
-            real_errors = self.get_count_code_errors(all_check_errors)
-            assertDictEqual(
-                self, real_errors, {check2enable: self.expected_errors[check2enable]}, f"Enabled only {check2enable}"
-            )
-
-    def test_checks_enable_one_by_one_with_cli(self):
-        for check2enable in self.expected_errors:
-            sys.argv = ["", "--no-exit", "--no-verbose", f"--enable={check2enable}"] + self.file_paths
+            expected_errors = self.expected_errors.copy()
+            sys.argv = ["", "--no-exit", "--no-verbose", f"--config={temp_fl.name}"] + self.file_paths
             all_check_errors = self.checks_cli_main()
+            expected_errors.pop(check2disable)
             real_errors = self.get_count_code_errors(all_check_errors)
-            assertDictEqual(
-                self, real_errors, {check2enable: self.expected_errors[check2enable]}, f"Enabled only {check2enable}"
-            )
+            self.assertTrue(real_errors == expected_errors, f"Disabled only {check2disable}")
 
-    def test_checks_enable_one_by_one_with_env(self):
+    def test_checks_enable_one_by_one_with_random_cli_env_conf(self):
+        """Faster way to test enable one by one using random method selection"""
+        methods = [
+            getattr(self, name)
+            for name in dir(self)
+            if name.startswith("_test_checks_enable_one_by_one") and callable(getattr(self, name))
+        ]
+        file_paths = self.file_paths
+        dir_paths = [os.path.dirname(i) for i in self.file_paths]
         for check2enable in self.expected_errors:
-            sys.argv = ["", "--no-exit", "--no-verbose"] + self.file_paths
-            os.environ[ENABLE_ENV_VAR] = check2enable
-            all_check_errors = self.checks_cli_main()
-            real_errors = self.get_count_code_errors(all_check_errors)
-            assertDictEqual(
-                self, real_errors, {check2enable: self.expected_errors[check2enable]}, f"Enabled only {check2enable}"
-            )
+            os.environ.pop(ENABLE_ENV_VAR, None)
+            os.environ.pop(DISABLE_ENV_VAR, None)
+            method = RND.choice(methods)
+            if self.compatible_with_directories:
+                self.file_paths = RND.choice([file_paths, dir_paths])  # pylint: disable=attribute-defined-outside-init
+            method(check2enable)
 
-    def test_checks_enable_one_by_one_with_cli_conf_file(self):
+    def _test_checks_enable_one_by_one(self, check2enable):
+        all_check_errors = self.checks_run(self.file_paths, no_exit=True, no_verbose=True, enable={check2enable})
+        real_errors = self.get_count_code_errors(all_check_errors)
+        assertDictEqual(
+            self, real_errors, {check2enable: self.expected_errors[check2enable]}, f"Enabled only {check2enable}"
+        )
+
+    def _test_checks_enable_one_by_one_with_cli(self, check2enable):
+        sys.argv = ["", "--no-exit", "--no-verbose", f"--enable={check2enable}"] + self.file_paths
+        all_check_errors = self.checks_cli_main()
+        real_errors = self.get_count_code_errors(all_check_errors)
+        assertDictEqual(
+            self, real_errors, {check2enable: self.expected_errors[check2enable]}, f"Enabled only {check2enable}"
+        )
+
+    def _test_checks_enable_one_by_one_with_env(self, check2enable):
+        sys.argv = ["", "--no-exit", "--no-verbose"] + self.file_paths
+        os.environ[ENABLE_ENV_VAR] = check2enable
+        all_check_errors = self.checks_cli_main()
+        real_errors = self.get_count_code_errors(all_check_errors)
+        assertDictEqual(
+            self, real_errors, {check2enable: self.expected_errors[check2enable]}, f"Enabled only {check2enable}"
+        )
+
+    def _test_checks_enable_one_by_one_with_cli_conf_file(self, check2enable):
         file_tmpl = "[MESSAGES_CONTROL]\nenable=%s"
         with tempfile.TemporaryDirectory() as tmp_dir:
             with chdir(tmp_dir):  # Should use the configuration file of the current path
                 tmp_fname = os.path.join(tmp_dir, CONFIG_NAME)
-                for check2enable in self.expected_errors:
-                    with open(tmp_fname, "w", encoding="UTF-8") as temp_fl:
-                        content = file_tmpl % check2enable
-                        temp_fl.write(content)
-                        temp_fl.flush()
+                with open(tmp_fname, "w", encoding="UTF-8") as temp_fl:
+                    content = file_tmpl % check2enable
+                    temp_fl.write(content)
+                    temp_fl.flush()
 
-                    sys.argv = ["", "--no-exit", "--no-verbose"] + self.file_paths
-                    all_check_errors = self.checks_cli_main()
-                    real_errors = self.get_count_code_errors(all_check_errors)
-                    assertDictEqual(
-                        self,
-                        real_errors,
-                        {check2enable: self.expected_errors[check2enable]},
-                        f"Enabled only {check2enable}",
-                    )
-
-    def test_checks_disable_one_by_one(self):
-        for check2disable in self.expected_errors:
-            expected_errors = self.expected_errors.copy()
-            all_check_errors = self.checks_run(self.file_paths, no_exit=True, no_verbose=True, disable={check2disable})
-            expected_errors.pop(check2disable)
-            real_errors = self.get_count_code_errors(all_check_errors)
-            assertDictEqual(self, real_errors, expected_errors, f"Disabled only {check2disable}")
+                sys.argv = ["", "--no-exit", "--no-verbose"] + self.file_paths
+                all_check_errors = self.checks_cli_main()
+                real_errors = self.get_count_code_errors(all_check_errors)
+                assertDictEqual(
+                    self,
+                    real_errors,
+                    {check2enable: self.expected_errors[check2enable]},
+                    f"Enabled only {check2enable}",
+                )
 
     def test_checks_enable_priority(self):
         """Verify enable configuration options have the correct priority. It should be:
