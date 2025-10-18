@@ -46,14 +46,12 @@ repos:
         self.pre_commit_cmd = ["pre-commit", "run", "--color=never", "-avc", self.pre_commit_config_yaml_path]
         self.expected_errors = {}
 
-    # TODO: Fix it
-    @unittest.skip("TODO: Fix it :)")
     def test_checks_hook_odoo_module(self):
         self.expected_errors = test_checks.EXPECTED_ERRORS.copy()
         self.pre_commit_cmd.append("oca-checks-odoo-module")
         returncode, output, cmd_str = run_cmd(self.pre_commit_cmd)
         self.assertTrue(returncode, f"The process exited with code zero {returncode} {output}")
-        errors_count = {code: output.count(code) for code in self.expected_errors}
+        errors_count = {code: output.count(f": {code} ") for code in self.expected_errors}
         common.assertDictEqual(
             self, errors_count, self.expected_errors, f"Different result than expected for\n{cmd_str}\n{output}"
         )

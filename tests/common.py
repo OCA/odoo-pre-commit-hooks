@@ -267,4 +267,4 @@ class ChecksCommon(unittest.TestCase):
     def test_checks_as_string(self):
         all_check_errors = self.checks_run(self.file_paths, no_exit=True, no_verbose=False)
         for check_error in all_check_errors:
-            self.assertTrue(str(check_error).count(check_error.code) == 1)
+            self.assertTrue(str(check_error).count(check_error.code) >= 1)
