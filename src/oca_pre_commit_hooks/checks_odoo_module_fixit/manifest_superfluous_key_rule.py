@@ -92,19 +92,9 @@ class ManifestSuperfluousKeyRule(common.Common):
             return
         if (isinstance(node.value, cst.List) and not node.value.elements) or (
             isinstance(node.value, cst.SimpleString) and not node.value.evaluated_value
-        ):
+        ) or (node.key.evaluated_value in ("active", "installable") and isinstance(node.value, cst.Name) and node.value.value == "True"):
             self.report(
                 node,
                 "Delete empty values.",
-                replacement=cst.RemoveFromParent(),
-            )
-        if (
-            node.key.evaluated_value in ("active", "installable")
-            and isinstance(node.value, cst.Name)
-            and node.value.value == "True"
-        ):
-            self.report(
-                node,
-                "Delete default values",
                 replacement=cst.RemoveFromParent(),
             )

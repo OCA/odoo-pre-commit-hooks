@@ -242,6 +242,8 @@ class ChecksOdooModule(BaseChecker):
             for lint_rule in lint_rules
             if self.is_message_enabled(lint_rule.name)
         ]
+        # TODO: R&D to optimize run the manifest checks only for __manifest__.py files
+        #       My first POC was that fixit is not able to filter the checks by file but maybe I could be wrong
         options = Options(debug=False, output_format="vscode", rules=lint_rules_enabled)
         results = fixit_paths(
             paths=[Path(self.odoo_addon_path)],
