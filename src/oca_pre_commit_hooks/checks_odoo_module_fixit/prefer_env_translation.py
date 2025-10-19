@@ -1,13 +1,14 @@
 import os
 
 import libcst as cst
-from fixit import InvalidTestCase, LintRule, ValidTestCase
+from fixit import InvalidTestCase, ValidTestCase
 from libcst.metadata import QualifiedName, QualifiedNameProvider
 
 from .. import utils
+from . import common
 
 
-class PreferEnvTranslationRule(LintRule):
+class PreferEnvTranslationRule(common.Common):
     """Replace `_('text')` with `self.env._('text')` only if '_' comes from 'odoo._'
     and only for modules >=18.0"""
 

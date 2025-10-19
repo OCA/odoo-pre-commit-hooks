@@ -232,6 +232,7 @@ class ChecksOdooModule(BaseChecker):
     def check_py(self):
         """Run fixit"""
         os.environ["FIXIT_ODOO_VERSION"] = str(self.module_version) or os.getenv("VERSION") or "18.0"
+        os.environ["FIXIT_AUTOFIX"] = str(self.autofix)
         rule = parse_rule(".checks_odoo_module_fixit", Path(os.path.dirname(os.path.abspath(__file__))))
         lint_rules = collect_rules(Config(enable=[rule], disable=[], python_version=None))
         lint_rules_enabled = [

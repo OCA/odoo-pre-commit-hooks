@@ -1,8 +1,10 @@
 import libcst as cst
-from fixit import InvalidTestCase, LintRule, ValidTestCase
+from fixit import InvalidTestCase, ValidTestCase
+
+from . import common
 
 
-class ManifestSuperfluousKeyRule(LintRule):
+class ManifestSuperfluousKeyRule(common.Common):
     """Identifies and removes
     Identifies from Odoo manifest files (__manifest__.py) superfluous keys
     (if they have the same as the default value) should be omitted for simplicity
