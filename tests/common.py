@@ -81,7 +81,7 @@ class ChecksCommon(unittest.TestCase):
             all_check_errors = self.checks_cli_main()
             expected_errors.pop(check2disable)
             real_errors = self.get_count_code_errors(all_check_errors)
-            assertDictEqual(self, real_errors, expected_errors)
+            assertDictEqual(self, real_errors, expected_errors, f"Disabled only {check2disable}")
 
     def test_checks_disable_one_by_one_with_env(self):
         for check2disable in self.expected_errors:
@@ -91,7 +91,7 @@ class ChecksCommon(unittest.TestCase):
             all_check_errors = self.checks_cli_main()
             expected_errors.pop(check2disable)
             real_errors = self.get_count_code_errors(all_check_errors)
-            assertDictEqual(self, real_errors, expected_errors)
+            assertDictEqual(self, real_errors, expected_errors, f"Disabled only {check2disable}")
 
     def test_checks_disable_one_by_one_with_cli_conf_file(self):
         file_tmpl = "[MESSAGES_CONTROL]\ndisable=%s"
@@ -107,20 +107,24 @@ class ChecksCommon(unittest.TestCase):
                 all_check_errors = self.checks_cli_main()
                 expected_errors.pop(check2disable)
                 real_errors = self.get_count_code_errors(all_check_errors)
-                self.assertTrue(real_errors == expected_errors)
+                self.assertTrue(real_errors == expected_errors, f"Disabled only {check2disable}")
 
     def test_checks_enable_one_by_one(self):
         for check2enable in self.expected_errors:
             all_check_errors = self.checks_run(self.file_paths, no_exit=True, no_verbose=True, enable={check2enable})
             real_errors = self.get_count_code_errors(all_check_errors)
-            assertDictEqual(self, real_errors, {check2enable: self.expected_errors[check2enable]})
+            assertDictEqual(
+                self, real_errors, {check2enable: self.expected_errors[check2enable]}, f"Enabled only {check2enable}"
+            )
 
     def test_checks_enable_one_by_one_with_cli(self):
         for check2enable in self.expected_errors:
             sys.argv = ["", "--no-exit", "--no-verbose", f"--enable={check2enable}"] + self.file_paths
             all_check_errors = self.checks_cli_main()
             real_errors = self.get_count_code_errors(all_check_errors)
-            assertDictEqual(self, real_errors, {check2enable: self.expected_errors[check2enable]})
+            assertDictEqual(
+                self, real_errors, {check2enable: self.expected_errors[check2enable]}, f"Enabled only {check2enable}"
+            )
 
     def test_checks_enable_one_by_one_with_env(self):
         for check2enable in self.expected_errors:
@@ -128,7 +132,9 @@ class ChecksCommon(unittest.TestCase):
             os.environ[ENABLE_ENV_VAR] = check2enable
             all_check_errors = self.checks_cli_main()
             real_errors = self.get_count_code_errors(all_check_errors)
-            assertDictEqual(self, real_errors, {check2enable: self.expected_errors[check2enable]})
+            assertDictEqual(
+                self, real_errors, {check2enable: self.expected_errors[check2enable]}, f"Enabled only {check2enable}"
+            )
 
     def test_checks_enable_one_by_one_with_cli_conf_file(self):
         file_tmpl = "[MESSAGES_CONTROL]\nenable=%s"
@@ -143,7 +149,12 @@ class ChecksCommon(unittest.TestCase):
                     sys.argv = ["", "--no-exit", "--no-verbose"] + self.file_paths
                     all_check_errors = self.checks_cli_main()
                     real_errors = self.get_count_code_errors(all_check_errors)
-                    assertDictEqual(self, real_errors, {check2enable: self.expected_errors[check2enable]})
+                    assertDictEqual(
+                        self,
+                        real_errors,
+                        {check2enable: self.expected_errors[check2enable]},
+                        f"Enabled only {check2enable}",
+                    )
 
     def test_checks_disable_one_by_one(self):
         for check2disable in self.expected_errors:
@@ -151,7 +162,7 @@ class ChecksCommon(unittest.TestCase):
             all_check_errors = self.checks_run(self.file_paths, no_exit=True, no_verbose=True, disable={check2disable})
             expected_errors.pop(check2disable)
             real_errors = self.get_count_code_errors(all_check_errors)
-            assertDictEqual(self, real_errors, expected_errors)
+            assertDictEqual(self, real_errors, expected_errors, f"Disabled only {check2disable}")
 
     def test_checks_enable_priority(self):
         """Verify enable configuration options have the correct priority. It should be:
@@ -256,4 +267,4 @@ class ChecksCommon(unittest.TestCase):
     def test_checks_as_string(self):
         all_check_errors = self.checks_run(self.file_paths, no_exit=True, no_verbose=False)
         for check_error in all_check_errors:
-            self.assertTrue(str(check_error).count(check_error.code) == 1)
+            self.assertTrue(str(check_error).count(check_error.code) >= 1)

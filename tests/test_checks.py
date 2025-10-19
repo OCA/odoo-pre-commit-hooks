@@ -76,7 +76,6 @@ class TestChecksWithFiles(common.ChecksCommon):
 
     @unittest.skipIf(not os.environ.get("BUILD_README"), "BUILD_README environment variable not enabled")
     def test_build_docstring(self):
-
         # Run "tox -e update-readme"
         # Why this here?
         # The unittest are isolated using "tox" virtualenv with all test-requirements installed
@@ -112,7 +111,7 @@ class TestChecksWithFiles(common.ChecksCommon):
         check_example_content = ""
         for code in sorted(all_check_errors_by_code):
             check_example_content += f"\n\n * {code}\n"
-            for check_error in all_check_errors_by_code[code]:
+            for check_error in sorted(all_check_errors_by_code[code])[:3]:
                 msg = f"{check_error.position.filepath}"
                 if check_error.position.line:
                     msg += f"#L{check_error.position.line}"

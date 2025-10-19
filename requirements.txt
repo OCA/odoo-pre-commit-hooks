@@ -1,8 +1,4 @@
-# xml checks
-lxml>=4.2.3
-
-# po checks
-polib==1.2.*
-
 colorama
+lxml>=4.2.3  # xml checks
 packaging
+polib==1.2.*  # po checks
