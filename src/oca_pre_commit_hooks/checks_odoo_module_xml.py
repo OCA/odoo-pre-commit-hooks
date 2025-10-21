@@ -33,7 +33,6 @@ class ChecksOdooModuleXML(BaseChecker):
     )
     xpath_record = etree.XPath("/odoo//record | /openerp//record")
     xpath_view_arch_xml = etree.XPath("field[@name='arch' and @type='xml'][1]")
-    xpath_ir_fields = etree.XPath("field[@name='name' or @name='user_id']")
     xpath_template = etree.XPath("/odoo//template|/openerp//template")
     xpath_view_replaces = etree.XPath(".//*[@position='replace'][1]")
     xpath_char_links = etree.XPath(".//link[@href]|.//script[@src]")
@@ -297,13 +296,25 @@ class ChecksOdooModuleXML(BaseChecker):
         # xml_dangerous_filter_wo_user
         if record.get("model") != "ir.filters":
             return
-        ir_filter_fields = self.xpath_ir_fields(record)
-        # if exists field="name" then is a new record
-        # then should be field="user_id" too
+        if not self.module_version or (self.module_version and self.module_version < Version("19")):
+            user_field_name = "user_id"
+        else:
+            user_field_name = "user_ids"
+        xpath_ir_fields = etree.XPath(f"field[@name='name' or @name='{user_field_name}']")
+        ir_filter_fields = xpath_ir_fields(record)
+        # - For Odoo versions before 19
+        #     any record that defines a <field name="name">
+        #     must also define <field name="user_id">.
+        #
+        # - For Odoo 19 and later
+        #     the field has been renamed to <field name="user_ids"> (many2many instead of many2one),
+        #     so the rule becomes:
+        #       any record that defines a <field name="name">
+        #       must also define <field name="user_ids">.
         if ir_filter_fields and len(ir_filter_fields) == 1:
             self.register_error(
                 code="xml-dangerous-filter-wo-user",
-                message="Dangerous filter without explicit `user_id`",
+                message=f"Dangerous filter without explicit `{user_field_name}`",
                 filepath=manifest_data["filename_short"],
                 line=record.sourceline,
             )
