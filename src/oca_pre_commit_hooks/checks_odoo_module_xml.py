@@ -289,25 +289,6 @@ class ChecksOdooModuleXML(BaseChecker):
                 line=record.sourceline,
             )
 
-    @utils.only_required_for_checks("xml-dangerous-filter-wo-user")
-    def visit_xml_record_filter(self, manifest_data, record):
-        """* Check xml-dangerous-filter-wo-user
-        Check dangerous filter without a user assigned.
-        """
-        # xml_dangerous_filter_wo_user
-        if record.get("model") != "ir.filters":
-            return
-        ir_filter_fields = self.xpath_ir_fields(record)
-        # if exists field="name" then is a new record
-        # then should be field="user_id" too
-        if ir_filter_fields and len(ir_filter_fields) == 1:
-            self.register_error(
-                code="xml-dangerous-filter-wo-user",
-                message="Dangerous filter without explicit `user_id`",
-                filepath=manifest_data["filename_short"],
-                line=record.sourceline,
-            )
-
     @utils.only_required_for_checks("xml-not-valid-char-link")
     def check_xml_not_valid_char_link(self):
         """* Check xml-not-valid-char-link

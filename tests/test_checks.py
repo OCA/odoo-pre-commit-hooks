@@ -22,7 +22,6 @@ EXPECTED_ERRORS = {
     "file-not-used": 1,
     "manifest-syntax-error": 2,
     "xml-create-user-wo-reset-password": 1,
-    "xml-dangerous-filter-wo-user": 1,
     "xml-dangerous-qweb-replace-low-priority": 9,
     "xml-deprecated-data-node": 8,
     "xml-deprecated-openerp-node": 4,

@@ -151,9 +151,6 @@ If the module is called "module_a" and the xmlid is
 The "module_a." is redundant it could be replaced to only
 `<record id="xmlid_name1" ...`
 
-* Check xml-dangerous-filter-wo-user
-Check dangerous filter without a user assigned.
-
 * Check xml-create-user-wo-reset-password
 records of user without `context="{'no_reset_password': True}"`
 This context avoid send email and mail log warning
@@ -307,10 +304,6 @@ options:
  * xml-create-user-wo-reset-password
 
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.6/test_repo/test_module/res_users.xml#L10 record res.users without `context="{'no_reset_password': True}"`
-
- * xml-dangerous-filter-wo-user
-
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.6/test_repo/broken_module/model_view_odoo.xml#L60 Dangerous filter without explicit `user_id`
 
  * xml-dangerous-qweb-replace-low-priority
 
