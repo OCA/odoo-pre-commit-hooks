@@ -207,7 +207,12 @@ class ChecksOdooModule(BaseChecker):
         if not manifest_datas:
             return
         checks_obj = checks_odoo_module_xml.ChecksOdooModuleXML(
-            manifest_datas, self.odoo_addon_name, self.enable, self.disable, module_version=self.module_version
+            manifest_datas,
+            self.odoo_addon_name,
+            self.enable,
+            self.disable,
+            module_version=self.module_version,
+            autofix=self.autofix,
         )
         for check_meth in utils.getattr_checks(checks_obj):
             check_meth()

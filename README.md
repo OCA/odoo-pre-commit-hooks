@@ -135,6 +135,12 @@ deprecated <openerp> xml node
 * Check xml-deprecated-qweb-directive
 for use of deprecated QWeb directives t-*-options
 
+* Check xml-header-missing
+Generated when the XML file is missing the XML declaration header '<?xml version="1.0" encoding="UTF-8" ?>'
+
+* Check xml-header-wrong
+Generated when the XML file declaration header is different than expected (case sensitive).
+
 * Check xml-not-valid-char-link
 The resource in in src/href contains a not valid character.
 
@@ -354,6 +360,16 @@ options:
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.7/test_repo/broken_module/template1.xml#L3 Duplicate xml template id `qweb/my_template1_noupdate_0`
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.7/test_repo/broken_module/template1.xml#L10 Duplicate xml template id `qweb/my_template2_noupdate_0`
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.7/test_repo/broken_module/template1.xml#L17 Duplicate xml template id `qweb/my_template3_noupdate_0`
+
+ * xml-header-missing
+
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.7/test_repo/broken_module/xml_wo_header.xml#L1 XML missing header
+
+ * xml-header-wrong
+
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.7/test_repo/broken_module/demo/duplicated_id_demo.xml#L1 XML header expected '<?xml version="1.0" encoding="UTF-8" ?>' but received '<?xml version="1.0" encoding="utf-8"?>'
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.7/test_repo/broken_module/deprecated_disable.xml#L1 XML header expected '<?xml version="1.0" encoding="UTF-8" ?>' but received '<?xml version="1.0" encoding="utf-8" ?>'
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.7/test_repo/broken_module/model_view.xml#L1 XML header expected '<?xml version="1.0" encoding="UTF-8" ?>' but received '<?xml version="1.0" encoding="utf-8"?>'
 
  * xml-not-valid-char-link
 

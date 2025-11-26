@@ -1,10 +1,13 @@
 import os
 import re
+import shutil
+import subprocess
 import sys
 import tempfile
 import unittest
 from collections import defaultdict
 from contextlib import contextmanager
+from distutils.dir_util import copy_tree  # pylint:disable=deprecated-module
 
 from oca_pre_commit_hooks import utils
 from oca_pre_commit_hooks.global_parser import CONFIG_NAME, DISABLE_ENV_VAR, ENABLE_ENV_VAR
@@ -29,17 +32,33 @@ def chdir(directory):
         os.chdir(original_dir)
 
 
+def create_dummy_repo(src_path, dest_path):
+    copy_tree(src_path, dest_path)
+    subprocess.check_call(["git", "init", dest_path, "--initial-branch=main"])
+
+
 class ChecksCommon(unittest.TestCase):
     # pylint: disable=no-member
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
         cls.maxDiff = None
+        cls.original_test_repo_path = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "test_repo"
+        )
 
     def setUp(self):
         super().setUp()
         os.environ.pop(DISABLE_ENV_VAR, None)
         os.environ.pop(ENABLE_ENV_VAR, None)
+        self.tmp_dir = os.path.realpath(tempfile.mkdtemp(suffix="_oca_pre_commit_hooks"))
+        self.test_repo_path = self.tmp_dir
+        create_dummy_repo(self.original_test_repo_path, self.tmp_dir)
+
+    def tearDown(self):
+        super().tearDown()
+        if os.path.isdir(self.tmp_dir) and self.tmp_dir != "/":
+            shutil.rmtree(self.tmp_dir, ignore_errors=True)
 
     @staticmethod
     def get_grouped_errors(all_check_errors):
@@ -101,6 +120,7 @@ class ChecksCommon(unittest.TestCase):
                 with open(tmp_fname, "w", encoding="UTF-8") as temp_fl:
                     content = file_tmpl % check2disable
                     temp_fl.write(content)
+                    temp_fl.flush()
 
                 expected_errors = self.expected_errors.copy()
                 sys.argv = ["", "--no-exit", "--no-verbose", f"--config={temp_fl.name}"] + self.file_paths
@@ -145,6 +165,7 @@ class ChecksCommon(unittest.TestCase):
                     with open(tmp_fname, "w", encoding="UTF-8") as temp_fl:
                         content = file_tmpl % check2enable
                         temp_fl.write(content)
+                        temp_fl.flush()
 
                     sys.argv = ["", "--no-exit", "--no-verbose"] + self.file_paths
                     all_check_errors = self.checks_cli_main()

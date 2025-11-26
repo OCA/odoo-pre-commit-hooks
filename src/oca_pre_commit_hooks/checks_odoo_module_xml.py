@@ -9,8 +9,10 @@ from packaging.version import Version
 from oca_pre_commit_hooks import utils
 from oca_pre_commit_hooks.base_checker import BaseChecker
 
-DFTL_MIN_PRIORITY = 99
 DFLT_DEPRECATED_TREE_ATTRS = ["colors", "fonts", "string"]
+DFTL_MIN_PRIORITY = 99
+XML_HEADER_EXPECTED = b'<?xml version="1.0" encoding="UTF-8" ?>'
+XML_HEADER_RE = re.compile(rb"^<\?xml[^>]*\?>", re.IGNORECASE | re.MULTILINE)
 
 
 # Same as Odoo: https://github.com/odoo/odoo/commit/9cefa76988ff94c3d590c6631b604755114d0297
@@ -58,18 +60,36 @@ class ChecksOdooModuleXML(BaseChecker):
         f"/odoo//template//*[{qweb_deprecated_attrs}] | " f"/openerp//template//*[{qweb_deprecated_attrs}]"
     )
 
-    def __init__(self, manifest_datas, module_name, enable, disable, module_version):
-        super().__init__(enable, disable, module_name, module_version)
+    def _get_first_tag(self, fileobj_xml):
+        buffer = []
+        for lineno, line in enumerate(fileobj_xml):
+            line_stripped = line.strip(b" \n")
+            if not buffer and line_stripped.startswith(b"<"):
+                buffer.append(line_stripped)
+                buffer_lineno = lineno + 1
+            if buffer and line_stripped.endswith(b">"):
+                if line_stripped not in buffer:
+                    buffer.append(line_stripped)
+                return b" ".join(buffer), buffer_lineno
+        return "", 0
+
+    def __init__(self, manifest_datas, module_name, enable, disable, module_version, autofix):
+        super().__init__(enable, disable, module_name, module_version, autofix)
         self.manifest_datas = manifest_datas or []
+        self.autofix = autofix
         for manifest_data in self.manifest_datas:
             try:
                 with open(manifest_data["filename"], "rb") as f_xml:
                     node = etree.parse(f_xml)
+                    f_xml.seek(0)
+                    first_tag, first_tag_lineno = self._get_first_tag(f_xml)
                     manifest_data.update(
                         {
                             "node": node,
                             "file_error": None,
                             "disabled_checks": self._get_disabled_checks(node),
+                            "first_tag": first_tag,
+                            "first_tag_lineno": first_tag_lineno,
                         }
                     )
             except (FileNotFoundError, etree.XMLSyntaxError, UnicodeDecodeError) as xml_err:
@@ -116,6 +136,50 @@ class ChecksOdooModuleXML(BaseChecker):
             return False
         replaces = cls.xpath_view_replaces(arch)
         return bool(replaces)
+
+    @utils.only_required_for_checks("xml-header-missing", "xml-header-wrong")
+    def check_xml_header(self):
+        """* Check xml-header-missing
+        Generated when the XML file is missing the XML declaration header '<?xml version="1.0" encoding="UTF-8" ?>'
+
+        * Check xml-header-wrong
+        Generated when the XML file declaration header is different than expected (case sensitive).
+        """
+        for manifest_data in self.manifest_datas:
+            first_tag = manifest_data.get("first_tag")
+            if first_tag is None:
+                # Error reading the file, skip checks
+                continue
+            if not first_tag.startswith(b"<?xml "):
+                if self.is_message_enabled("xml-header-missing", manifest_data["disabled_checks"]):
+                    self.register_error(
+                        code="xml-header-missing",
+                        message="XML missing header",
+                        filepath=manifest_data["filename_short"],
+                        line=1,
+                    )
+                    if self.autofix:
+                        with open(manifest_data["filename"], "rb") as f_xml:
+                            content = b'<?xml version="1.0" encoding="UTF-8" ?>\n' + f_xml.read()
+                        utils.perform_fix(manifest_data["filename"], content)
+            elif self.is_message_enabled("xml-header-wrong", manifest_data["disabled_checks"]):
+                new_content = XML_HEADER_RE.sub(XML_HEADER_EXPECTED, first_tag, count=1)
+                if new_content != first_tag:
+                    self.register_error(
+                        code="xml-header-wrong",
+                        message=(
+                            f'XML header expected \'{XML_HEADER_EXPECTED.decode("UTF-8")}\' '
+                            f'but received \'{first_tag.decode("UTF-8")}\''
+                        ),
+                        filepath=manifest_data["filename_short"],
+                        line=manifest_data["first_tag_lineno"],
+                    )
+                    if self.autofix:
+                        with open(manifest_data["filename"], "rb") as f_xml:
+                            content = f_xml.read()
+                        utils.perform_fix(
+                            manifest_data["filename"], XML_HEADER_RE.sub(XML_HEADER_EXPECTED, content, count=1)
+                        )
 
     # Not set only_required_for_checks because of the calls to visit_xml_record... methods
     def check_xml_records(self):
