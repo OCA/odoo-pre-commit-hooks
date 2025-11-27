@@ -37,38 +37,31 @@ EXPECTED_ERRORS = {
     "xml-oe-structure-missing-id": 6,
     "xml-record-missing-id": 2,
     "xml-duplicate-template-id": 9,
+    "xml-header-missing": 1,
+    "xml-header-wrong": 19,
     "xml-deprecated-oe-chatter": 1,
 }
 
 
 class TestChecksWithDirectories(common.ChecksCommon):
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        test_repo_path = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "test_repo")
-        cls.file_paths = glob.glob(os.path.join(test_repo_path, "*", "__openerp__.py")) + glob.glob(
-            os.path.join(test_repo_path, "*", "__manifest__.py")
-        )
-        cls.file_paths = [os.path.dirname(i) for i in cls.file_paths]
-
     def setUp(self):
         super().setUp()
+        self.file_paths = glob.glob(os.path.join(self.test_repo_path, "*", "__openerp__.py")) + glob.glob(
+            os.path.join(self.test_repo_path, "*", "__manifest__.py")
+        )
+        self.file_paths = [os.path.dirname(i) for i in self.file_paths]
         self.checks_run = oca_pre_commit_hooks.checks_odoo_module.run
         self.checks_cli_main = oca_pre_commit_hooks.cli.main
         self.expected_errors = EXPECTED_ERRORS.copy()
 
 
 class TestChecksWithFiles(common.ChecksCommon):
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        test_repo_path = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "test_repo")
-        cls.file_paths = glob.glob(os.path.join(test_repo_path, "*", "__openerp__.py")) + glob.glob(
-            os.path.join(test_repo_path, "*", "__manifest__.py")
-        )
 
     def setUp(self):
         super().setUp()
+        self.file_paths = glob.glob(os.path.join(self.test_repo_path, "*", "__openerp__.py")) + glob.glob(
+            os.path.join(self.test_repo_path, "*", "__manifest__.py")
+        )
         self.checks_run = oca_pre_commit_hooks.checks_odoo_module.run
         self.checks_cli_main = oca_pre_commit_hooks.cli.main
         self.expected_errors = EXPECTED_ERRORS.copy()
@@ -116,7 +109,9 @@ class TestChecksWithFiles(common.ChecksCommon):
                     msg += f"#L{check_error.position.line}"
                 if check_error.message:
                     msg += f" {check_error.message}"
-                check_example_content += f"\n    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v{version}/{msg}"
+                check_example_content += (
+                    f"\n    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v{version}/test_repo/{msg}"
+                )
         check_example_content = f"# Examples\n{check_example_content}"
         new_readme = self.re_replace(
             "[//]: # (start-example)", "[//]: # (end-example)", check_example_content, new_readme
@@ -133,3 +128,32 @@ class TestChecksWithFiles(common.ChecksCommon):
     def test_non_exists_path(self):
         all_check_errors = self.checks_run(["/tmp/no_exists"], no_exit=True, no_verbose=False)
         self.assertFalse(all_check_errors)
+
+    def test_autofix(self):
+        # Before autofix
+        fname_wo_header = os.path.join(self.test_repo_path, "broken_module", "xml_wo_header.xml")
+        with open(fname_wo_header, "rb") as f_wo_header:
+            content = f_wo_header.read()
+            self.assertFalse(content.strip().startswith(b"<?xml version="), "The XML header was preivously added")
+
+        fname_wrong_header = os.path.join(self.test_repo_path, "broken_module", "model_view.xml")
+        with open(fname_wrong_header, "rb") as f_wrong_header:
+            content = f_wrong_header.read()
+            self.assertFalse(
+                content.strip().startswith(oca_pre_commit_hooks.checks_odoo_module_xml.XML_HEADER_EXPECTED),
+                "The XML wrong header was preivously fixed",
+            )
+
+        self.checks_run(self.file_paths, autofix=True, no_exit=True, no_verbose=False)
+
+        # After autofix
+        with open(fname_wo_header, "rb") as f_wo_header:
+            content = f_wo_header.read()
+            self.assertTrue(content.strip().startswith(b"<?xml version="), "The XML header was not added")
+
+        with open(fname_wrong_header, "rb") as f_wrong_header:
+            content = f_wrong_header.read()
+            self.assertTrue(
+                content.strip().startswith(oca_pre_commit_hooks.checks_odoo_module_xml.XML_HEADER_EXPECTED),
+                "The XML wrong header was not fixed fixed",
+            )

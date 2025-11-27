@@ -1,7 +1,9 @@
 import os
 import re
+import shutil
 import subprocess
 import sys
+import tempfile
 from ast import literal_eval
 from contextlib import contextmanager
 from functools import lru_cache
@@ -175,3 +177,13 @@ def manifest_version(manifest_path):
             return Version(manifest.get("version"))
         except (InvalidVersion, TypeError):
             return None
+
+
+def perform_fix(file_path, new_content):
+    """Perform the fix by overwriting the file with the new content
+    using a temp file to copy after."""
+    # Use `delete=False` to be able to copy the file on Windows
+    with tempfile.NamedTemporaryFile("wb", delete=False) as f_tmp:
+        f_tmp.write(new_content)
+    shutil.copy(f_tmp.name, file_path)
+    os.unlink(f_tmp.name)
