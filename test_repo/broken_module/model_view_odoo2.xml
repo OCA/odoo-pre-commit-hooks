@@ -146,6 +146,6 @@
                 </form>
             </field>
         </record>
-
+    <menuitem name="Root" id="broken_module.menu_root" />
     </data>
 </odoo>
