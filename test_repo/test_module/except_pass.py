@@ -24,7 +24,7 @@ class TestExceptPass(object):
         exception = False
         try:
             raise Exception('Exception')
-        except Exception as exception:
+        except Exception:
             pass
         if exception:
             pass
@@ -33,7 +33,7 @@ class TestExceptPass(object):
         userError = False
         try:
             raise Exception('Exception')
-        except Exception as userError:
+        except Exception:
             pass
         if userError:
             pass
@@ -42,7 +42,7 @@ class TestExceptPass(object):
         exception = False
         try:
             raise Exception('Exception')
-        except (Exception, IndexError) as exception:
+        except (Exception, IndexError):
             pass
         if exception:
             pass
@@ -57,7 +57,7 @@ class TestExceptPass(object):
         exception = False
         try:
             raise Exception('Exception')
-        except (Exception, IndexError, NameError) as exception:
+        except (Exception, IndexError, NameError):
             pass
         except Exception:  # except-pass
             pass

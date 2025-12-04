@@ -314,7 +314,7 @@ class TestModel(models.Model):
         _('%(strname)s') % {'strname': 'hello'}
         _('%(strname)s %(intname)d') % {'strname': 'hello', 'intname': 3}
         _('%s') % 'hello'
-        _('%d') % 3
+        _('%d') % 3  # lint-ignore=prefer-env-translation
         return error_msg
 
     def my_method2(self, variable2):
