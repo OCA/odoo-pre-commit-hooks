@@ -383,9 +383,9 @@ options:
 
  * xml-duplicate-fields
 
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.2/test_repo/broken_module/model_view_odoo2.xml#L6 Duplicate xml field `name`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.2/test_repo/broken_module/model_view_odoo2.xml#L19 Duplicate xml field `model`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.2/test_repo/broken_module/model_view_odoo2.xml#L74 Duplicate xml field `arch`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.2/test_repo/broken_module/model_view_odoo2.xml#L5 Duplicate xml field `name`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.2/test_repo/broken_module/model_view_odoo2.xml#L18 Duplicate xml field `model`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.2/test_repo/broken_module/model_view_odoo2.xml#L73 Duplicate xml field `arch`
 
  * xml-duplicate-record-id
 
@@ -400,6 +400,7 @@ options:
 
  * xml-header-missing
 
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.2/test_repo/broken_module/model_view_odoo2.xml#L1 XML missing header
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.2/test_repo/broken_module/xml_wo_header.xml#L1 XML missing header
 
  * xml-header-wrong
@@ -410,9 +411,9 @@ options:
 
  * xml-id-position-first
 
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.2/test_repo/broken_module/model_view_odoo2.xml#L37 The "id" attribute must be first `<record id="view_ir_config_search" model=...`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.2/test_repo/broken_module/model_view_odoo2.xml#L62 The "id" attribute must be first `<record id="access_rule" model=...`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.2/test_repo/broken_module/model_view_odoo2.xml#L149 The "id" attribute must be first `<menuitem id="broken_module.menu_root" name=...`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.2/test_repo/broken_module/deprecated_disable.xml#L4 The "id" attribute must be first `<record id="duplicate_record" model=...`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.2/test_repo/broken_module/model_view_odoo2.xml#L36 The "id" attribute must be first `<record id="view_ir_config_search" model=...`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.2/test_repo/broken_module/model_view_odoo2.xml#L61 The "id" attribute must be first `<record id="access_rule" model=...`
 
  * xml-not-valid-char-link
 
@@ -433,7 +434,8 @@ options:
  * xml-redundant-module-name
 
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.2/test_repo/broken_module/model_view2.xml#L15 Redundant module name `<record id="broken_module.view_model_form2"`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.2/test_repo/broken_module/model_view_odoo2.xml#L149 Redundant module name `<menuitem id="broken_module.menu_root"`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.2/test_repo/broken_module/model_view_odoo2.xml#L148 Redundant module name `<menuitem id="broken_module.menu_root"`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.2/test_repo/broken_module/model_view_odoo2.xml#L154 Redundant module name `<menuitem id="broken_module.menu_root2"`
 
  * xml-syntax-error
 

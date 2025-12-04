@@ -32,16 +32,16 @@ EXPECTED_ERRORS = {
     "xml-duplicate-fields": 3,
     "xml-duplicate-record-id": 2,
     "xml-not-valid-char-link": 2,
-    "xml-redundant-module-name": 2,
+    "xml-redundant-module-name": 3,
     "xml-syntax-error": 2,
     "xml-view-dangerous-replace-low-priority": 7,
     "xml-xpath-translatable-item": 4,
     "xml-oe-structure-missing-id": 6,
     "xml-record-missing-id": 2,
     "xml-duplicate-template-id": 9,
-    "xml-header-missing": 1,
-    "xml-header-wrong": 19,
-    "xml-id-position-first": 3,
+    "xml-header-missing": 2,
+    "xml-header-wrong": 18,
+    "xml-id-position-first": 5,
     "xml-deprecated-oe-chatter": 1,
 }
 
@@ -144,7 +144,12 @@ class TestChecks(common.ChecksCommon):
             "The XML wrong xmlid order was previously fixed",
         )
         self.assertIn(
-            b'<menuitem name="Root" id="broken_module.menu_root" />',
+            b"<menuitem name=\"Root\" id='broken_module.menu_root' />",
+            content,
+            "The XML wrong xmlid order and redundant module name was previously fixed",
+        )
+        self.assertIn(
+            b"<menuitem name=\"Root 2\"\n        id='broken_module.menu_root2'",
             content,
             "The XML wrong xmlid order and redundant module name was previously fixed",
         )
@@ -177,9 +182,14 @@ class TestChecks(common.ChecksCommon):
             b'<record id="view_ir_config_search" model="ir.ui.view">', content, "The XML wrong xmlid was not fixed"
         )
         self.assertIn(
-            b'<menuitem id="menu_root" name="Root" />',
+            b"<menuitem id='menu_root' name=\"Root\" />",
             content,
             "The XML wrong xmlid order and redundant module name was not fixed",
+        )
+        self.assertIn(
+            b"<menuitem id='menu_root2'\n        name=\"Root 2\"",
+            content,
+            "The XML wrong xmlid order multiline and redundant module name was not fixed",
         )
 
         with open(fname_redundant_module_name, "rb") as f_redundant_module_name:

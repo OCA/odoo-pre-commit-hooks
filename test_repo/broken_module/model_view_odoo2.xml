@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
         <!-- duplicate record field "name" -->
@@ -146,6 +145,12 @@
                 </form>
             </field>
         </record>
-    <menuitem name="Root" id="broken_module.menu_root" />
+    <menuitem name="Root" id='broken_module.menu_root' />
+
+    <menuitem name="Root 2"
+        id='broken_module.menu_root2'
+        parent="menu_root"
+        attrs="{'invisible': [('active', '=', False)]}"
+    />
     </data>
 </odoo>
