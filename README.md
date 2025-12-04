@@ -157,6 +157,14 @@ If the module is called "module_a" and the xmlid is
 The "module_a." is redundant it could be replaced to only
 `<record id="xmlid_name1" ...`
 
+* Check xml-id-position-first
+
+If the record id is not in the first position
+`<record ... id="xmlid_name1"`
+
+It should be the first
+`<record id="xmlid_name1" ...`
+
 * Check xml-create-user-wo-reset-password
 records of user without `context="{'no_reset_password': True}"`
 This context avoid send email and mail log warning
@@ -399,6 +407,11 @@ options:
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.0/test_repo/broken_module/demo/duplicated_id_demo.xml#L1 XML header expected '<?xml version="1.0" encoding="UTF-8" ?>' but received '<?xml version="1.0" encoding="utf-8"?>'
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.0/test_repo/broken_module/deprecated_disable.xml#L1 XML header expected '<?xml version="1.0" encoding="UTF-8" ?>' but received '<?xml version="1.0" encoding="utf-8" ?>'
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.0/test_repo/broken_module/model_view.xml#L1 XML header expected '<?xml version="1.0" encoding="UTF-8" ?>' but received '<?xml version="1.0" encoding="utf-8"?>'
+
+ * xml-id-position-first
+
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.0/test_repo/broken_module/model_view_odoo2.xml#L37 The "id" attribute must be first `<record id="view_ir_config_search" model=... />`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.0/test_repo/broken_module/model_view_odoo2.xml#L62 The "id" attribute must be first `<record id="access_rule" model=... />`
 
  * xml-not-valid-char-link
 
