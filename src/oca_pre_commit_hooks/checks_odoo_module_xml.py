@@ -270,7 +270,7 @@ class ChecksOdooModuleXML(BaseChecker):
                 line=1,
             )
 
-    @utils.only_required_for_checks("xml-redundant-module-name")
+    @utils.only_required_for_checks("xml-redundant-module-name", "xml-id-position-first")
     def visit_xml_record(self, manifest_data, record):
         """* Check xml-redundant-module-name
 
@@ -278,6 +278,14 @@ class ChecksOdooModuleXML(BaseChecker):
         `<record id="module_a.xmlid_name1" ...`
 
         The "module_a." is redundant it could be replaced to only
+        `<record id="xmlid_name1" ...`
+
+        * Check xml-id-position-first
+
+        If the record id is not in the first position
+        `<record ... id="xmlid_name1"`
+
+        It should be the first
         `<record id="xmlid_name1" ...`
         """
         # redundant_module_name
@@ -295,6 +303,32 @@ class ChecksOdooModuleXML(BaseChecker):
                 filepath=manifest_data["filename_short"],
                 line=record.sourceline,
             )
+
+        first_attr = record.keys()[0]
+        if first_attr != "id" and self.is_message_enabled("xml-id-position-first", manifest_data["disabled_checks"]):
+            self.register_error(
+                code="xml-id-position-first",
+                message=f'The "id" attribute must be first `<record id="{record_id}" {first_attr}=... />`',
+                info=f'Use `<record id="{record_id}"  {first_attr}=... />` instead',
+                filepath=manifest_data["filename_short"],
+                line=record.sourceline,
+            )
+            if self.autofix:
+                # Not compatible with multi-line because it is complex to parse and fix and could raise new errors
+                # only compatible if the record tag tostring is the same than the source ~80% of the cases
+                attrs = dict(record.attrib)
+                new_attrs = {"id": attrs.pop("id"), **attrs}
+                old_tag = etree.tostring(record).splitlines()[0]
+                record.attrib.clear()
+                record.attrib.update(new_attrs)
+                new_tag = etree.tostring(record).splitlines()[0]
+                content = b""
+                with open(manifest_data["filename"], "rb") as f_xml:
+                    for no_line, line in enumerate(f_xml):
+                        if no_line == record.sourceline - 1:
+                            line = line.replace(old_tag, new_tag)
+                        content += line
+                utils.perform_fix(manifest_data["filename"], content)
 
     @utils.only_required_for_checks("xml-view-dangerous-replace-low-priority", "xml-deprecated-tree-attribute")
     def visit_xml_record_view(self, manifest_data, record):
