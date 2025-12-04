@@ -300,8 +300,8 @@ class ChecksOdooModuleXML(BaseChecker):
         ):
             self.register_error(
                 code="xml-redundant-module-name",
-                message=f'Redundant module name `id="{record_id}"`',
-                info=f'Use `id="{xmlid_name}"` instead',
+                message=f'Redundant module name `<{record.tag} id="{record_id}"`',
+                info=f'Use `<{record.tag} id="{xmlid_name}"` instead',
                 filepath=manifest_data["filename_short"],
                 line=record.sourceline,
             )
@@ -310,8 +310,8 @@ class ChecksOdooModuleXML(BaseChecker):
                 record.attrib["id"] = xmlid_name
                 content = b""
                 with open(manifest_data["filename"], "rb") as f_xml:
-                    for no_line, line in enumerate(f_xml):
-                        if no_line == record.sourceline - 1:
+                    for no_line, line in enumerate(f_xml, start=1):
+                        if no_line == record.sourceline:
                             line = line.replace(f' id="{record_id}" '.encode(), f' id="{xmlid_name}" '.encode())
                         content += line
                 utils.perform_fix(manifest_data["filename"], content)
@@ -320,8 +320,8 @@ class ChecksOdooModuleXML(BaseChecker):
         if first_attr != "id" and self.is_message_enabled("xml-id-position-first", manifest_data["disabled_checks"]):
             self.register_error(
                 code="xml-id-position-first",
-                message=f'The "id" attribute must be first `id="{record_id}" {first_attr}=... />`',
-                info=f'Use `id="{record_id}"  {first_attr}=...` instead',
+                message=f'The "id" attribute must be first `<{record.tag} id="{record_id}" {first_attr}=...`',
+                info=f'Use `<{record.tag} id="{record_id}"  {first_attr}=...` instead',
                 filepath=manifest_data["filename_short"],
                 line=record.sourceline,
             )
@@ -329,9 +329,9 @@ class ChecksOdooModuleXML(BaseChecker):
                 # Not compatible with multi-line because it is complex to parse and fix and could raise new errors
                 # only compatible if the record tag tostring is the same than the source ~80% of the cases
                 attrs = dict(record.attrib)
-                old_tag = " ".join(f'{k}="{v}"' for k, v in attrs.items())
+                old_tag = f"{record.tag} " + " ".join(f'{k}="{v}"' for k, v in attrs.items())
                 new_attrs = {"id": attrs.pop("id"), **attrs}
-                new_tag = " ".join(f'{k}="{v}"' for k, v in new_attrs.items())
+                new_tag = f"{record.tag} " + " ".join(f'{k}="{v}"' for k, v in new_attrs.items())
 
                 # Update the record attrib to propagate the change to other checks
                 record.attrib.clear()
@@ -339,8 +339,8 @@ class ChecksOdooModuleXML(BaseChecker):
 
                 content = b""
                 with open(manifest_data["filename"], "rb") as f_xml:
-                    for no_line, line in enumerate(f_xml):
-                        if no_line == record.sourceline - 1:
+                    for no_line, line in enumerate(f_xml, start=1):
+                        if no_line == record.sourceline:
                             line = line.replace(old_tag.encode("UTF-8"), new_tag.encode("UTF-8"))
                         content += line
                 utils.perform_fix(manifest_data["filename"], content)
