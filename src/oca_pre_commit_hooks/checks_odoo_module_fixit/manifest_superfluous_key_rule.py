@@ -51,6 +51,8 @@ class ManifestSuperfluousKeyRule(common.Common):
     "active": True,
     "installable": (
         True),
+    "auto_install": (
+        False),
     "name": "hello",
 }
     """,
@@ -83,6 +85,8 @@ class ManifestSuperfluousKeyRule(common.Common):
         ),
     ]
 
+    manifest_keys_values_true = ["active", "installable"]
+
     def __init__(self) -> None:
         super().__init__()
         self.name = "manifest-superfluous-key"
@@ -94,9 +98,16 @@ class ManifestSuperfluousKeyRule(common.Common):
             (isinstance(node.value, cst.List) and not node.value.elements)
             or (isinstance(node.value, cst.SimpleString) and not node.value.evaluated_value)
             or (
-                node.key.evaluated_value in ("active", "installable")
+                node.key.evaluated_value in self.manifest_keys_values_true
                 and isinstance(node.value, cst.Name)
                 and node.value.value == "True"
+            )
+            or (
+                # boolean keys are `False` by default, only the ones listed in
+                # `manifest_keys_values_true` are treated as `True` by default
+                node.key.evaluated_value not in self.manifest_keys_values_true
+                and isinstance(node.value, cst.Name)
+                and node.value.value == "False"
             )
         ):
             self.report(
