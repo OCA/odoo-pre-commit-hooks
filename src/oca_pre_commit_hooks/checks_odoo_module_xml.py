@@ -74,25 +74,37 @@ class ChecksOdooModuleXML(BaseChecker):
                 return b" ".join(buffer), buffer_lineno
         return "", 0
 
+    def update_node(self, manifest_data):
+        """Update the etree node of the manifest_data.
+        Useful when the file is modified by autofix and a new line is inserted/removed.
+        It will update the sourceline of the nodes"""
+        with open(manifest_data["filename"], "rb") as f_xml:
+            node = etree.parse(f_xml)
+            manifest_data.update({"node": node})
+            f_xml.seek(0)
+            first_tag, first_tag_lineno = self._get_first_tag(f_xml)
+            manifest_data.update(
+                {
+                    "node": node,
+                    "first_tag": first_tag,
+                    "first_tag_lineno": first_tag_lineno,
+                }
+            )
+            return node
+
     def __init__(self, manifest_datas, module_name, enable, disable, module_version, autofix):
         super().__init__(enable, disable, module_name, module_version, autofix)
         self.manifest_datas = manifest_datas or []
         self.autofix = autofix
         for manifest_data in self.manifest_datas:
             try:
-                with open(manifest_data["filename"], "rb") as f_xml:
-                    node = etree.parse(f_xml)
-                    f_xml.seek(0)
-                    first_tag, first_tag_lineno = self._get_first_tag(f_xml)
-                    manifest_data.update(
-                        {
-                            "node": node,
-                            "file_error": None,
-                            "disabled_checks": self._get_disabled_checks(node),
-                            "first_tag": first_tag,
-                            "first_tag_lineno": first_tag_lineno,
-                        }
-                    )
+                node = self.update_node(manifest_data)
+                manifest_data.update(
+                    {
+                        "file_error": None,
+                        "disabled_checks": self._get_disabled_checks(node),
+                    }
+                )
             except (FileNotFoundError, etree.XMLSyntaxError, UnicodeDecodeError) as xml_err:
                 manifest_data.update(
                     {
@@ -138,6 +150,32 @@ class ChecksOdooModuleXML(BaseChecker):
         replaces = cls.xpath_view_replaces(arch)
         return bool(replaces)
 
+    @staticmethod
+    def _read_node(filename, node):
+        """Read the content of file spliting the content in 3 pieces:
+        - before the xml node
+        - the xml node
+        - after the xml node"""
+        content_before = b""
+        content_node = b""
+        content_after = b""
+        if (node_previous := node.getprevious()) is not None:
+            start_line = node_previous.sourceline + 1
+        elif (node_parent := node.getparent()) is not None:
+            start_line = node_parent.sourceline + 1
+        else:
+            start_line = 2  # it is the first element and it is the root
+        end_line = node.sourceline
+        with open(filename, "rb") as f_content:
+            for no_line, line in enumerate(f_content, start=1):
+                if no_line < start_line:
+                    content_before += line
+                elif start_line <= no_line <= end_line:
+                    content_node += line
+                else:
+                    content_after += line
+        return content_before, content_node, content_after
+
     @utils.only_required_for_checks("xml-header-missing", "xml-header-wrong")
     def check_xml_header(self):
         """* Check xml-header-missing
@@ -163,6 +201,7 @@ class ChecksOdooModuleXML(BaseChecker):
                         with open(manifest_data["filename"], "rb") as f_xml:
                             content = b'<?xml version="1.0" encoding="UTF-8" ?>\n' + f_xml.read()
                         utils.perform_fix(manifest_data["filename"], content)
+                        self.update_node(manifest_data)  # update sourceline after insert a new line
             elif self.is_message_enabled("xml-header-wrong", manifest_data["disabled_checks"]):
                 new_content = XML_HEADER_RE.sub(XML_HEADER_EXPECTED, first_tag, count=1)
                 if new_content != first_tag:
@@ -181,6 +220,7 @@ class ChecksOdooModuleXML(BaseChecker):
                         utils.perform_fix(
                             manifest_data["filename"], XML_HEADER_RE.sub(XML_HEADER_EXPECTED, content, count=1)
                         )
+                        self.update_node(manifest_data)  # update sourceline after remove a possible line
 
     # Not set only_required_for_checks because of the calls to visit_xml_record... methods
     def check_xml_records(self):
@@ -306,15 +346,13 @@ class ChecksOdooModuleXML(BaseChecker):
                 line=record.sourceline,
             )
             if self.autofix:
-                # Modify the record attrib to propagate the change to other checks
-                record.attrib["id"] = xmlid_name
-                content = b""
-                with open(manifest_data["filename"], "rb") as f_xml:
-                    for no_line, line in enumerate(f_xml, start=1):
-                        if no_line == record.sourceline:
-                            line = line.replace(f' id="{record_id}" '.encode(), f' id="{xmlid_name}" '.encode())
-                        content += line
-                utils.perform_fix(manifest_data["filename"], content)
+                bef, during, aft = self._read_node(manifest_data["filename"], record)
+                pattern = rb'\bid\s*=\s*(?P<q>["\'])(?P<id>' + re.escape(record_id.encode()) + rb")(?P=q)"
+                during2 = re.sub(pattern, rb"id=\g<q>" + xmlid_name.encode() + rb"\g<q>", during, count=1)
+                if during2 != during:
+                    # Modify the record attrib to propagate the change to other checks
+                    record.attrib["id"] = xmlid_name
+                    utils.perform_fix(manifest_data["filename"], bef + during2 + aft)
 
         first_attr = record.keys()[0]
         if first_attr != "id" and self.is_message_enabled("xml-id-position-first", manifest_data["disabled_checks"]):
@@ -326,24 +364,64 @@ class ChecksOdooModuleXML(BaseChecker):
                 line=record.sourceline,
             )
             if self.autofix:
-                # Not compatible with multi-line because it is complex to parse and fix and could raise new errors
-                # only compatible if the record tag tostring is the same than the source ~80% of the cases
                 attrs = dict(record.attrib)
-                old_tag = f"{record.tag} " + " ".join(f'{k}="{v}"' for k, v in attrs.items())
-                new_attrs = {"id": attrs.pop("id"), **attrs}
-                new_tag = f"{record.tag} " + " ".join(f'{k}="{v}"' for k, v in new_attrs.items())
+                bef, during, aft = self._read_node(manifest_data["filename"], record)
 
-                # Update the record attrib to propagate the change to other checks
-                record.attrib.clear()
-                record.attrib.update(new_attrs)
+                # Build regex pattern to match the tag with all its known attributes
+                # sourceline is the last line of the last attribute, so we need to search backwards
+                tag_name = re.escape(record.tag)
 
-                content = b""
-                with open(manifest_data["filename"], "rb") as f_xml:
-                    for no_line, line in enumerate(f_xml, start=1):
-                        if no_line == record.sourceline:
-                            line = line.replace(old_tag.encode("UTF-8"), new_tag.encode("UTF-8"))
-                        content += line
-                utils.perform_fix(manifest_data["filename"], content)
+                # Create a pattern that matches all known attributes in any order
+                # Each attribute: attrname="attrvalue" with optional whitespace
+                attr_patterns = []
+                # Use the first attribute spaces since that id will be the new first attribute
+                keys = [f"spaces_before_{first_attr}", "id"]
+                for attr_name, attr_value in attrs.items():
+                    escaped_name = re.escape(attr_name)
+                    escaped_value = re.escape(attr_value)
+                    # Match attribute with flexible whitespace and quotes
+                    attr_patterns.append(
+                        rf'(?P<spaces_before_{attr_name}>\s*)(?P<{attr_name}>{escaped_name}\s*=\s*(?P<quote_{attr_name}>["\'])({escaped_value})(?P=quote_{attr_name}))'
+                    )
+                    if attr_name == "id":
+                        # skip the first key "id" because is already added
+                        continue
+                    if attr_name == first_attr:
+                        # Use the same spaces_before_id for the first attribute
+                        # <record name="test_name"
+                        #     id="test_id"
+                        # />
+                        # <record id="test_id"
+                        #     name="test_name"
+                        # />
+                        keys.extend(["spaces_before_id", attr_name])
+                        continue
+                    keys.extend([f"spaces_before_{attr_name}", attr_name])
+                # Pattern for the complete opening tag
+                # <tag_name whitespace attr1 whitespace attr2 ... whitespace>
+                # Using DOTALL to match across lines
+                attrs_regex = r"".join(attr_patterns)
+                pattern = (
+                    rf"(?P<open_{record.tag}><{tag_name})"  # Opening tag with space
+                    rf"{attrs_regex}"  # All attributes with whitespace between them
+                    rf"(?P<close_{record.tag}>\s*(/?)>)"  # Optional self-closing and closing >
+                )
+
+                # Search with multiline and dotall flags
+                match = re.search(pattern, during.decode(), re.DOTALL | re.MULTILINE)
+                if match:
+                    keys = [f"open_{record.tag}"] + keys + [f"close_{record.tag}"]
+                    match_dict = match.groupdict()
+                    recreate = "".join(match_dict[k] for k in keys)
+                    original = match.group()
+                    during2 = during.replace(original.encode(), recreate.encode(), 1)
+                    if during2 != during:
+                        # Modify the record attrib to propagate the change to other checks
+                        id_value = attrs.pop("id")
+                        record.attrib.clear()
+                        new_attrs = {"id": id_value, **attrs}
+                        record.attrib.update(new_attrs)
+                        utils.perform_fix(manifest_data["filename"], bef + during2 + aft)
 
     @utils.only_required_for_checks("xml-view-dangerous-replace-low-priority", "xml-deprecated-tree-attribute")
     def visit_xml_record_view(self, manifest_data, record):
