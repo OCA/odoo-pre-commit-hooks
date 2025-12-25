@@ -1,6 +1,7 @@
 import os
 import re
 from collections import defaultdict, namedtuple
+from copy import deepcopy
 from typing import Dict, List
 
 from lxml import etree
@@ -13,6 +14,7 @@ DFLT_DEPRECATED_TREE_ATTRS = ["colors", "fonts", "string"]
 DFTL_MIN_PRIORITY = 99
 XML_HEADER_EXPECTED = b'<?xml version="1.0" encoding="UTF-8" ?>'
 XML_HEADER_RE = re.compile(rb"^<\?xml[^>]*\?>", re.IGNORECASE | re.MULTILINE)
+NUMBER_RE = re.compile(r"^(?P<integer>\d+)(?P<decimal>\.\d+)?$")
 
 
 # Same as Odoo: https://github.com/odoo/odoo/commit/9cefa76988ff94c3d590c6631b604755114d0297
@@ -311,7 +313,67 @@ class ChecksOdooModuleXML(BaseChecker):
                 line=1,
             )
 
-    @utils.only_required_for_checks("xml-redundant-module-name", "xml-id-position-first")
+    def _check_xml_field_eval(self, manifest_data, record):
+        if manifest_data["data_section"] not in ["data", "demo"]:
+            # Only data and demo files are checked for field eval
+            return
+        if not (
+            self.is_message_enabled("xml-field-bool-without-eval", manifest_data["disabled_checks"])
+            or self.is_message_enabled("xml-field-number-without-eval", manifest_data["disabled_checks"])
+        ):
+            # skip if none of the checks are enabled
+            return
+        for field in record.xpath(".//field[@name and not(@eval) and text() and not(@type)]"):
+            field_name = field.get("name")
+            field_text = field.text.title()
+            needs_fix = False
+            if field_text in ["True", "False"] and self.is_message_enabled(
+                "xml-field-bool-without-eval", manifest_data["disabled_checks"]
+            ):
+                self.register_error(
+                    code="xml-field-bool-without-eval",
+                    message=f"Field `{field_name}` with boolean value without `eval` attribute",
+                    filepath=manifest_data["filename_short"],
+                    line=field.sourceline,
+                )
+                needs_fix = True
+            elif (
+                self.is_message_enabled("xml-field-number-without-eval", manifest_data["disabled_checks"])
+                and (field_number := NUMBER_RE.match(field_text))
+            ) and (len(field_number.groupdict()["integer"]) <= 3 or field_number.groupdict()["decimal"]):
+                # >=4 digits could be a phone number not integer
+                # TODO: Add self.config.eval_exception=["phone", "zip", "mobile"] to avoid parsing those fields
+                self.register_error(
+                    code="xml-field-number-without-eval",
+                    message=f"Field `{field_name}` with integer value without `eval` attribute",
+                    filepath=manifest_data["filename_short"],
+                    line=field.sourceline,
+                )
+                needs_fix = True
+            if needs_fix and self.autofix:
+                field_copy = deepcopy(field)
+                field.attrib["eval"] = field_text
+                field.text = None
+                bef, during, aft = self._read_node(manifest_data["filename"], field)
+
+                field_regex = (
+                    rf"<{re.escape(field.tag)}\s+name\s*=\s*(?P<q>[\"']){re.escape(field_name)}(?P=q).*".encode()
+                )
+                spaces_match = re.search(field_regex, during)
+                if spaces_match:
+                    during2 = during.replace(spaces_match.group(), etree.tostring(field).rstrip(b" \n"))
+                    if during2 != during:
+                        during2 = during2.replace(b"/>", b" />")
+                        utils.perform_fix(manifest_data["filename"], bef + during2 + aft)
+                    else:
+                        field = field_copy  # revert changes if not fixed
+
+    @utils.only_required_for_checks(
+        "xml-field-bool-without-eval",
+        "xml-field-number-without-eval",
+        "xml-id-position-first",
+        "xml-redundant-module-name",
+    )
     def visit_xml_record(self, manifest_data, record):
         """* Check xml-redundant-module-name
 
@@ -328,8 +390,22 @@ class ChecksOdooModuleXML(BaseChecker):
 
         It should be the first
         `<record id="xmlid_name1" ...`
+
+        * Check xml-field-bool-without-eval
+
+        if the record is boolean but without eval attribute
+        `<field name="active">True</field>`
+        instead of
+        `<field name="active" eval="True" />`
+
+        * Check xml-field-number-without-eval
+
+        if the record is integer but without eval attribute
+        `<field name="sequence">100</field>`
+        instead of
+        `<field name="sequence" eval="100" />`
         """
-        # redundant_module_name
+        self._check_xml_field_eval(manifest_data, record)
         record_id = record.get("id")
         if not record_id:
             return
