@@ -14,7 +14,7 @@ DFLT_DEPRECATED_TREE_ATTRS = ["colors", "fonts", "string"]
 DFTL_MIN_PRIORITY = 99
 XML_HEADER_EXPECTED = b'<?xml version="1.0" encoding="UTF-8" ?>'
 XML_HEADER_RE = re.compile(rb"^<\?xml[^>]*\?>", re.IGNORECASE | re.MULTILINE)
-NUMBER_RE = re.compile(r"^(?P<integer>\d+)(?P<decimal>\.\d+)?$")
+NUMBER_RE = re.compile(r"^(?P<integer>[+-]?\d+)(?P<decimal>\.\d+)?$")
 
 
 # Same as Odoo: https://github.com/odoo/odoo/commit/9cefa76988ff94c3d590c6631b604755114d0297
@@ -62,6 +62,14 @@ class ChecksOdooModuleXML(BaseChecker):
     xpath_qweb_deprecated = etree.XPath(
         f"/odoo//template//*[{qweb_deprecated_attrs}] | " f"/openerp//template//*[{qweb_deprecated_attrs}]"
     )
+
+    @staticmethod
+    def _get_boolean_field_by_model(model_name):
+        return utils.DFLT_BOOLEAN_FIELDS + (utils.DFLT_BOOLEAN_FIELDS_BY_MODEL.get(model_name) or [])
+
+    @staticmethod
+    def _get_numeric_field_by_model(model_name):
+        return utils.DFLT_NUMERIC_FIELDS + (utils.DFLT_NUMERIC_FIELDS_BY_MODEL.get(model_name) or [])
 
     def _get_first_tag(self, fileobj_xml):
         buffer = []
@@ -314,21 +322,25 @@ class ChecksOdooModuleXML(BaseChecker):
             )
 
     def _check_xml_field_eval(self, manifest_data, record):
-        if manifest_data["data_section"] not in ["data", "demo"]:
-            # Only data and demo files are checked for field eval
-            return
         if not (
             self.is_message_enabled("xml-field-bool-without-eval", manifest_data["disabled_checks"])
-            or self.is_message_enabled("xml-field-number-without-eval", manifest_data["disabled_checks"])
+            or self.is_message_enabled("xml-field-numeric-without-eval", manifest_data["disabled_checks"])
         ):
             # skip if none of the checks are enabled
             return
         for field in record.xpath(".//field[@name and not(@eval) and text() and not(@type)]"):
             field_name = field.get("name")
             field_text = field.text.title()
+            model_name = None
+            if (record := field.getparent()) is not None:
+                model_name = record.get("model")
+            if not model_name:
+                continue
             needs_fix = False
-            if field_text in ["True", "False"] and self.is_message_enabled(
-                "xml-field-bool-without-eval", manifest_data["disabled_checks"]
+            if (
+                self.is_message_enabled("xml-field-bool-without-eval", manifest_data["disabled_checks"])
+                and field_text in ["True", "False"]
+                and field_name in self._get_boolean_field_by_model(model_name)
             ):
                 self.register_error(
                     code="xml-field-bool-without-eval",
@@ -338,14 +350,13 @@ class ChecksOdooModuleXML(BaseChecker):
                 )
                 needs_fix = True
             elif (
-                self.is_message_enabled("xml-field-number-without-eval", manifest_data["disabled_checks"])
-                and (field_number := NUMBER_RE.match(field_text))
-            ) and (len(field_number.groupdict()["integer"]) <= 3 or field_number.groupdict()["decimal"]):
-                # >=4 digits could be a phone number not integer
-                # TODO: Add self.config.eval_exception=["phone", "zip", "mobile"] to avoid parsing those fields
+                self.is_message_enabled("xml-field-numeric-without-eval", manifest_data["disabled_checks"])
+                and NUMBER_RE.match(field_text)
+                and field_name in self._get_numeric_field_by_model(model_name)
+            ):
                 self.register_error(
-                    code="xml-field-number-without-eval",
-                    message=f"Field `{field_name}` with integer value without `eval` attribute",
+                    code="xml-field-numeric-without-eval",
+                    message=f"Field `{field_name}` with numeric value without `eval` attribute",
                     filepath=manifest_data["filename_short"],
                     line=field.sourceline,
                 )
@@ -370,7 +381,7 @@ class ChecksOdooModuleXML(BaseChecker):
 
     @utils.only_required_for_checks(
         "xml-field-bool-without-eval",
-        "xml-field-number-without-eval",
+        "xml-field-numeric-without-eval",
         "xml-id-position-first",
         "xml-redundant-module-name",
     )
@@ -398,7 +409,7 @@ class ChecksOdooModuleXML(BaseChecker):
         instead of
         `<field name="active" eval="True" />`
 
-        * Check xml-field-number-without-eval
+        * Check xml-field-numeric-without-eval
 
         if the record is integer but without eval attribute
         `<field name="sequence">100</field>`

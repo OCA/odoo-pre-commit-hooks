@@ -20,6 +20,117 @@ from oca_pre_commit_hooks.base_checker import BaseChecker
 CHECKS_DISABLED_REGEX = re.compile(re.escape("oca-hooks:disable=") + r"([a-z\-,]+)")
 DEPRECATED_CHECKS_DISABLED_REGEX = re.compile(re.escape("pylint:disable=") + r"([a-z\-,]+)")
 RE_CHECK_DOCSTRING = r"\* Check (?P<check>[\w|\-]+)"
+DFLT_BOOLEAN_FIELDS = [
+    # common boolean fields repeated for many models
+    "active",
+    "is_published",
+    "website_published",
+]
+DFLT_BOOLEAN_FIELDS_BY_MODEL = {
+    "account.payment.term": [
+        "is_fixed",
+    ],
+    "account.report": [
+        "filter_journals",
+        "filter_unfold_all",
+    ],
+    "account.report.column": [
+        "sortable",
+    ],
+    "account.report.expression": [
+        "auditable",
+        "green_on_positive",
+    ],
+    "account.report.line": [
+        "foldable",
+        "hide_if_zero",
+        "hierarchy_level",
+    ],
+    "hr.payslip.input.type": [
+        "available_in_attachments",
+    ],
+    "hr.salary.rule": [
+        "appears_on_payroll_report",
+        "appears_on_payslip",
+    ],
+    "hr.work.entry.type": [
+        "is_leave",
+    ],
+    "ir.attachment": [
+        "public",
+    ],
+    "ir.rule": [
+        "perm_create",
+        "perm_read",
+        "perm_unlink",
+        "perm_write",
+    ],
+    "mail.message.subtype": [
+        "default",
+    ],
+    "mail.template": [
+        "auto_delete",
+    ],
+    "payment.method": [
+        "support_express_checkout",
+        "support_tokenization",
+    ],
+    "planning.slot": [
+        "publication_warning",
+    ],
+    "product.product": [
+        "available_in_pos",
+    ],
+    "product.template": [
+        "available_in_pos",
+    ],
+    "res.partner": [
+        "is_company",
+    ],
+}
+DFLT_NUMERIC_FIELDS = [
+    # common numeric fields repeated for many models
+    "color",
+    "sequence",
+    "website_sequence",
+]
+DFLT_NUMERIC_FIELDS_BY_MODEL = {
+    "account.analytic.line": [
+        "amount",
+        "unit_amount",
+    ],
+    "ir.cron": [
+        "interval_number",
+        "numbercall",
+    ],
+    "ir.ui.view": [
+        "priority",
+    ],
+    "product.product": [
+        "list_price",
+        "standard_price",
+        "weight",
+    ],
+    "product.template": [
+        "list_price",
+        "standard_price",
+        "weight",
+    ],
+    "res.currency": [
+        "rounding",
+    ],
+    "res.currency.rate": [
+        "rate",
+    ],
+    "sale.order.line": [
+        "price_unit",
+        "product_uom_qty",
+    ],
+    "stock.move": [
+        "product_uom_qty",
+        "quantity_done",
+    ],
+}
 
 
 def checks_disabled(comment):

@@ -5,6 +5,7 @@
         <record id="view_model_form10" model="ir.ui.view">
             <field name="name">view.model.form</field>
             <field name="model">test.model</field>
+            <field name="priority">-1</field>
             <field name="arch" type="xml">
                 <tree>
                     <field name="name"></field>
@@ -20,7 +21,7 @@
             <field name="active4" eval="False"/>
             <field name="sequence">1</field>
             <field name="sequence2" type="int">15</field>
-            <field name="number">1.08</field>
+            <field name="amount">1.08</field>
             <field name="phone">4777777777</field>
         </record>
 

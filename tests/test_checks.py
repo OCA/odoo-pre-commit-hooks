@@ -45,8 +45,8 @@ EXPECTED_ERRORS = {
     "xml-header-wrong": 18,
     "xml-id-position-first": 5,
     "xml-deprecated-oe-chatter": 1,
-    "xml-field-bool-without-eval": 4,
-    "xml-field-number-without-eval": 7,
+    "xml-field-bool-without-eval": 2,
+    "xml-field-numeric-without-eval": 7,
 }
 
 
@@ -172,7 +172,7 @@ class TestChecks(common.ChecksCommon):
             "The XML eval was previously fixed",
         )
         self.assertIn(
-            b'<field name="number">1.08</field>',
+            b'<field name="amount">1.08</field>',
             content,
             "The XML eval was previously fixed",
         )
@@ -180,6 +180,11 @@ class TestChecks(common.ChecksCommon):
             b'<field name="phone">4777777777</field>',
             content,
             "The XML eval was previously fixed",
+        )
+        self.assertIn(
+            b'<field name="priority">-1</field>',
+            content,
+            "The XML eval was not fixed",
         )
 
         fname_redundant_module_name = os.path.join(self.test_repo_path, "broken_module", "model_view2.xml")
@@ -241,9 +246,14 @@ class TestChecks(common.ChecksCommon):
             "The XML eval was not fixed",
         )
         self.assertIn(
-            b'<field name="number" eval="1.08" />',
+            b'<field name="priority" eval="-1" />',
             content,
             "The XML eval was not fixed",
+        )
+        self.assertIn(
+            b'<field name="amount">1.08</field>',
+            content,
+            "The XML eval was not should be fixed for amount in that model",
         )
         self.assertIn(
             b'<field name="phone">4777777777</field>',
