@@ -114,6 +114,9 @@ Check if there is a file created but not referenced from __manifest__.py
 * Check manifest-syntax-error
 Check if the manifest file has syntax error
 
+* Check prefer-readme-rst
+Check if the module has README.md file to prefer README.rst file
+
 * Check csv-duplicate-record-id
 duplicate CSV "id" AKA xmlid but for CSV files
 
@@ -343,6 +346,10 @@ options:
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.3/test_repo/broken_module/models/broken_model.py#L76 Use self.env._(...) instead of _(…) directly inside Odoo model methods.
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.3/test_repo/broken_module/models/broken_model.py#L86 Use self.env._(...) instead of _(…) directly inside Odoo model methods.
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.3/test_repo/broken_module/models/broken_model.py#L243 Use self.env._(...) instead of _(…) directly inside Odoo model methods.
+
+ * prefer-readme-rst
+
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.3/test_repo/broken_module/README.md#L1 Prefer README.rst instead of README.md
 
  * xml-create-user-wo-reset-password
 

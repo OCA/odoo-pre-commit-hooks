@@ -38,6 +38,7 @@ def chdir(directory):
 def create_dummy_repo(src_path, dest_path):
     copy_tree(src_path, dest_path)
     subprocess.check_call(["git", "init", dest_path, "--initial-branch=main"])
+    subprocess.check_call(["git", "add", "*"], cwd=dest_path)
 
 
 class ChecksCommon(unittest.TestCase):
