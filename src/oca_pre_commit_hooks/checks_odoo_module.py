@@ -175,12 +175,12 @@ class ChecksOdooModule(BaseChecker):
             fnames.add(subpath_obj.relative_to(module_root_path_obj).as_posix())
         return fnames
 
+    @utils.only_required_for_installable()
     @utils.only_required_for_checks("file-not-used")
     def check_file_not_used(self):
         """* Check file-not-used
         Check if there is a file created but not referenced from __manifest__.py
         """
-        # TODO: Check if is installed module case
         manifest_files = set()
         for _ext, manifest_referenced_files in self.manifest_referenced_files.items():
             for manifest_referenced_file in manifest_referenced_files:
