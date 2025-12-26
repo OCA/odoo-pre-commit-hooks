@@ -2,6 +2,7 @@
 import ast
 import glob
 import os
+import subprocess
 import sys
 from collections import defaultdict
 from functools import lru_cache
@@ -179,6 +180,7 @@ class ChecksOdooModule(BaseChecker):
         """* Check file-not-used
         Check if there is a file created but not referenced from __manifest__.py
         """
+        # TODO: Check if is installed module case
         manifest_files = set()
         for _ext, manifest_referenced_files in self.manifest_referenced_files.items():
             for manifest_referenced_file in manifest_referenced_files:
@@ -205,6 +207,30 @@ class ChecksOdooModule(BaseChecker):
                 filepath=manifest_path_short,
                 line=1,
             )
+
+    @utils.only_required_for_installable()
+    @utils.only_required_for_checks("prefer-readme-rst")
+    def check_readme(self):
+        """* Check prefer-readme-rst
+        Check if the module has README.md file to prefer README.rst file
+        """
+        if self.is_message_enabled("prefer-readme-rst"):
+            readme_md = Path(self.odoo_addon_path) / "README.md"
+            if readme_md.is_file():
+                manifest_path_short = readme_md.relative_to(self.manifest_top_path)
+                self.register_error(
+                    code="prefer-readme-rst",
+                    message="Prefer README.rst instead of README.md",
+                    info=self.error,
+                    filepath=str(manifest_path_short),
+                    line=1,
+                )
+                if self.autofix:
+                    subprocess.check_output(
+                        ["git", "mv", str(manifest_path_short), str(manifest_path_short.with_suffix(".rst"))],
+                        cwd=self.manifest_top_path,
+                        stderr=subprocess.STDOUT,
+                    )
 
     @utils.only_required_for_installable()
     def check_xml(self):

@@ -5,6 +5,7 @@ import re
 import subprocess
 import sys
 import unittest
+from pathlib import Path
 
 import oca_pre_commit_hooks
 from . import common
@@ -23,6 +24,7 @@ EXPECTED_ERRORS = {
     "manifest-superfluous-key": 3,
     "manifest-syntax-error": 2,
     "prefer-env-translation": 41,
+    "prefer-readme-rst": 1,
     "xml-create-user-wo-reset-password": 1,
     "xml-dangerous-qweb-replace-low-priority": 9,
     "xml-deprecated-data-node": 8,
@@ -162,6 +164,14 @@ class TestChecks(common.ChecksCommon):
             content,
             "The XML wrong redundant module name was previously fixed",
         )
+        self.assertTrue(
+            (Path(self.test_repo_path) / "broken_module" / "README.md").is_file(),
+            "The README.md file should exist before autofix",
+        )
+        self.assertFalse(
+            (Path(self.test_repo_path) / "broken_module" / "README.rst").is_file(),
+            "The README.rst file should not exist before autofix",
+        )
 
         self.checks_run(self.file_paths, autofix=True, no_exit=True, no_verbose=False)
 
@@ -198,4 +208,12 @@ class TestChecks(common.ChecksCommon):
             b'<record id="view_model_form2" model="ir.ui.view">',
             content,
             "The XML wrong redundant module name was not fixed",
+        )
+        self.assertFalse(
+            (Path(self.test_repo_path) / "broken_module" / "README.md").is_file(),
+            "The README.md file should not exist after autofix",
+        )
+        self.assertTrue(
+            (Path(self.test_repo_path) / "broken_module" / "README.rst").is_file(),
+            "The README.rst file should exist after autofix",
         )
