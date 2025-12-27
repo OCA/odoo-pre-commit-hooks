@@ -613,6 +613,32 @@ class ChecksOdooModuleXML(BaseChecker):
 
         return f"{manifest_data['data_section']}/{template_id}_noupdate_{template.getparent().get('noupdate', '0')}"
 
+    def verify_template_prettier_incompatible(self, template, manifest_data):
+        """There are text tags incompatible with prettier xml autofix
+        More info https://github.com/OCA/odoo-pre-commit-hooks/issues/149"""
+        target_attrs = {"t-out", "t-esc", "t-raw"}
+        for node_textarea in template.xpath(".//textarea"):
+            if len(node_textarea_child := node_textarea.getchildren()) != 1:
+                continue
+            node_textarea_child = node_textarea_child[0]
+            has_text = node_textarea.text and node_textarea.text.strip()
+            has_tail = node_textarea_child.tail and node_textarea_child.tail.strip()
+            found_attr = set(node_textarea_child.attrib) & target_attrs
+            if node_textarea_child.tag != "t" or has_text or has_tail or not found_attr:
+                continue
+            found_attr = found_attr.pop()
+            self.register_error(
+                code="xml-template-prettier-incompatible",
+                message=(
+                    f"Node `<{node_textarea.tag} ...><{node_textarea_child.tag} {found_attr}=...` "
+                    "incompatible for Prettier XML auto-fix. To prevent unexpected text insertion "
+                    f"prefer `<{node_textarea.tag} {found_attr}=...`"
+                ),
+                filepath=manifest_data["filename_short"],
+                line=node_textarea_child.sourceline,
+            )
+            # TODO: Autofix using the same node
+
     @utils.only_required_for_checks(
         "xml-dangerous-qweb-replace-low-priority",
         "xml-duplicate-template-id",
@@ -625,6 +651,9 @@ class ChecksOdooModuleXML(BaseChecker):
 
         * Check xml-duplicate-template-id
         Triggered when two templates share the same ID
+
+        * Check xml-template-prettier-incompatible
+        Indentify nodes incompatible with Prettier XML auto-fix generating possible unexpected text insertion
         """
         template_ids: Dict[str, List[FileElementPair]] = defaultdict(list)
         for manifest_data in self.manifest_datas:
@@ -638,6 +667,8 @@ class ChecksOdooModuleXML(BaseChecker):
                     if not template_id:  # pragma: no cover
                         continue
                     template_ids[template_id].append(FileElementPair(manifest_data["filename_short"], template))
+                if self.is_message_enabled("xml-template-prettier-incompatible", manifest_data["disabled_checks"]):
+                    self.verify_template_prettier_incompatible(template, manifest_data)
 
                 if (
                     self.is_message_enabled("xml-id-position-first", manifest_data["disabled_checks"])
