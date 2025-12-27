@@ -25,6 +25,7 @@ EXPECTED_ERRORS = {
     "manifest-syntax-error": 2,
     "prefer-env-translation": 41,
     "prefer-readme-rst": 1,
+    "unused-logger": 1,
     "xml-create-user-wo-reset-password": 1,
     "xml-dangerous-qweb-replace-low-priority": 9,
     "xml-deprecated-data-node": 8,
