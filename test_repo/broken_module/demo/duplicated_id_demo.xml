@@ -5,11 +5,24 @@
         <record id="view_model_form10" model="ir.ui.view">
             <field name="name">view.model.form</field>
             <field name="model">test.model</field>
+            <field name="priority">-1</field>
             <field name="arch" type="xml">
                 <tree>
                     <field name="name"></field>
                 </tree>
             </field>
+        </record>
+
+        <record id="demo1" model="res.partner">
+            <field name="name">Partner 1</field>
+            <field name="active">True</field>
+            <field name="active2" eval="True"/>
+            <field name="active3">False</field>
+            <field name="active4" eval="False"/>
+            <field name="sequence">1</field>
+            <field name="sequence2" type="int">15</field>
+            <field name="amount">1.08</field>
+            <field name="phone">4777777777</field>
         </record>
 
     </data>

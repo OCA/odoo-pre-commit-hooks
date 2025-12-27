@@ -168,6 +168,20 @@ If the record id is not in the first position
 It should be the first
 `<record id="xmlid_name1" ...`
 
+* Check xml-field-bool-without-eval
+
+if the record is boolean but without eval attribute
+`<field name="active">True</field>`
+instead of
+`<field name="active" eval="True" />`
+
+* Check xml-field-numeric-without-eval
+
+if the record is integer but without eval attribute
+`<field name="sequence">100</field>`
+instead of
+`<field name="sequence" eval="100" />`
+
 * Check xml-create-user-wo-reset-password
 records of user without `context="{'no_reset_password': True}"`
 This context avoid send email and mail log warning
@@ -391,8 +405,8 @@ options:
  * xml-duplicate-fields
 
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.4/test_repo/broken_module/model_view_odoo2.xml#L5 Duplicate xml field `name`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.4/test_repo/broken_module/model_view_odoo2.xml#L18 Duplicate xml field `model`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.4/test_repo/broken_module/model_view_odoo2.xml#L73 Duplicate xml field `arch`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.4/test_repo/broken_module/model_view_odoo2.xml#L22 Duplicate xml field `model`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.4/test_repo/broken_module/model_view_odoo2.xml#L80 Duplicate xml field `arch`
 
  * xml-duplicate-record-id
 
@@ -404,6 +418,17 @@ options:
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.4/test_repo/broken_module/template1.xml#L3 Duplicate xml template id `qweb/my_template1_noupdate_0`
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.4/test_repo/broken_module/template1.xml#L10 Duplicate xml template id `qweb/my_template2_noupdate_0`
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.4/test_repo/broken_module/template1.xml#L17 Duplicate xml template id `qweb/my_template3_noupdate_0`
+
+ * xml-field-bool-without-eval
+
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.4/test_repo/broken_module/demo/duplicated_id_demo.xml#L18 Field `active` with boolean value without `eval` attribute
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.4/test_repo/broken_module/model_view_odoo2.xml#L18 Field `active` with boolean value without `eval` attribute
+
+ * xml-field-numeric-without-eval
+
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.4/test_repo/broken_module/demo/duplicated_id_demo.xml#L8 Field `priority` with numeric value without `eval` attribute
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.4/test_repo/broken_module/demo/duplicated_id_demo.xml#L22 Field `sequence` with numeric value without `eval` attribute
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.4/test_repo/broken_module/model_view2.xml#L62 Field `priority` with numeric value without `eval` attribute
 
  * xml-header-missing
 
@@ -419,8 +444,8 @@ options:
  * xml-id-position-first
 
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.4/test_repo/broken_module/deprecated_disable.xml#L4 The "id" attribute must be first `<record id="duplicate_record" model=...`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.4/test_repo/broken_module/model_view_odoo2.xml#L36 The "id" attribute must be first `<record id="view_ir_config_search" model=...`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.4/test_repo/broken_module/model_view_odoo2.xml#L61 The "id" attribute must be first `<record id="access_rule" model=...`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.4/test_repo/broken_module/model_view_odoo2.xml#L43 The "id" attribute must be first `<record id="view_ir_config_search" model=...`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.4/test_repo/broken_module/model_view_odoo2.xml#L68 The "id" attribute must be first `<record id="access_rule" model=...`
 
  * xml-not-valid-char-link
 
@@ -441,8 +466,8 @@ options:
  * xml-redundant-module-name
 
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.4/test_repo/broken_module/model_view2.xml#L15 Redundant module name `<record id="broken_module.view_model_form2"`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.4/test_repo/broken_module/model_view_odoo2.xml#L148 Redundant module name `<menuitem id="broken_module.menu_root"`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.4/test_repo/broken_module/model_view_odoo2.xml#L154 Redundant module name `<menuitem id="broken_module.menu_root2"`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.4/test_repo/broken_module/model_view_odoo2.xml#L155 Redundant module name `<menuitem id="broken_module.menu_root"`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.4/test_repo/broken_module/model_view_odoo2.xml#L161 Redundant module name `<menuitem id="broken_module.menu_root2"`
 
  * xml-syntax-error
 

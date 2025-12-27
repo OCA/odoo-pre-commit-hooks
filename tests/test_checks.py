@@ -45,6 +45,8 @@ EXPECTED_ERRORS = {
     "xml-header-wrong": 18,
     "xml-id-position-first": 5,
     "xml-deprecated-oe-chatter": 1,
+    "xml-field-bool-without-eval": 2,
+    "xml-field-numeric-without-eval": 7,
 }
 
 
@@ -156,6 +158,35 @@ class TestChecks(common.ChecksCommon):
             "The XML wrong xmlid order and redundant module name was previously fixed",
         )
 
+        fname_wrong_xml_eval = os.path.join(self.test_repo_path, "broken_module", "demo", "duplicated_id_demo.xml")
+        with open(fname_wrong_xml_eval, "rb") as f_wrong_xml_eval:
+            content = f_wrong_xml_eval.read()
+        self.assertIn(
+            b'<field name="active">True</field>',
+            content,
+            "The XML eval was previously fixed",
+        )
+        self.assertIn(
+            b'<field name="sequence">1</field>',
+            content,
+            "The XML eval was previously fixed",
+        )
+        self.assertIn(
+            b'<field name="amount">1.08</field>',
+            content,
+            "The XML eval was previously fixed",
+        )
+        self.assertIn(
+            b'<field name="phone">4777777777</field>',
+            content,
+            "The XML eval was previously fixed",
+        )
+        self.assertIn(
+            b'<field name="priority">-1</field>',
+            content,
+            "The XML eval was not fixed",
+        )
+
         fname_redundant_module_name = os.path.join(self.test_repo_path, "broken_module", "model_view2.xml")
         with open(fname_redundant_module_name, "rb") as f_redundant_module_name:
             content = f_redundant_module_name.read()
@@ -200,6 +231,34 @@ class TestChecks(common.ChecksCommon):
             b"<menuitem id='menu_root2'\n        name=\"Root 2\"",
             content,
             "The XML wrong xmlid order multiline and redundant module name was not fixed",
+        )
+
+        with open(fname_wrong_xml_eval, "rb") as f_wrong_xml_eval:
+            content = f_wrong_xml_eval.read()
+        self.assertIn(
+            b'<field name="active" eval="True" />',
+            content,
+            "The XML eval was not fixed",
+        )
+        self.assertIn(
+            b'<field name="sequence" eval="1" />',
+            content,
+            "The XML eval was not fixed",
+        )
+        self.assertIn(
+            b'<field name="priority" eval="-1" />',
+            content,
+            "The XML eval was not fixed",
+        )
+        self.assertIn(
+            b'<field name="amount">1.08</field>',
+            content,
+            "The XML eval was not should be fixed for amount in that model",
+        )
+        self.assertIn(
+            b'<field name="phone">4777777777</field>',
+            content,
+            "The XML eval was not should be fixed for phone numbers",
         )
 
         with open(fname_redundant_module_name, "rb") as f_redundant_module_name:

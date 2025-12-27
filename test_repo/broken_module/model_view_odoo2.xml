@@ -15,8 +15,15 @@
         <!-- inherit views with duplicate fields also checked -->
         <record id="view_model_form2" model="ir.ui.view">
             <field name="name">view.model.form</field>
+            <field name="active">True</field>
+            <field name="active2" eval="True"/>
+            <field name="active3">False</field>
+            <field name="active4" eval="False"/>
             <field name="model">which.model.is.right</field>
             <field name="model">test.model</field>
+            <field name="sequence">1</field>
+            <field name="sequence2" eval="1"/>
+            <field name="phone">4777777777</field>
             <field name="inherit_id" ref="id_category_list"/>
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='description']" position="after">
