@@ -46,7 +46,7 @@ def generage_long_description():
 
 setup(
     name="oca-odoo-pre-commit-hooks",
-    version="0.2.4",
+    version="0.2.5",
     license="LGPL-3.0-or-later",
     description="odoo-pre-commit-hooks to use in pre-commit-config.yml files",
     long_description=generage_long_description(),
