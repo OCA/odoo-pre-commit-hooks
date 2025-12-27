@@ -244,6 +244,9 @@ e.g. 'data': []
 Replace `_('text')` with `self.env._('text')` only if '_' comes from 'odoo._'
 and only for modules >=18.0
 
+* Check unused-logger
+Disallow unused `_logger = logging.getLogger(__name__)` in Odoo models.
+
 
 [//]: # (end-checks)
 
@@ -367,6 +370,10 @@ options:
  * prefer-readme-rst
 
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.6/test_repo/broken_module/README.md#L1 Prefer README.rst instead of README.md
+
+ * unused-logger
+
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.6/test_repo/broken_module/models/model_inhe1.py#L17 Unused `_logger` is not allowed in Odoo models. Remove it if not used.
 
  * xml-create-user-wo-reset-password
 

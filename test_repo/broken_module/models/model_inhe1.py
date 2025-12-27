@@ -12,6 +12,9 @@ from odoo.addons.module.models import partner
 import no_exists
 from no_exists import package
 
+import logging
+
+_logger = logging.getLogger(__name__)  # unused logger
 
 class TestModel(models.Model):
     _inherit = 'res.company'
