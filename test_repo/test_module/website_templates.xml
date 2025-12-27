@@ -12,6 +12,22 @@
         <div class="oe_structure_gotcha"/>
         <main class="oe_structure oe_hello"/>
         <div class="d-flex fake_oe_structure"/>
+        <!--prettier incompatible-->
+        <textarea
+            name="text_area_name"
+            class="form-control mt-3"
+            required="required"
+            rows="4"
+            placeholder="help of the text area."
+        ><t t-out="model and model.field" /></textarea>
+        <!--prettier incompatible-->
+        <textarea name="description"><t t-out="campaign.description" /></textarea>
+        <!--prettier incompatible-->
+        <textarea name="conditional">  <t t-if="cond" t-out="val" /> </textarea>
+        <!--prettier compatible-->
+        <textarea name="fixed" t-out="campaign.description" />
+        <!--prettier compatible-->
+        <textarea name="mixed">   Ver: <t t-out="campaign.url" /></textarea>
     </template>
 
     <!-- Deprecated QWeb directive "t-field-options". -->
