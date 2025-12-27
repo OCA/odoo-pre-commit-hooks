@@ -2,7 +2,7 @@
 <odoo>
 
     <!-- Deprecated QWeb directive "t-esc-options". -->
-    <template id="test_template_1" name="Test Template 1">
+    <template name="Test Template 1" id="test_template_1">
         <div>
             <span t-esc="price" t-esc-options='{"widget": "monetary"}'/>
         </div>
@@ -15,7 +15,8 @@
     </template>
 
     <!-- Deprecated QWeb directive "t-field-options". -->
-    <template id="test_template_2" name="Test Template 2">
+    <template name="Test Template 2"
+        id="test_template_2">
         <div>
             <span t-field="line.image" t-field-options='{"widget": "image"}'/>
         </div>
@@ -33,7 +34,10 @@
         </body>
     </template>
 
-    <template id="assets_backend" name="test_module_widget" inherit_id="web.assets_backend">
+    <template
+        name="test_module_widget"
+        inherit_id="web.assets_backend"
+        id="assets_backend" >
         <xpath expr="." position="inside">
             <!-- Wrong but is working in odoo web debug mode -->
             <link rel="stylesheet" href="/test_module_widget/static/widget.css?v=1"/>
@@ -49,5 +53,11 @@
             <script type="text/javascript" src="https://code.jquery.com/jquery-3.2.1.min.js?_ca=235"/>
         </xpath>
     </template>
+
+    <template
+        name='test_module_widget_2'
+        inherit_id="web.assets_backend"
+        id='assets_backend_2'
+    />
 
 </odoo>

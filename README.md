@@ -394,7 +394,7 @@ options:
  * xml-deprecated-qweb-directive
 
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.5/test_repo/test_module/website_templates.xml#L7 Deprecated QWeb directive `t-esc-options`. Use `t-options` instead
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.5/test_repo/test_module/website_templates.xml#L20 Deprecated QWeb directive `t-field-options`. Use `t-options` instead
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.5/test_repo/test_module/website_templates.xml#L21 Deprecated QWeb directive `t-field-options`. Use `t-options` instead
 
  * xml-deprecated-tree-attribute
 
@@ -449,14 +449,14 @@ options:
 
  * xml-not-valid-char-link
 
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.5/test_repo/test_module/website_templates.xml#L39 The resource in in src/href contains a not valid character
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.5/test_repo/test_module/website_templates.xml#L41 The resource in in src/href contains a not valid character
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.5/test_repo/test_module/website_templates.xml#L43 The resource in in src/href contains a not valid character
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.5/test_repo/test_module/website_templates.xml#L45 The resource in in src/href contains a not valid character
 
  * xml-oe-structure-missing-id
 
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.5/test_repo/test_module/website_templates.xml#L9 Consider removing the class `oe_structure` or adding a proper id to the tag. The id must contain `oe_structure`
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.5/test_repo/test_module/website_templates.xml#L13 Consider removing the class `oe_structure` or adding a proper id to the tag. The id must contain `oe_structure`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.5/test_repo/test_module/website_templates.xml#L24 Consider removing the class `oe_structure` or adding a proper id to the tag. The id must contain `oe_structure`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.5/test_repo/test_module/website_templates.xml#L25 Consider removing the class `oe_structure` or adding a proper id to the tag. The id must contain `oe_structure`
 
  * xml-record-missing-id
 
