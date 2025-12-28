@@ -378,6 +378,8 @@ class ChecksOdooModule(BaseChecker):
                     else:
                         content += line
                         break
+                else:
+                    continue  # The file contains only comments; skip to avoid deleting it
                 if needs_fix:
                     fname_short = str(pyfile.relative_to(Path(self.manifest_top_path)))
                     self.register_error(
