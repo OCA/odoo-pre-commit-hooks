@@ -288,7 +288,7 @@ class ChecksOdooModule(BaseChecker):
         return [lint_rule for lint_rule, lint_rule_name in lint_rules if self.is_message_enabled(lint_rule_name)]
 
     @utils.only_required_for_installable()
-    def check_py(self):
+    def check_py_fixit(self):
         """Run fixit"""
         fixit_odoo_version = (
             os.environ.get("FIXIT_ODOO_VERSION")
@@ -345,6 +345,52 @@ class ChecksOdooModule(BaseChecker):
                     line=result.violation.range.start.line,
                     column=result.violation.range.start.column,
                 )
+
+    @utils.only_required_for_installable()
+    def check_py(self):
+        """* Check use-header-comments
+        Check if the py file has comments '# comment' only in the header of python files
+        Except valid comments e.g. pylint, flake8, shebang or comments in the middle (not header)
+        """
+        if self.is_message_enabled("use-header-comments"):
+            self._remove_header_comments(Path(self.manifest_path))
+
+    def _remove_header_comments(self, manifest_path):
+        for pyfile in manifest_path.parent.rglob("*.py"):
+            with pyfile.open("r") as f_py:
+                content = ""
+                needs_fix = False
+                line_numbers_with_comment = []
+                for no_line, line in enumerate(f_py, start=1):
+                    line_strip = line.strip(" \n")
+                    if not line_strip:
+                        # empty line
+                        content += line
+                        continue
+                    if line.startswith("#"):
+                        if any(token in line for token in utils.VALID_HEADER_COMMENTS):
+                            # valid comments
+                            content += line
+                            continue
+                        # comment to remove
+                        needs_fix = True
+                        line_numbers_with_comment.append(no_line)
+                    else:
+                        content += line
+                        break
+                if needs_fix:
+                    fname_short = str(pyfile.relative_to(Path(self.manifest_top_path)))
+                    self.register_error(
+                        code="use-header-comments",
+                        message=f"Use of header comments in lines {', '.join(map(str, line_numbers_with_comment))}",
+                        info=self.error,
+                        filepath=fname_short,
+                        line=line_numbers_with_comment[-1],
+                    )
+                    if self.autofix:
+                        content += "\n".join(line for line in f_py)
+            if needs_fix and self.autofix:
+                utils.perform_fix(str(pyfile), content.encode())
 
 
 def lookup_manifest_paths(filenames_or_modules):

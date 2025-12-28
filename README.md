@@ -114,6 +114,10 @@ Check if there is a file created but not referenced from __manifest__.py
 * Check manifest-syntax-error
 Check if the manifest file has syntax error
 
+* Check use-header-comments
+Check if the py file has comments '# comment' only in the header of python files
+Except valid comments e.g. pylint, flake8, shebang or comments in the middle (not header)
+
 * Check prefer-readme-rst
 Check if the module has README.md file to prefer README.rst file
 
@@ -374,6 +378,10 @@ options:
  * unused-logger
 
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.8/test_repo/broken_module/models/model_inhe1.py#L17 Unused `_logger` is not allowed in Odoo models. Remove it if not used.
+
+ * use-header-comments
+
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.8/test_repo/eleven_module/models.py#L9 Use of header comments in lines 3, 5, 6, 7, 9
 
  * xml-create-user-wo-reset-password
 
