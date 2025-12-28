@@ -20,6 +20,20 @@ from oca_pre_commit_hooks.base_checker import BaseChecker
 CHECKS_DISABLED_REGEX = re.compile(re.escape("oca-hooks:disable=") + r"([a-z\-,]+)")
 DEPRECATED_CHECKS_DISABLED_REGEX = re.compile(re.escape("pylint:disable=") + r"([a-z\-,]+)")
 RE_CHECK_DOCSTRING = r"\* Check (?P<check>[\w|\-]+)"
+VALID_HEADER_COMMENTS = (
+    "# !",  # shebang
+    "#!",  # shebang
+    "coding:",  # encode
+    "fixit:",
+    "lint-ignore:",  # fixit
+    "flake8:",
+    "fmt:",  # black
+    "isort:",
+    "noqa:",  # flake8
+    "nosec:",  # bandit
+    "oca-hooks:",
+    "pylint:",
+)
 DFLT_BOOLEAN_FIELDS = [
     # common boolean fields repeated for many models
     "active",

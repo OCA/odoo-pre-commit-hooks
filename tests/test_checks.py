@@ -26,6 +26,7 @@ EXPECTED_ERRORS = {
     "prefer-env-translation": 41,
     "prefer-readme-rst": 1,
     "unused-logger": 1,
+    "use-header-comments": 1,
     "xml-create-user-wo-reset-password": 1,
     "xml-dangerous-qweb-replace-low-priority": 9,
     "xml-deprecated-data-node": 8,
@@ -228,6 +229,25 @@ class TestChecks(common.ChecksCommon):
             "The XML wrong xmlid order was previously fixed",
         )
 
+        py_comment = os.path.join(self.test_repo_path, "eleven_module", "models.py")
+        with open(py_comment, "rb") as f:
+            content = f.read()
+
+        self.assertIn(
+            b"""
+# comment normal
+# pylint: comment
+# Copyright 2016 Vauxoo
+# Copyright 2015 Vauxoo
+# License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
+# flake8: comment
+# comment normal
+
+""",
+            content,
+            "The py Copyright was previously fixed",
+        )
+
         self.checks_run(self.file_paths, autofix=True, no_exit=True, no_verbose=False)
 
         # After autofix
@@ -319,4 +339,16 @@ class TestChecks(common.ChecksCommon):
     />""",
             content,
             "The XML xmlid order was not fixed",
+        )
+
+        with open(py_comment, "rb") as f:
+            content = f.read()
+        self.assertIn(
+            b"""
+# pylint: comment
+# flake8: comment
+
+""",
+            content,
+            "The py Copyright was not fixed",
         )
