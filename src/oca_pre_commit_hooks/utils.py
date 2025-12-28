@@ -314,3 +314,19 @@ def perform_fix(file_path, new_content):
         f_tmp.write(new_content)
     shutil.copy(f_tmp.name, file_path)
     os.unlink(f_tmp.name)
+
+
+@contextmanager
+def environ_tmp_set(key, value):
+    old_value = os.environ.get(key)
+    if value is None:
+        os.environ.pop(key, None)
+    else:
+        os.environ[key] = value
+    try:
+        yield
+    finally:
+        if old_value is None:
+            os.environ.pop(key, None)
+        else:
+            os.environ[key] = old_value

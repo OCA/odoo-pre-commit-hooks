@@ -290,52 +290,61 @@ class ChecksOdooModule(BaseChecker):
     @utils.only_required_for_installable()
     def check_py(self):
         """Run fixit"""
-        os.environ["FIXIT_ODOO_VERSION"] = str(self.module_version) or os.getenv("VERSION") or "18.0"
-        os.environ["FIXIT_AUTOFIX"] = str(self.autofix)
-        lint_rules_enabled_all = self._get_fixit_enabled_rules(manifest_rule=False)
-        lint_rules_enabled_manifest = self._get_fixit_enabled_rules(manifest_rule=True)
-        if not (lint_rules_enabled_all or lint_rules_enabled_manifest):
-            return
-        results = []
-        if lint_rules_enabled_manifest:
-            manifest_options = Options(debug=False, output_format="vscode", rules=lint_rules_enabled_manifest)
-            results.append(
-                fixit_paths(
-                    paths=[Path(self.manifest_path)],
-                    options=manifest_options,
-                    autofix=self.autofix,
-                    parallel=False,
+        fixit_odoo_version = (
+            os.environ.get("FIXIT_ODOO_VERSION")
+            or self.module_version
+            and str(self.module_version)
+            or os.environ.get("VERSION")
+            or "18.0"
+        )
+        with (
+            utils.environ_tmp_set("FIXIT_ODOO_VERSION", fixit_odoo_version),
+            utils.environ_tmp_set("FIXIT_AUTOFIX", str(self.autofix)),
+        ):
+            lint_rules_enabled_all = self._get_fixit_enabled_rules(manifest_rule=False)
+            lint_rules_enabled_manifest = self._get_fixit_enabled_rules(manifest_rule=True)
+            if not (lint_rules_enabled_all or lint_rules_enabled_manifest):
+                return
+            results = []
+            if lint_rules_enabled_manifest:
+                manifest_options = Options(debug=False, output_format="vscode", rules=lint_rules_enabled_manifest)
+                results.append(
+                    fixit_paths(
+                        paths=[Path(self.manifest_path)],
+                        options=manifest_options,
+                        autofix=self.autofix,
+                        parallel=False,
+                    )
                 )
-            )
-        if lint_rules_enabled_all:
-            all_options = Options(debug=False, output_format="vscode", rules=lint_rules_enabled_all)
-            results.append(
-                fixit_paths(
-                    paths=[Path(self.odoo_addon_path)],
-                    options=all_options,
-                    autofix=self.autofix,
-                    parallel=False,
+            if lint_rules_enabled_all:
+                all_options = Options(debug=False, output_format="vscode", rules=lint_rules_enabled_all)
+                results.append(
+                    fixit_paths(
+                        paths=[Path(self.odoo_addon_path)],
+                        options=all_options,
+                        autofix=self.autofix,
+                        parallel=False,
+                    )
                 )
-            )
-        for result in chain.from_iterable(results):
-            if not result.violation:
-                continue
-            message = result.violation.message
-            if result.violation.autofixable and not self.autofix:
-                message += " (has autofix)"
-            filename_short = os.path.relpath(result.path.as_posix(), self.manifest_top_path)
-            self.register_error(
-                code=result.violation.rule_name,
-                message=message,
-                info=(self.error or "")
-                + (
-                    "You can disable this check by adding the following comment to the "
-                    f"affected line or just above it `# lint-ignore: {result.violation.rule_name}`"
-                ),
-                filepath=filename_short,
-                line=result.violation.range.start.line,
-                column=result.violation.range.start.column,
-            )
+            for result in chain.from_iterable(results):
+                if not result.violation:
+                    continue
+                message = result.violation.message
+                if result.violation.autofixable and not self.autofix:
+                    message += " (has autofix)"
+                filename_short = os.path.relpath(result.path.as_posix(), self.manifest_top_path)
+                self.register_error(
+                    code=result.violation.rule_name,
+                    message=message,
+                    info=(self.error or "")
+                    + (
+                        "You can disable this check by adding the following comment to the "
+                        f"affected line or just above it `# lint-ignore: {result.violation.rule_name}`"
+                    ),
+                    filepath=filename_short,
+                    line=result.violation.range.start.line,
+                    column=result.violation.range.start.column,
+                )
 
 
 def lookup_manifest_paths(filenames_or_modules):
