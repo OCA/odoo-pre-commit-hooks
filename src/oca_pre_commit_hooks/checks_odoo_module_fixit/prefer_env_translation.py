@@ -94,7 +94,8 @@ class PreferEnvTranslationRule(common.Common):
         if not self.odoo_version:
             print(
                 f"WARNING. Invalid manifest versions format ({self.odoo_version}). "
-                f"It was not possible if {self.name} rule applies but even running",
+                f"It was not possible if {self.name} rule applies but even running "
+                "To force a specific Odoo version, set the environment variable FIXIT_ODOO_VERSION=18.0"
             )
             self.odoo_version = self.odoo_min_version  # Set default min version to run the check
         if not isinstance(node.func, cst.Name):
