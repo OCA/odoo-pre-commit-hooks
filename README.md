@@ -344,7 +344,7 @@ options:
 
  * csv-duplicate-record-id
 
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/broken_module/ir.model.access.csv#L5 Duplicate CSV record `access_account_account_type`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/broken_module/ir.model.access.csv#L5 Duplicate CSV record `access_account_account_type` broken_module/ir.model.access.csv:6
 
  * csv-syntax-error
 
@@ -352,24 +352,24 @@ options:
 
  * file-not-used
 
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/broken_module/__openerp__.py#L1 File "broken_module/report/test_report.xml" is not referenced in the manifest.
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/broken_module/__openerp__.py#L1 File "broken_module/report/test_report.xml" is not referenced in the manifest. 🔴 If it is loaded from another source (e.g. a post_init_hook script), just add it under the section "oca_data_manual": ["report/test_report.xml",] to be considered. 🔵 Otherwise, you might want to remove it.
 
  * manifest-superfluous-key
 
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/broken_module/__openerp__.py#L32 Delete empty values.
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/broken_module/__openerp__.py#L34 Delete empty values.
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/woversion_module/__manifest__.py#L8 Delete empty values.
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/broken_module/__openerp__.py#L32 Delete empty values. You can disable this check by adding the following comment to the affected line or just above it `# lint-ignore: manifest-superfluous-key`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/broken_module/__openerp__.py#L34 Delete empty values. You can disable this check by adding the following comment to the affected line or just above it `# lint-ignore: manifest-superfluous-key`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/woversion_module/__manifest__.py#L8 Delete empty values. You can disable this check by adding the following comment to the affected line or just above it `# lint-ignore: manifest-superfluous-key`
 
  * manifest-syntax-error
 
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/manifest_werror/__manifest__.py#L1 Manifest could not be loaded
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/manifest_werror/__manifest__.py#L1 Manifest could not be loaded manifest malformed
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/woinit_module/__manifest__.py#L1 Manifest could not be loaded
 
  * prefer-env-translation
 
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/broken_module/models/broken_model.py#L76 Use self.env._(...) instead of _(…) directly inside Odoo model methods.
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/broken_module/models/broken_model.py#L86 Use self.env._(...) instead of _(…) directly inside Odoo model methods.
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/broken_module/models/broken_model.py#L243 Use self.env._(...) instead of _(…) directly inside Odoo model methods.
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/broken_module/models/broken_model.py#L76 Use self.env._(...) instead of _(…) directly inside Odoo model methods. You can disable this check by adding the following comment to the affected line or just above it `# lint-ignore: prefer-env-translation`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/broken_module/models/broken_model.py#L86 Use self.env._(...) instead of _(…) directly inside Odoo model methods. You can disable this check by adding the following comment to the affected line or just above it `# lint-ignore: prefer-env-translation`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/broken_module/models/broken_model.py#L243 Use self.env._(...) instead of _(…) directly inside Odoo model methods. You can disable this check by adding the following comment to the affected line or just above it `# lint-ignore: prefer-env-translation`
 
  * prefer-readme-rst
 
@@ -377,7 +377,7 @@ options:
 
  * unused-logger
 
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/broken_module/models/model_inhe1.py#L17 Unused `_logger` is not allowed in Odoo models. Remove it if not used.
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/broken_module/models/model_inhe1.py#L17 Unused `_logger` is not allowed in Odoo models. Remove it if not used. You can disable this check by adding the following comment to the affected line or just above it `# lint-ignore: unused-logger`
 
  * use-header-comments
 
@@ -389,15 +389,15 @@ options:
 
  * xml-dangerous-qweb-replace-low-priority
 
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/broken_module/template1.xml#L4 Dangerous use of `replace` from view with priority 0 < 99
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/broken_module/template1.xml#L7 Dangerous use of `replace` from view with priority 0 < 99
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/broken_module/template1.xml#L18 Dangerous use of `replace` from view with priority 0 < 99
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/broken_module/template1.xml#L4 Dangerous use of `replace` from view with priority 0 < 99 Only replace as a last resort. Try `position="attributes"`, `position="move"` or `t-if="False"` first
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/broken_module/template1.xml#L7 Dangerous use of `replace` from view with priority 0 < 99 Only replace as a last resort. Try `position="attributes"`, `position="move"` or `t-if="False"` first
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/broken_module/template1.xml#L18 Dangerous use of `replace` from view with priority 0 < 99 Only replace as a last resort. Try `position="attributes"`, `position="move"` or `t-if="False"` first
 
  * xml-deprecated-data-node
 
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/broken_module/demo/duplicated_id_demo.xml#L3 Deprecated `<data>` node
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/broken_module/model_view.xml#L3 Deprecated `<data>` node
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/broken_module/model_view2.xml#L3 Deprecated `<data>` node
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/broken_module/demo/duplicated_id_demo.xml#L3 Deprecated `<data>` node Use `<odoo>` instead of `<odoo><data>` or `<odoo noupdate="1">` instead of `<odoo><data noupdate="1">`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/broken_module/model_view.xml#L3 Deprecated `<data>` node Use `<odoo>` instead of `<odoo><data>` or `<odoo noupdate="1">` instead of `<odoo><data noupdate="1">`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/broken_module/model_view2.xml#L3 Deprecated `<data>` node Use `<odoo>` instead of `<odoo><data>` or `<odoo noupdate="1">` instead of `<odoo><data noupdate="1">`
 
  * xml-deprecated-oe-chatter
 
@@ -405,9 +405,9 @@ options:
 
  * xml-deprecated-openerp-node
 
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/broken_module/model_view.xml#L2 Deprecated `<openerp>` xml node
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/broken_module/model_view2.xml#L2 Deprecated `<openerp>` xml node
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/test_module/model_view.xml#L2 Deprecated `<openerp>` xml node
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/broken_module/model_view.xml#L2 Deprecated `<openerp>` xml node Use `<odoo>` instead
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/broken_module/model_view2.xml#L2 Deprecated `<openerp>` xml node Use `<odoo>` instead
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/test_module/model_view.xml#L2 Deprecated `<openerp>` xml node Use `<odoo>` instead
 
  * xml-deprecated-qweb-directive
 
@@ -422,20 +422,20 @@ options:
 
  * xml-duplicate-fields
 
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/broken_module/model_view_odoo2.xml#L5 Duplicate xml field `name`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/broken_module/model_view_odoo2.xml#L22 Duplicate xml field `model`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/broken_module/model_view_odoo2.xml#L80 Duplicate xml field `arch`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/broken_module/model_view_odoo2.xml#L5 Duplicate xml field `name` broken_module/model_view_odoo2.xml:12
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/broken_module/model_view_odoo2.xml#L22 Duplicate xml field `model` broken_module/model_view_odoo2.xml:23
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/broken_module/model_view_odoo2.xml#L80 Duplicate xml field `arch` broken_module/model_view_odoo2.xml:83
 
  * xml-duplicate-record-id
 
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/broken_module/model_view.xml#L5 Duplicate xml record id `view_model_form`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/broken_module/model_view2.xml#L5 Duplicate xml record id `view_model_form2`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/broken_module/model_view.xml#L5 Duplicate xml record id `view_model_form` broken_module/model_view_odoo.xml:5 broken_module/model_view_odoo2.xml:4
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/broken_module/model_view2.xml#L5 Duplicate xml record id `view_model_form2` broken_module/model_view_odoo2.xml:16
 
  * xml-duplicate-template-id
 
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/broken_module/template1.xml#L3 Duplicate xml template id `qweb/my_template1_noupdate_0`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/broken_module/template1.xml#L10 Duplicate xml template id `qweb/my_template2_noupdate_0`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/broken_module/template1.xml#L17 Duplicate xml template id `qweb/my_template3_noupdate_0`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/broken_module/template1.xml#L3 Duplicate xml template id `qweb/my_template1_noupdate_0` broken_module/template1_copy2.xml:3
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/broken_module/template1.xml#L10 Duplicate xml template id `qweb/my_template2_noupdate_0` broken_module/template1_copy2.xml:10
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/broken_module/template1.xml#L17 Duplicate xml template id `qweb/my_template3_noupdate_0` broken_module/template1_copy2.xml:17
 
  * xml-field-bool-without-eval
 
@@ -461,9 +461,9 @@ options:
 
  * xml-id-position-first
 
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/broken_module/deprecated_disable.xml#L4 The "id" attribute must be first `<record id="duplicate_record" model=...`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/broken_module/model_view_odoo2.xml#L43 The "id" attribute must be first `<record id="view_ir_config_search" model=...`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/broken_module/model_view_odoo2.xml#L68 The "id" attribute must be first `<record id="access_rule" model=...`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/broken_module/deprecated_disable.xml#L4 The "id" attribute must be first `<record id="duplicate_record" model=...` Use `<record id="duplicate_record"  model=...` instead
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/broken_module/model_view_odoo2.xml#L43 The "id" attribute must be first `<record id="view_ir_config_search" model=...` Use `<record id="view_ir_config_search"  model=...` instead
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/broken_module/model_view_odoo2.xml#L68 The "id" attribute must be first `<record id="access_rule" model=...` Use `<record id="access_rule"  model=...` instead
 
  * xml-not-valid-char-link
 
@@ -483,9 +483,9 @@ options:
 
  * xml-redundant-module-name
 
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/broken_module/model_view2.xml#L15 Redundant module name `<record id="broken_module.view_model_form2"`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/broken_module/model_view_odoo2.xml#L155 Redundant module name `<menuitem id="broken_module.menu_root"`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/broken_module/model_view_odoo2.xml#L161 Redundant module name `<menuitem id="broken_module.menu_root2"`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/broken_module/model_view2.xml#L15 Redundant module name `<record id="broken_module.view_model_form2"` Use `<record id="view_model_form2"` instead
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/broken_module/model_view_odoo2.xml#L155 Redundant module name `<menuitem id="broken_module.menu_root"` Use `<menuitem id="menu_root"` instead
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/broken_module/model_view_odoo2.xml#L161 Redundant module name `<menuitem id="broken_module.menu_root2"` Use `<menuitem id="menu_root2"` instead
 
  * xml-syntax-error
 
@@ -500,9 +500,9 @@ options:
 
  * xml-view-dangerous-replace-low-priority
 
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/broken_module/model_view2.xml#L25 Dangerous use of `replace` from view with priority 0 < 99
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/broken_module/model_view2.xml#L37 Dangerous use of `replace` from view with priority 0 < 99
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/broken_module/model_view2.xml#L47 Dangerous use of `replace` from view with priority 0 < 99
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/broken_module/model_view2.xml#L25 Dangerous use of `replace` from view with priority 0 < 99 Only replace as a last resort. Try `position="attributes"`, `position="move"` or `invisible="1"` first
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/broken_module/model_view2.xml#L37 Dangerous use of `replace` from view with priority 0 < 99 Only replace as a last resort. Try `position="attributes"`, `position="move"` or `invisible="1"` first
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.10/test_repo/broken_module/model_view2.xml#L47 Dangerous use of `replace` from view with priority 0 < 99 Only replace as a last resort. Try `position="attributes"`, `position="move"` or `invisible="1"` first
 
  * xml-xpath-translatable-item
 

@@ -99,14 +99,27 @@ class TestChecks(common.ChecksCommon):
 
         version = oca_pre_commit_hooks.__version__
         check_example_content = ""
+        ansi_re = re.compile(
+            r"""
+            \x1B  # ESC
+            (?:   # 7-bit C1 Fe (except CSI)
+                [@-Z\\-_]
+            |     # or [ for CSI, followed by control sequences
+                \[
+                [0-?]*  # Parameter bytes
+                [ -/]*  # Intermediate bytes
+                [@-~]   # Final byte
+            )
+            """,
+            re.VERBOSE,
+        )
+        ext2url = re.compile(r"(\.\w+):(\d+):\d*:?", re.VERBOSE)
         for code in sorted(all_check_errors_by_code):
             check_example_content += f"\n\n * {code}\n"
             for check_error in sorted(all_check_errors_by_code[code])[:3]:
-                msg = f"{check_error.position.filepath}"
-                if check_error.position.line:
-                    msg += f"#L{check_error.position.line}"
-                if check_error.message:
-                    msg += f" {check_error.message}"
+                msg = ansi_re.sub("", str(check_error))
+                msg = msg.replace("\n", " ").replace(f" {code} ", " ")
+                msg = ext2url.sub(r"\1#L\2", msg, count=1)
                 check_example_content += (
                     f"\n    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v{version}/test_repo/{msg}"
                 )
