@@ -1,5 +1,5 @@
 colorama
-fixit @ git+https://github.com/Instagram/Fixit.git@ab5dea2  # py autofixes
+fixit==2.2.1  # py autofixes
 lxml>=4.2.3  # xml checks
 packaging
 polib==1.2.*  # po checks
