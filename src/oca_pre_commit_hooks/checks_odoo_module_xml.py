@@ -112,7 +112,7 @@ class ChecksOdooModuleXML(BaseChecker):
                 manifest_data.update(
                     {
                         "file_error": None,
-                        "disabled_checks": self._get_disabled_checks(node),
+                        "disabled_checks": self._get_disabled_checks(node, manifest_data),
                     }
                 )
             except (FileNotFoundError, etree.XMLSyntaxError, UnicodeDecodeError) as xml_err:
@@ -124,7 +124,7 @@ class ChecksOdooModuleXML(BaseChecker):
                     }
                 )
 
-    def _get_disabled_checks(self, node):
+    def _get_disabled_checks(self, node, manifest_data):
         """Get the check-name disable comments from etree XML node
 
         e.g. <!-- oca-hooks:disable=check-name -->
@@ -134,7 +134,9 @@ class ChecksOdooModuleXML(BaseChecker):
             checks_disabled, use_deprecated = utils.checks_disabled(comment_node.text)
             all_checks_disabled |= set(checks_disabled)
             if use_deprecated:
-                print(f"{node.docinfo.URL}:{comment_node.sourceline} WARNING. DEPRECATED. Use oca-disable instead.")
+                print(
+                    f"{manifest_data['filename_short']}:{comment_node.sourceline} WARNING. DEPRECATED. Use oca-disable instead."
+                )
         return all_checks_disabled
 
     def getattr_checks(self, manifest_data, prefix):
