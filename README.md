@@ -367,9 +367,9 @@ options:
 
  * prefer-env-translation
 
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.11/test_repo/broken_module/models/broken_model.py#L76 Use self.env._(...) instead of _(…) directly inside Odoo model methods. You can disable this check by adding the following comment to the affected line or just above it `# lint-ignore: prefer-env-translation`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.11/test_repo/broken_module/models/broken_model.py#L86 Use self.env._(...) instead of _(…) directly inside Odoo model methods. You can disable this check by adding the following comment to the affected line or just above it `# lint-ignore: prefer-env-translation`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.11/test_repo/broken_module/models/broken_model.py#L243 Use self.env._(...) instead of _(…) directly inside Odoo model methods. You can disable this check by adding the following comment to the affected line or just above it `# lint-ignore: prefer-env-translation`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.11/test_repo/broken_module/models/broken_model.py#L80 Use self.env._(...) instead of _(…) directly inside Odoo model methods. You can disable this check by adding the following comment to the affected line or just above it `# lint-ignore: prefer-env-translation`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.11/test_repo/broken_module/models/broken_model.py#L90 Use self.env._(...) instead of _(…) directly inside Odoo model methods. You can disable this check by adding the following comment to the affected line or just above it `# lint-ignore: prefer-env-translation`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.11/test_repo/broken_module/models/broken_model.py#L247 Use self.env._(...) instead of _(…) directly inside Odoo model methods. You can disable this check by adding the following comment to the affected line or just above it `# lint-ignore: prefer-env-translation`
 
  * prefer-readme-rst
 

@@ -58,8 +58,12 @@ from odoo.addons.iap.models import iap
 
 other_field = fields.Char()
 
+EXCEPTION_MAP = {
+    "key1": lambda: _('No translatable with self.env._ 1'),
+}
 
 def function_no_method():
+    _('No translatable with self.env._ 2')
     return broken_model1, broken_module1, broken_module2, broken_model2
 
 
