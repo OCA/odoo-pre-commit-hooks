@@ -6,7 +6,7 @@ from fixit.config import collect_rules, parse_rule
 from fixit.ftypes import Config
 from fixit.testing import generate_lint_rule_test_cases
 
-from oca_pre_commit_hooks import checks_odoo_module_fixit
+from oca_pre_commit_hooks import checks_odoo_module_fixit_rules
 
 
 class FixitTest(unittest.TestCase):
@@ -17,7 +17,7 @@ class FixitTest(unittest.TestCase):
 
         rule = parse_rule(
             ".checks_odoo_module_fixit",
-            Path(os.path.dirname(os.path.dirname(os.path.abspath(checks_odoo_module_fixit.__file__)))),
+            Path(os.path.dirname(os.path.dirname(os.path.abspath(checks_odoo_module_fixit_rules.__file__)))),
         )
         lint_rules = collect_rules(Config(enable=[rule], disable=[], python_version=None))
         test_cases = generate_lint_rule_test_cases(lint_rules)

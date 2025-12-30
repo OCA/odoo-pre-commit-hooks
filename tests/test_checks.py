@@ -12,6 +12,7 @@ from . import common
 
 ALL_CHECK_CLASS = [
     oca_pre_commit_hooks.checks_odoo_module.ChecksOdooModule,
+    oca_pre_commit_hooks.checks_odoo_module_fixit.ChecksOdooModuleFixit,
     oca_pre_commit_hooks.checks_odoo_module_csv.ChecksOdooModuleCSV,
     oca_pre_commit_hooks.checks_odoo_module_xml.ChecksOdooModuleXML,
 ]
@@ -60,9 +61,17 @@ class TestChecks(common.ChecksCommon):
         self.file_paths = glob.glob(os.path.join(self.test_repo_path, "*", "__openerp__.py")) + glob.glob(
             os.path.join(self.test_repo_path, "*", "__manifest__.py")
         )
-        self.checks_run = oca_pre_commit_hooks.checks_odoo_module.run
-        self.checks_cli_main = oca_pre_commit_hooks.cli.main
         self.expected_errors = EXPECTED_ERRORS.copy()
+
+    def checks_run(self, *args, **kwargs):
+        result = oca_pre_commit_hooks.checks_odoo_module.run(*args, **kwargs)
+        result += oca_pre_commit_hooks.checks_odoo_module_fixit.run(*args, **kwargs)
+        return result
+
+    def checks_cli_main(self, *args, **kwargs):
+        result = oca_pre_commit_hooks.cli.main(*args, **kwargs)
+        result2 = oca_pre_commit_hooks.cli_fixit.main(*args, **kwargs)
+        return result + result2
 
     @unittest.skipIf(not os.environ.get("BUILD_README"), "BUILD_README environment variable not enabled")
     def test_build_docstring(self):
@@ -73,8 +82,8 @@ class TestChecks(common.ChecksCommon):
         # already installed in the OS (without latest dev changes)
         # and we do not have way to evaluate all checks are evaluated and documented from another side
         # Feel free to migrate to better place this non-standard section of the code
-
         checks_found, checks_docstring = oca_pre_commit_hooks.utils.get_checks_docstring(ALL_CHECK_CLASS)
+
         readme_path = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "README.md")
         with open(readme_path, encoding="UTF-8") as f_readme:
             readme_content = f_readme.read()

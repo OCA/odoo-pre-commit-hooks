@@ -114,12 +114,12 @@ Check if there is a file created but not referenced from __manifest__.py
 * Check manifest-syntax-error
 Check if the manifest file has syntax error
 
+* Check prefer-readme-rst
+Check if the module has README.md file to prefer README.rst file
+
 * Check use-header-comments
 Check if the py file has comments '# comment' only in the header of python files
 Except valid comments e.g. pylint, flake8, shebang or comments in the middle (not header)
-
-* Check prefer-readme-rst
-Check if the module has README.md file to prefer README.rst file
 
 * Check csv-duplicate-record-id
 duplicate CSV "id" AKA xmlid but for CSV files

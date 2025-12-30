@@ -23,3 +23,13 @@
   types_or: ["text"]
   files: \.(po|pot)$
   require_serial: false
+- id: oca-checks-odoo-module-fixit
+  name: Checks for Odoo modules with autofixes
+  description: Multiple checks for Odoo modules with autofixes
+  entry: oca-checks-odoo-module-fixit
+  args: []
+  language: python
+  types_or: ["python"]
+  files: \.py$
+  # require_serial false to run parallels jobs faster
+  require_serial: false
