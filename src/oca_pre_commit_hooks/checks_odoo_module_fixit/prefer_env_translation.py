@@ -2,6 +2,7 @@ import os
 
 import libcst as cst
 from fixit import InvalidTestCase, ValidTestCase
+from libcst import matchers as m
 from libcst.metadata import ParentNodeProvider, QualifiedName, QualifiedNameProvider
 
 from .. import checks_odoo_module_fixit_common as common, utils
@@ -16,6 +17,25 @@ ODOO_SUPER_CLASSES = (
     "openerp.models.Model",
     "openerp.models.TransientModel",
 )
+
+
+class OdooGettextFixer(cst.CSTTransformer):
+    """Recursive fixer looking for calls and fixing them
+    It helps when the line has multiple calls in the same line _(_(...))"""
+
+    def __init__(self, func_name: str = "_"):
+        self.func_name = func_name
+
+    def leave_Call(  # noqa: B906 pylint:disable=invalid-name
+        self, original_node: cst.Call, updated_node: cst.Call  # pylint:disable=unused-argument
+    ) -> cst.Call:
+        if m.matches(updated_node, m.Call(func=m.Name(value=self.func_name))):
+            return updated_node.with_changes(
+                func=cst.Attribute(
+                    value=cst.Attribute(value=cst.Name("self"), attr=cst.Name("env")), attr=cst.Name("_")
+                )
+            )
+        return updated_node
 
 
 class PreferEnvTranslationRule(common.Common):
@@ -107,6 +127,40 @@ class PreferEnvTranslationRule(common.Common):
             self.env._("old translated")
     """,
         ),
+        InvalidTestCase(
+            code="""
+from odoo import http, _
+from odoo.exceptions import ValidationError
+
+
+class TestModel(http.Controller):
+    def my_method(self):
+        raise ValidationError(_(
+            'The following numbers are already used:\\n%s',
+            '\\n'.join(_(
+                '%(n)s in journal %(j)s',
+                n=_('n'),
+                j=_('j'),
+            ) for r in [])
+        ))
+    """,
+            expected_replacement="""
+from odoo import http, _
+from odoo.exceptions import ValidationError
+
+
+class TestModel(http.Controller):
+    def my_method(self):
+        raise ValidationError(self.env._(
+            'The following numbers are already used:\\n%s',
+            '\\n'.join(self.env._(
+                '%(n)s in journal %(j)s',
+                n=self.env._('n'),
+                j=self.env._('j'),
+            ) for r in [])
+        ))
+    """,
+        ),
     ]
 
     def __init__(self) -> None:
@@ -128,14 +182,14 @@ class PreferEnvTranslationRule(common.Common):
         if self.odoo_min_version > self.odoo_version:
             return
         for qname in self.get_metadata(QualifiedNameProvider, node.func, set()):
-            if isinstance(qname, QualifiedName) and (
-                qname.name.startswith("odoo._") or qname.name.startswith("openerp._")
-            ):
+            if isinstance(qname, QualifiedName) and qname.name.startswith(("odoo._", "openerp._")):
                 if not (class_node := self._get_parent_class(node)) or not self._is_odoo_model_or_controller(
                     class_node
                 ):
                     return
-                replacement = self.fix(node)
+                func_alias = node.func.value
+                fixer = OdooGettextFixer(func_name=func_alias)
+                replacement = node.visit(fixer)
                 self.report(node, replacement=replacement)
                 break
 
