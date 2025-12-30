@@ -2,9 +2,20 @@ import os
 
 import libcst as cst
 from fixit import InvalidTestCase, ValidTestCase
-from libcst.metadata import QualifiedName, QualifiedNameProvider
+from libcst.metadata import ParentNodeProvider, QualifiedName, QualifiedNameProvider
 
 from .. import checks_odoo_module_fixit_common as common, utils
+
+ODOO_SUPER_CLASSES = (
+    "odoo.http.Controller",
+    "odoo.models.AbstractModel",
+    "odoo.models.Model",
+    "odoo.models.TransientModel",
+    "openerp.http.Controller",
+    "openerp.models.AbstractModel",
+    "openerp.models.Model",
+    "openerp.models.TransientModel",
+)
 
 
 class PreferEnvTranslationRule(common.Common):
@@ -12,7 +23,8 @@ class PreferEnvTranslationRule(common.Common):
     and only for modules >=18.0"""
 
     MESSAGE = "Use self.env._(...) instead of _(…) directly inside Odoo model methods."
-    METADATA_DEPENDENCIES = (QualifiedNameProvider,)
+    METADATA_DEPENDENCIES = (QualifiedNameProvider, ParentNodeProvider)
+
     VALID = [
         ValidTestCase(
             code="""
@@ -43,6 +55,19 @@ class PreferEnvTranslationRule(common.Common):
             _("is not a Odoo translation")
     """
         ),
+        ValidTestCase(
+            code="""
+    from odoo import _
+
+    MAP = {
+        "key1": lambda: _('No translatable from odoo models'),
+    }
+    # No Odoo models class
+    class TestModel(object):
+        def my_method(self):
+            _("ok")
+    """
+        ),
     ]
 
     INVALID = [
@@ -66,18 +91,18 @@ class PreferEnvTranslationRule(common.Common):
         ),
         InvalidTestCase(
             code="""
-    from odoo import models, _ as lt
+    from odoo import http, _ as lt
 
 
-    class TestModel(models.Model):
+    class TestModel(http.Controller):
         def my_method(self):
             lt("old translated")
     """,
             expected_replacement="""
-    from odoo import models, _ as lt
+    from odoo import http, _ as lt
 
 
-    class TestModel(models.Model):
+    class TestModel(http.Controller):
         def my_method(self):
             self.env._("old translated")
     """,
@@ -102,11 +127,14 @@ class PreferEnvTranslationRule(common.Common):
             return
         if self.odoo_min_version > self.odoo_version:
             return
-        qualified_names = self.get_metadata(QualifiedNameProvider, node.func, set())
-        for qname in qualified_names:
+        for qname in self.get_metadata(QualifiedNameProvider, node.func, set()):
             if isinstance(qname, QualifiedName) and (
                 qname.name.startswith("odoo._") or qname.name.startswith("openerp._")
             ):
+                if not (class_node := self._get_parent_class(node)) or not self._is_odoo_model_or_controller(
+                    class_node
+                ):
+                    return
                 replacement = self.fix(node)
                 self.report(node, replacement=replacement)
                 break
@@ -121,3 +149,22 @@ class PreferEnvTranslationRule(common.Common):
                 attr=cst.Name("_"),
             )
         )
+
+    def _get_parent_class(self, node: cst.CSTNode) -> cst.ClassDef | None:
+        parent = self.get_metadata(ParentNodeProvider, node, None)
+        while parent:
+            if isinstance(parent, cst.ClassDef):
+                return parent
+            parent = self.get_metadata(ParentNodeProvider, parent, None)
+        return None
+
+    def _is_odoo_model_or_controller(self, class_def: cst.ClassDef) -> bool:
+        for base in class_def.bases:
+            qnames = self.get_metadata(QualifiedNameProvider, base.value, set())
+            for qname in qnames:
+                if not isinstance(qname, QualifiedName):
+                    continue
+                name = qname.name
+                if name.endswith(ODOO_SUPER_CLASSES):
+                    return True
+        return False
