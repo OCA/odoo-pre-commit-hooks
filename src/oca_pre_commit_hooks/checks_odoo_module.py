@@ -390,7 +390,7 @@ class ChecksOdooModule(BaseChecker):
                         line=line_numbers_with_comment[-1],
                     )
                     if self.autofix:
-                        content += "\n".join(line for line in f_py)
+                        content += "".join(line for line in f_py)
             if needs_fix and self.autofix:
                 utils.perform_fix(str(pyfile), content.encode())
 
