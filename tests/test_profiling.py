@@ -52,9 +52,11 @@ class TestProfiling(TestCase):
 
     def test_profile_checks_module(self):
         checks_module_run = oca_pre_commit_hooks.cli.main
+        checks_module_run2 = oca_pre_commit_hooks.cli_fixit.main
         sys.argv = ["", "--no-exit", "--no-verbose"] + self.module_files
         with cprofile():
             errors = checks_module_run()
+            errors += checks_module_run2()
 
         self.assertDictEqual(common.ChecksCommon.get_count_code_errors(errors), MODULES_ERRORS)
 
@@ -70,8 +72,10 @@ class TestProfiling(TestCase):
     def test_profile_checks_module_custom(self):
         manifests = self.manifests_from_repo(environ.get("PROFILING_TEST_REPO"))
         checks_module_run = oca_pre_commit_hooks.cli.main
+        checks_module_run2 = oca_pre_commit_hooks.cli_fixit.main
         sys.argv = ["", "--no-exit", "--no-verbose"] + manifests
 
         print(f"Running oca-checks-odoo-module on {len(manifests)} manifests")
         with cprofile():
             checks_module_run()
+            checks_module_run2()

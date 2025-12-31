@@ -291,10 +291,10 @@ def get_checks_docstring(check_classes):
             checks_found |= set(re.findall(RE_CHECK_DOCSTRING, checks_docstring))
             checks_docstring = re.sub(r"( )+\*", "*", checks_docstring)
     rule = parse_rule(
-        ".checks_odoo_module_fixit",
+        ".checks_odoo_module_fixit_rules",
         Path(__file__).resolve().parent,
     )
-    if "ChecksOdooModule" in [check_class.__name__ for check_class in check_classes]:
+    if "ChecksOdooModuleFixit" in [check_class.__name__ for check_class in check_classes]:
         checks_docstring += "\n** Special fixit checks\n"
         lint_rules = collect_rules(Config(enable=[rule], disable=[], python_version=None))
         for lint_rule in sorted(lint_rules, key=lambda r: r.name):
