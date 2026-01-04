@@ -18,6 +18,8 @@ ODOO_SUPER_CLASSES = (
     "openerp.models.TransientModel",
 )
 
+TRANSLATION_METHODS = ["odoo._", "openerp._", "odoo._lt", "openerp._lt"]
+
 
 class OdooGettextFixer(cst.CSTTransformer):
     """Recursive fixer looking for calls and fixing them
@@ -161,6 +163,20 @@ class TestModel(http.Controller):
         ))
     """,
         ),
+        InvalidTestCase(
+            code="""
+    from odoo import models, _lt
+    class TestModel(models.Model):
+        def my_method(self):
+            _lt("old translated")
+    """,
+            expected_replacement="""
+    from odoo import models, _lt
+    class TestModel(models.Model):
+        def my_method(self):
+            self.env._("old translated")
+    """,
+        ),
     ]
 
     def __init__(self) -> None:
@@ -177,21 +193,18 @@ class TestModel(http.Controller):
                 "To force a specific Odoo version, set the environment variable FIXIT_ODOO_VERSION=18.0"
             )
             self.odoo_version = self.odoo_min_version  # Set default min version to run the check
-        if not isinstance(node.func, cst.Name):
+        if not isinstance(node.func, cst.Name) or self.odoo_min_version > self.odoo_version:
             return
-        if self.odoo_min_version > self.odoo_version:
+        if not (class_node := self._get_parent_class(node)) or not self._is_odoo_model_or_controller(class_node):
             return
         for qname in self.get_metadata(QualifiedNameProvider, node.func, set()):
-            if isinstance(qname, QualifiedName) and qname.name.startswith(("odoo._", "openerp._")):
-                if not (class_node := self._get_parent_class(node)) or not self._is_odoo_model_or_controller(
-                    class_node
-                ):
-                    return
-                func_alias = node.func.value
-                fixer = OdooGettextFixer(func_name=func_alias)
-                replacement = node.visit(fixer)
-                self.report(node, replacement=replacement)
-                break
+            if not isinstance(qname, QualifiedName) or qname.name not in TRANSLATION_METHODS:
+                continue
+            func_alias = node.func.value
+            fixer = OdooGettextFixer(func_name=func_alias)
+            replacement = node.visit(fixer)
+            self.report(node, replacement=replacement)
+            break
 
     def fix(self, node: cst.Call) -> cst.Call:
         return node.with_changes(
