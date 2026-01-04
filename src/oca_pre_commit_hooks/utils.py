@@ -272,6 +272,14 @@ def walk_up(path, filenames, top):
     return walk_up(os.path.dirname(path), filenames, top)
 
 
+def fixit_parse_rule():
+    rule = parse_rule(
+        ".checks_odoo_module_fixit_rules",
+        Path(__file__).resolve().parent,
+    )
+    return rule
+
+
 def get_checks_docstring(check_classes):
     checks_docstring = ""
     checks_found = set()
@@ -290,10 +298,7 @@ def get_checks_docstring(check_classes):
             checks_docstring += "\n" + check_meth.__doc__.strip(" \n") + "\n"
             checks_found |= set(re.findall(RE_CHECK_DOCSTRING, checks_docstring))
             checks_docstring = re.sub(r"( )+\*", "*", checks_docstring)
-    rule = parse_rule(
-        ".checks_odoo_module_fixit_rules",
-        Path(__file__).resolve().parent,
-    )
+    rule = fixit_parse_rule()
     if "ChecksOdooModuleFixit" in [check_class.__name__ for check_class in check_classes]:
         checks_docstring += "\n** Special fixit checks\n"
         lint_rules = collect_rules(Config(enable=[rule], disable=[], python_version=None))

@@ -55,7 +55,7 @@ class ChecksOdooModuleFixit(BaseChecker):
     @staticmethod
     @lru_cache(maxsize=32)
     def _get_fixit_rules(manifest_rule):
-        rule = parse_rule(".checks_odoo_module_fixit_rules", Path(os.path.dirname(os.path.abspath(__file__))))
+        rule = utils.fixit_parse_rule()
         lint_rules = collect_rules(Config(enable=[rule], disable=[], python_version=None))
         return [
             (
