@@ -70,7 +70,7 @@ jobs:
         pip --version
         pip list --format=freeze
     - name: Test
-      run: tox -e ${{ matrix.tox_env }} -v
+      run: tox -e ${{ matrix.tox_env }} -v -- -n auto
       # TODO: Publish package only for signed tags
     - name: Publish package
       if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags') && contains(matrix.tox_env, 'build')
