@@ -90,6 +90,17 @@ class PreferEnvTranslationRule(common.Common):
             _("ok")
     """
         ),
+        ValidTestCase(
+            code="""
+    from odoo import http, _ as lt
+
+
+    class TestModel(http.Controller):
+        @staticmethod
+        def my_method():
+            lt("old translated")
+    """
+        ),
     ]
 
     INVALID = [
@@ -193,9 +204,14 @@ class TestModel(http.Controller):
                 "To force a specific Odoo version, set the environment variable FIXIT_ODOO_VERSION=18.0"
             )
             self.odoo_version = self.odoo_min_version  # Set default min version to run the check
-        if not isinstance(node.func, cst.Name) or self.odoo_min_version > self.odoo_version:
-            return
-        if not (class_node := self._get_parent_class(node)) or not self._is_odoo_model_or_controller(class_node):
+        if (
+            not isinstance(node.func, cst.Name)
+            or self.odoo_min_version > self.odoo_version
+            or not (class_node := self._get_parent_class(node))
+            or not self._is_odoo_model_or_controller(class_node)
+            or not (func_node := self._get_parent_function(node))
+            or not self._function_has_self(func_node)
+        ):
             return
         for qname in self.get_metadata(QualifiedNameProvider, node.func, set()):
             if not isinstance(qname, QualifiedName) or qname.name not in TRANSLATION_METHODS:
@@ -234,4 +250,29 @@ class TestModel(http.Controller):
                 name = qname.name
                 if name.endswith(ODOO_SUPER_CLASSES):
                     return True
+        return False
+
+    def _get_parent_function(self, node: cst.CSTNode) -> cst.FunctionDef | None:
+        """Look for the FunctionDef parent closest"""
+        parent = self.get_metadata(ParentNodeProvider, node, None)
+        while parent:
+            if isinstance(parent, cst.FunctionDef):
+                return parent
+            if isinstance(parent, cst.ClassDef):
+                # If there is not a method but class so it is an attribute
+                return None
+            parent = self.get_metadata(ParentNodeProvider, parent, None)
+        return None
+
+    def _function_has_self(self, func_node: cst.FunctionDef) -> bool:
+        """Check the first argument is called 'self'"""
+        params = func_node.params.params
+        if not params:
+            return False
+
+        first_param = params[0]
+
+        if isinstance(first_param.name, cst.Name) and first_param.name.value == "self":
+            return True
+
         return False
