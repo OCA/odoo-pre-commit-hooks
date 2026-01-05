@@ -3,9 +3,10 @@ import os
 import re
 import subprocess
 import sys
-import unittest
 from shutil import copyfile
 from tempfile import TemporaryDirectory
+
+import pytest
 
 import oca_pre_commit_hooks
 from . import common
@@ -30,35 +31,43 @@ EXPECTED_ERRORS = {
 
 class TestChecksPO(common.ChecksCommon):
     @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
+    def setup_class(cls):
+        super().setup_class()
         cls.test_repo_path = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "test_repo")
         po_glob_pattern = os.path.join(cls.test_repo_path, "**", "*.po")
         pot_glob_pattern = f"{po_glob_pattern}t"
         cls.file_paths = glob.glob(po_glob_pattern, recursive=True) + glob.glob(pot_glob_pattern, recursive=True)
         cls.compatible_with_directories = False  # *.po files are not compatible with directoris only run with files
 
-    def setUp(self):
-        super().setUp()
+    def setup_method(self, method):
+        super().setup_method(method)
         self.expected_errors = EXPECTED_ERRORS.copy()
         self.checks_run = oca_pre_commit_hooks.checks_odoo_module_po.run
         self.checks_cli_main = oca_pre_commit_hooks.cli_po.main
 
+    @pytest.mark.parametrize("check2disable", EXPECTED_ERRORS)
+    def test_checks_disable_one_by_one_with_random_cli_env_conf(self, check2disable):
+        self._test_checks_disable_one_by_one_with_random_cli_env_conf(check2disable)
+
+    @pytest.mark.parametrize("check2enable", EXPECTED_ERRORS)
+    def test_checks_enable_one_by_one_with_random_cli_env_conf(self, check2enable):
+        self._test_checks_enable_one_by_one_with_random_cli_env_conf(check2enable)
+
     def test_non_exists_path(self):
         all_check_errors = self.checks_run(["/tmp/no_exists"], no_exit=True, no_verbose=False)
         real_errors = self.get_count_code_errors(all_check_errors)
-        self.assertDictEqual(real_errors, {"po-syntax-error": 1})
+        common.assertDictEqual(self, real_errors, {"po-syntax-error": 1})
 
     def test_pretty_format_po(self):
         ugly_po = os.path.join(self.test_repo_path, "eleven_module", "i18n", "ugly.po")
         pretty_po = os.path.join(self.test_repo_path, "eleven_module", "i18n", "pretty.po")
 
         errors = self.checks_run([pretty_po], enable={"po-pretty-format"}, no_exit=True, no_verbose=False)
-        self.assertFalse(errors)
+        assert not errors
 
         errors = self.checks_run([ugly_po], enable={"po-pretty-format"}, no_exit=True, no_verbose=False)
         real_errors = self.get_count_code_errors(errors)
-        self.assertIn("po-pretty-format", real_errors)
+        assert "po-pretty-format" in real_errors
 
     def test_pretty_format_po_autofix(self):
         ugly_po = os.path.join(self.test_repo_path, "eleven_module", "i18n", "ugly.po")
@@ -72,13 +81,13 @@ class TestChecksPO(common.ChecksCommon):
 
             self.checks_run([ugly_po_cp], enable={"po-pretty-format"}, no_exit=True, no_verbose=False, autofix=False)
             with open(ugly_po_cp, encoding="utf-8") as ugly_fd, open(autofix_po, encoding="utf-8") as pretty_fd:
-                self.assertNotEqual(ugly_fd.read(), pretty_fd.read())
+                assert ugly_fd.read() != pretty_fd.read()
 
             self.checks_run([ugly_po_cp], enable={"po-pretty-format"}, no_exit=True, no_verbose=False, autofix=True)
             with open(ugly_po_cp, encoding="utf-8") as ugly_fd, open(autofix_po, encoding="utf-8") as pretty_fd:
-                self.assertEqual(ugly_fd.read(), pretty_fd.read())
+                assert ugly_fd.read() == pretty_fd.read()
 
-    @unittest.skipIf(not os.environ.get("BUILD_README"), "BUILD_README environment variable not enabled")
+    @pytest.mark.skipif(not os.getenv("BUILD_README"), reason="BUILD_README environment variable not enabled")
     def test_build_docstring(self):
         checks_found, checks_docstring = oca_pre_commit_hooks.utils.get_checks_docstring(
             [oca_pre_commit_hooks.checks_odoo_module_po.ChecksOdooModulePO]
@@ -123,9 +132,7 @@ class TestChecksPO(common.ChecksCommon):
         )
         with open(readme_path, "w", encoding="UTF-8") as f_readme:
             f_readme.write(new_readme)
-        self.assertEqual(
-            readme_content,
-            new_readme,
-            "The README was updated! Don't panic only failing for CI purposes. Run the same test again.",
-        )
-        self.assertFalse(set(self.expected_errors) - checks_found, "Missing docstring of checks tested")
+        assert (
+            readme_content == new_readme
+        ), "The README was updated! Don't panic only failing for CI purposes. Run the same test again."
+        assert not set(self.expected_errors) - checks_found, "Missing docstring of checks tested"

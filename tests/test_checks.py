@@ -4,8 +4,9 @@ import os
 import re
 import subprocess
 import sys
-import unittest
 from pathlib import Path
+
+import pytest
 
 import oca_pre_commit_hooks
 from . import common
@@ -56,8 +57,8 @@ EXPECTED_ERRORS = {
 
 class TestChecks(common.ChecksCommon):
 
-    def setUp(self):
-        super().setUp()
+    def setup_method(self, method):
+        super().setup_method(method)
         self.file_paths = glob.glob(os.path.join(self.test_repo_path, "*", "__openerp__.py")) + glob.glob(
             os.path.join(self.test_repo_path, "*", "__manifest__.py")
         )
@@ -73,7 +74,15 @@ class TestChecks(common.ChecksCommon):
         result2 = oca_pre_commit_hooks.cli_fixit.main(*args, **kwargs)
         return result + result2
 
-    @unittest.skipIf(not os.environ.get("BUILD_README"), "BUILD_README environment variable not enabled")
+    @pytest.mark.parametrize("check2disable", EXPECTED_ERRORS)
+    def test_checks_disable_one_by_one_with_random_cli_env_conf(self, check2disable):
+        self._test_checks_disable_one_by_one_with_random_cli_env_conf(check2disable)
+
+    @pytest.mark.parametrize("check2enable", EXPECTED_ERRORS)
+    def test_checks_enable_one_by_one_with_random_cli_env_conf(self, check2enable):
+        self._test_checks_enable_one_by_one_with_random_cli_env_conf(check2enable)
+
+    @pytest.mark.skipif(not os.getenv("BUILD_README"), reason="BUILD_README environment variable not enabled")
     def test_build_docstring(self):
         # Run "tox -e update-readme"
         # Why this here?
@@ -90,7 +99,10 @@ class TestChecks(common.ChecksCommon):
 
         checks_docstring = f"# Checks\n{checks_docstring}"
         new_readme = self.re_replace(
-            "[//]: # (start-checks)", "[//]: # (end-checks)", checks_docstring, readme_content
+            "[//]: # (start-checks)",
+            "[//]: # (end-checks)",
+            checks_docstring,
+            readme_content,
         )
 
         # Find a better way to get the --help string
@@ -138,124 +150,89 @@ class TestChecks(common.ChecksCommon):
         )
         with open(readme_path, "w", encoding="UTF-8") as f_readme:
             f_readme.write(new_readme)
-        self.assertEqual(
-            readme_content,
-            new_readme,
-            "The README was updated! Don't panic only failing for CI purposes. Run the same test again.",
-        )
-        self.assertFalse(set(self.expected_errors) - checks_found, "Missing docstring of checks tested")
+        assert (
+            readme_content == new_readme
+        ), "The README was updated! Don't panic only failing for CI purposes. Run the same test again."
+        assert not set(self.expected_errors) - checks_found, "Missing docstring of checks tested"
 
     def test_non_exists_path(self):
         all_check_errors = self.checks_run(["/tmp/no_exists"], no_exit=True, no_verbose=False)
-        self.assertFalse(all_check_errors)
+        assert not all_check_errors
 
     def test_autofix(self):
         # Before autofix
         fname_wo_header = os.path.join(self.test_repo_path, "broken_module", "xml_wo_header.xml")
         with open(fname_wo_header, "rb") as f_wo_header:
             content = f_wo_header.read()
-        self.assertFalse(content.strip().startswith(b"<?xml version="), "The XML header was previously added")
+        assert not content.strip().startswith(b"<?xml version="), "The XML header was previously added"
 
         fname_wrong_header = os.path.join(self.test_repo_path, "broken_module", "model_view.xml")
         with open(fname_wrong_header, "rb") as f_wrong_header:
             content = f_wrong_header.read()
-        self.assertFalse(
-            content.strip().startswith(oca_pre_commit_hooks.checks_odoo_module_xml.XML_HEADER_EXPECTED),
-            "The XML wrong header was previously fixed",
-        )
+        assert not content.strip().startswith(
+            oca_pre_commit_hooks.checks_odoo_module_xml.XML_HEADER_EXPECTED
+        ), "The XML wrong header was previously fixed"
 
         fname_wrong_xmlid_order = os.path.join(self.test_repo_path, "broken_module", "model_view_odoo2.xml")
         with open(fname_wrong_xmlid_order, "rb") as f_wrong_xmlid_order:
             content = f_wrong_xmlid_order.read()
-        self.assertIn(
-            b'<record model="ir.ui.view" id="view_ir_config_search">',
-            content,
-            "The XML wrong xmlid order was previously fixed",
-        )
-        self.assertIn(
-            b"<menuitem name=\"Root\" id='broken_module.menu_root' />",
-            content,
-            "The XML wrong xmlid order and redundant module name was previously fixed",
-        )
-        self.assertIn(
-            b"<menuitem name=\"Root 2\"\n        id='broken_module.menu_root2'",
-            content,
-            "The XML wrong xmlid order and redundant module name was previously fixed",
-        )
+        assert (
+            b'<record model="ir.ui.view" id="view_ir_config_search">' in content
+        ), "The XML wrong xmlid order was previously fixed"
+        assert (
+            b"<menuitem name=\"Root\" id='broken_module.menu_root' />" in content
+        ), "The XML wrong xmlid order and redundant module name was previously fixed"
+        assert (
+            b"<menuitem name=\"Root 2\"\n        id='broken_module.menu_root2'" in content
+        ), "The XML wrong xmlid order and redundant module name was previously fixed"
 
         fname_wrong_xml_eval = os.path.join(self.test_repo_path, "broken_module", "demo", "duplicated_id_demo.xml")
         with open(fname_wrong_xml_eval, "rb") as f_wrong_xml_eval:
             content = f_wrong_xml_eval.read()
-        self.assertIn(
-            b'<field name="active">True</field>',
-            content,
-            "The XML eval was previously fixed",
-        )
-        self.assertIn(
-            b'<field name="sequence">1</field>',
-            content,
-            "The XML eval was previously fixed",
-        )
-        self.assertIn(
-            b'<field name="amount">1.08</field>',
-            content,
-            "The XML eval was previously fixed",
-        )
-        self.assertIn(
-            b'<field name="phone">4777777777</field>',
-            content,
-            "The XML eval was previously fixed",
-        )
-        self.assertIn(
-            b'<field name="priority">-1</field>',
-            content,
-            "The XML eval was not fixed",
-        )
+        assert b'<field name="active">True</field>' in content, "The XML eval was previously fixed"
+        assert b'<field name="sequence">1</field>' in content, "The XML eval was previously fixed"
+        assert b'<field name="amount">1.08</field>' in content, "The XML eval was previously fixed"
+        assert b'<field name="phone">4777777777</field>' in content, "The XML eval was previously fixed"
+        assert b'<field name="priority">-1</field>' in content, "The XML eval was not fixed"
 
         fname_redundant_module_name = os.path.join(self.test_repo_path, "broken_module", "model_view2.xml")
         with open(fname_redundant_module_name, "rb") as f_redundant_module_name:
             content = f_redundant_module_name.read()
-        self.assertIn(
-            b'<record id="broken_module.view_model_form2" model="ir.ui.view">',
-            content,
-            "The XML wrong redundant module name was previously fixed",
-        )
-        self.assertTrue(
-            (Path(self.test_repo_path) / "broken_module" / "README.md").is_file(),
-            "The README.md file should exist before autofix",
-        )
-        self.assertFalse(
-            (Path(self.test_repo_path) / "broken_module" / "README.rst").is_file(),
-            "The README.rst file should not exist before autofix",
-        )
+        assert (
+            b'<record id="broken_module.view_model_form2" model="ir.ui.view">' in content
+        ), "The XML wrong redundant module name was previously fixed"
+        assert (
+            Path(self.test_repo_path) / "broken_module" / "README.md"
+        ).is_file(), "The README.md file should exist before autofix"
+        assert not (
+            Path(self.test_repo_path) / "broken_module" / "README.rst"
+        ).is_file(), "The README.rst file should not exist before autofix"
 
         template_xml = os.path.join(self.test_repo_path, "test_module", "website_templates.xml")
         with open(template_xml, "rb") as f_template_xml:
             content = f_template_xml.read()
-        self.assertIn(
+        assert (
             b'''<template
         name="test_module_widget"
         inherit_id="web.assets_backend"
-        id="assets_backend"''',
-            content,
-            "The XML wrong xmlid order was previously fixed",
-        )
+        id="assets_backend"'''
+            in content
+        ), "The XML wrong xmlid order was previously fixed"
 
-        self.assertIn(
+        assert (
             b"""<template
         name='test_module_widget_2'
         inherit_id="web.assets_backend"
         id='assets_backend_2'
-    />""",
-            content,
-            "The XML wrong xmlid order was previously fixed",
-        )
+    />"""
+            in content
+        ), "The XML wrong xmlid order was previously fixed"
 
         py_comment = os.path.join(self.test_repo_path, "eleven_module", "models.py")
         with open(py_comment, "rb") as f:
             content = f.read()
 
-        self.assertIn(
+        assert (
             b"""
 # comment normal
 # pylint: comment
@@ -265,112 +242,83 @@ class TestChecks(common.ChecksCommon):
 # flake8: comment
 # comment normal
 
-""",
-            content,
-            "The py Copyright was previously fixed",
-        )
+"""
+            in content
+        ), "The py Copyright was previously fixed"
 
         self.checks_run(self.file_paths, autofix=True, no_exit=True, no_verbose=False)
 
         # After autofix
         with open(fname_wo_header, "rb") as f_wo_header:
             content = f_wo_header.read()
-        self.assertTrue(content.strip().startswith(b"<?xml version="), "The XML header was not added")
+        assert content.strip().startswith(b"<?xml version="), "The XML header was not added"
 
         with open(fname_wrong_header, "rb") as f_wrong_header:
             content = f_wrong_header.read()
-        self.assertTrue(
-            content.strip().startswith(oca_pre_commit_hooks.checks_odoo_module_xml.XML_HEADER_EXPECTED),
-            "The XML wrong header was not fixed",
-        )
+        assert content.strip().startswith(
+            oca_pre_commit_hooks.checks_odoo_module_xml.XML_HEADER_EXPECTED
+        ), "The XML wrong header was not fixed"
         with open(fname_wrong_xmlid_order, "rb") as f_wrong_xmlid_order:
             content = f_wrong_xmlid_order.read()
-        self.assertIn(
-            b'<record id="view_ir_config_search" model="ir.ui.view">', content, "The XML wrong xmlid was not fixed"
-        )
-        self.assertIn(
-            b"<menuitem id='menu_root' name=\"Root\" />",
-            content,
-            "The XML wrong xmlid order and redundant module name was not fixed",
-        )
-        self.assertIn(
-            b"<menuitem id='menu_root2'\n        name=\"Root 2\"",
-            content,
-            "The XML wrong xmlid order multiline and redundant module name was not fixed",
-        )
+        assert (
+            b'<record id="view_ir_config_search" model="ir.ui.view">' in content
+        ), "The XML wrong xmlid was not fixed"
+        assert (
+            b"<menuitem id='menu_root' name=\"Root\" />" in content
+        ), "The XML wrong xmlid order and redundant module name was not fixed"
+        assert (
+            b"<menuitem id='menu_root2'\n        name=\"Root 2\"" in content
+        ), "The XML wrong xmlid order multiline and redundant module name was not fixed"
 
         with open(fname_wrong_xml_eval, "rb") as f_wrong_xml_eval:
             content = f_wrong_xml_eval.read()
-        self.assertIn(
-            b'<field name="active" eval="True" />',
-            content,
-            "The XML eval was not fixed",
-        )
-        self.assertIn(
-            b'<field name="sequence" eval="1" />',
-            content,
-            "The XML eval was not fixed",
-        )
-        self.assertIn(
-            b'<field name="priority" eval="-1" />',
-            content,
-            "The XML eval was not fixed",
-        )
-        self.assertIn(
-            b'<field name="amount">1.08</field>',
-            content,
-            "The XML eval was not should be fixed for amount in that model",
-        )
-        self.assertIn(
-            b'<field name="phone">4777777777</field>',
-            content,
-            "The XML eval was not should be fixed for phone numbers",
-        )
+        assert b'<field name="active" eval="True" />' in content, "The XML eval was not fixed"
+        assert b'<field name="sequence" eval="1" />' in content, "The XML eval was not fixed"
+        assert b'<field name="priority" eval="-1" />' in content, "The XML eval was not fixed"
+        assert (
+            b'<field name="amount">1.08</field>' in content
+        ), "The XML eval was not should be fixed for amount in that model"
+        assert (
+            b'<field name="phone">4777777777</field>' in content
+        ), "The XML eval was not should be fixed for phone numbers"
 
         with open(fname_redundant_module_name, "rb") as f_redundant_module_name:
             content = f_redundant_module_name.read()
-        self.assertIn(
-            b'<record id="view_model_form2" model="ir.ui.view">',
-            content,
-            "The XML wrong redundant module name was not fixed",
-        )
-        self.assertFalse(
-            (Path(self.test_repo_path) / "broken_module" / "README.md").is_file(),
-            "The README.md file should not exist after autofix",
-        )
-        self.assertTrue(
-            (Path(self.test_repo_path) / "broken_module" / "README.rst").is_file(),
-            "The README.rst file should exist after autofix",
-        )
+        assert (
+            b'<record id="view_model_form2" model="ir.ui.view">' in content
+        ), "The XML wrong redundant module name was not fixed"
+        assert not (
+            Path(self.test_repo_path) / "broken_module" / "README.md"
+        ).is_file(), "The README.md file should not exist after autofix"
+        assert (
+            Path(self.test_repo_path) / "broken_module" / "README.rst"
+        ).is_file(), "The README.rst file should exist after autofix"
 
         with open(template_xml, "rb") as f_template_xml:
             content = f_template_xml.read()
-        self.assertIn(
+        assert (
             b'''<template
         id="assets_backend"
         name="test_module_widget"
-        inherit_id="web.assets_backend"''',
-            content,
-            "The XML xmlid order was not fixed",
-        )
-        self.assertIn(
+        inherit_id="web.assets_backend"'''
+            in content
+        ), "The XML xmlid order was not fixed"
+        assert (
             b"""<template
         id='assets_backend_2'
         name='test_module_widget_2'
         inherit_id="web.assets_backend"
-    />""",
-            content,
-            "The XML xmlid order was not fixed",
-        )
+    />"""
+            in content
+        ), "The XML xmlid order was not fixed"
 
         with open(py_comment, "rb") as f:
             content = f.read()
-        self.assertIn(
+        assert (
             b"""
 # pylint: comment
 # flake8: comment
 
-""",
-            content,
-            "The py Copyright was not fixed",
-        )
+"""
+            in content
+        ), "The py Copyright was not fixed"

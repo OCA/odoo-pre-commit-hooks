@@ -2,7 +2,6 @@ import os
 import re
 import subprocess
 import sys
-import unittest
 
 from . import common, test_checks, test_checks_po
 
@@ -17,12 +16,11 @@ def run_cmd(cmd):
     return (returncode, output.decode(sys.stdout.encoding), " ".join(cmd))
 
 
-class ChecksCommon(unittest.TestCase):
+class ChecksCommon:
     # TODO: Create a tmp repo and run different scenarios
 
     @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
+    def setup_class(cls):
         cls.maxDiff = None
         top_path = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
         cls.pre_commit_hooks_yaml_path = os.path.join(top_path, ".pre-commit-hooks.yaml")
@@ -42,8 +40,7 @@ repos:
 """
             f_dest.write(new_content)
 
-    def setUp(self):
-        super().setUp()
+    def setup_method(self, method):
         self.pre_commit_cmd = ["pre-commit", "run", "--color=never", "-avc", self.pre_commit_config_yaml_path]
         self.expected_errors = {}
 
@@ -55,7 +52,7 @@ repos:
         ansi = re.compile(r"\x1B\[[0-9;]*[A-Za-z]")
         output2 = ansi.sub("", output2)
         output += output2
-        self.assertTrue(returncode, f"The process exited with code zero {returncode} {output}")
+        assert returncode, f"The process exited with code zero {returncode} {output}"
         errors_count = {code: output.count(f": {code.replace('`', '')} ") for code in self.expected_errors}
         common.assertDictEqual(
             self, errors_count, self.expected_errors, f"Different result than expected for\n{cmd_str}\n{output}"
@@ -65,7 +62,7 @@ repos:
         self.expected_errors = test_checks_po.EXPECTED_ERRORS.copy()
         self.pre_commit_cmd.append("oca-checks-po")
         returncode, output, cmd_str = run_cmd(self.pre_commit_cmd)
-        self.assertTrue(returncode, f"The process exited with code zero {returncode} {output}")
+        assert returncode, f"The process exited with code zero {returncode} {output}"
         errors_count = {code: output.count(code) for code in self.expected_errors}
         common.assertDictEqual(
             self, errors_count, self.expected_errors, f"Different result than expected for\n{cmd_str}\n{output}"
