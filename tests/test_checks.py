@@ -24,7 +24,7 @@ EXPECTED_ERRORS = {
     "file-not-used": 1,
     "manifest-superfluous-key": 3,
     "manifest-syntax-error": 2,
-    "prefer-env-translation": 41,
+    "prefer-env-translation": 39,
     "prefer-readme-rst": 1,
     "unused-logger": 1,
     "use-header-comments": 1,
