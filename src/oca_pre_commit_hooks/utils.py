@@ -26,6 +26,7 @@ VALID_HEADER_COMMENTS = (
     "coding:",  # encode
     "fixit:",
     "lint-ignore:",  # fixit
+    "lint-ignore=",  # fixit
     "flake8:",
     "fmt:",  # black
     "isort:",
