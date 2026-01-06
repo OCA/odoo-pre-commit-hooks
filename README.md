@@ -356,9 +356,9 @@ options:
 
  * manifest-superfluous-key
 
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.13/test_repo/broken_module/__openerp__.py#L32 Delete empty values. You can disable this check by adding the following comment to the affected line or just above it `# lint-ignore: manifest-superfluous-key`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.13/test_repo/broken_module/__openerp__.py#L34 Delete empty values. You can disable this check by adding the following comment to the affected line or just above it `# lint-ignore: manifest-superfluous-key`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.13/test_repo/woversion_module/__manifest__.py#L8 Delete empty values. You can disable this check by adding the following comment to the affected line or just above it `# lint-ignore: manifest-superfluous-key`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.13/test_repo/broken_module/__openerp__.py#L32 Delete empty values. You can disable this check by adding the following comment to the affected line or just above it `# lint-ignore=manifest-superfluous-key` or `# lint-ignore`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.13/test_repo/broken_module/__openerp__.py#L34 Delete empty values. You can disable this check by adding the following comment to the affected line or just above it `# lint-ignore=manifest-superfluous-key` or `# lint-ignore`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.13/test_repo/woversion_module/__manifest__.py#L8 Delete empty values. You can disable this check by adding the following comment to the affected line or just above it `# lint-ignore=manifest-superfluous-key` or `# lint-ignore`
 
  * manifest-syntax-error
 
@@ -367,9 +367,9 @@ options:
 
  * prefer-env-translation
 
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.13/test_repo/broken_module/models/broken_model.py#L247 Use self.env._(...) instead of _(…) directly inside Odoo model methods. You can disable this check by adding the following comment to the affected line or just above it `# lint-ignore: prefer-env-translation`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.13/test_repo/broken_module/models/broken_model.py#L264 Use self.env._(...) instead of _(…) directly inside Odoo model methods. You can disable this check by adding the following comment to the affected line or just above it `# lint-ignore: prefer-env-translation`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.13/test_repo/broken_module/models/broken_model.py#L267 Use self.env._(...) instead of _(…) directly inside Odoo model methods. You can disable this check by adding the following comment to the affected line or just above it `# lint-ignore: prefer-env-translation`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.13/test_repo/broken_module/models/broken_model.py#L247 Use self.env._(...) instead of _(…) directly inside Odoo model methods. You can disable this check by adding the following comment to the affected line or just above it `# lint-ignore=prefer-env-translation` or `# lint-ignore`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.13/test_repo/broken_module/models/broken_model.py#L264 Use self.env._(...) instead of _(…) directly inside Odoo model methods. You can disable this check by adding the following comment to the affected line or just above it `# lint-ignore=prefer-env-translation` or `# lint-ignore`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.13/test_repo/broken_module/models/broken_model.py#L267 Use self.env._(...) instead of _(…) directly inside Odoo model methods. You can disable this check by adding the following comment to the affected line or just above it `# lint-ignore=prefer-env-translation` or `# lint-ignore`
 
  * prefer-readme-rst
 
@@ -377,7 +377,7 @@ options:
 
  * unused-logger
 
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.13/test_repo/broken_module/models/model_inhe1.py#L17 Unused `_logger` is not allowed in Odoo models. Remove it if not used. You can disable this check by adding the following comment to the affected line or just above it `# lint-ignore: unused-logger`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.13/test_repo/broken_module/models/model_inhe1.py#L17 Unused `_logger` is not allowed in Odoo models. Remove it if not used. You can disable this check by adding the following comment to the affected line or just above it `# lint-ignore=unused-logger` or `# lint-ignore`
 
  * use-header-comments
 

@@ -148,7 +148,7 @@ class ChecksOdooModuleFixit(BaseChecker):
                     info=(self.error or "")
                     + (
                         "You can disable this check by adding the following comment to the "
-                        f"affected line or just above it `# lint-ignore: {result.violation.rule_name}`"
+                        f"affected line or just above it `# lint-ignore={result.violation.rule_name}` or `# lint-ignore`"
                     ),
                     filepath=filename_short,
                     line=result.violation.range.start.line,
