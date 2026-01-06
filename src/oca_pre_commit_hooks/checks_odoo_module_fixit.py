@@ -20,27 +20,28 @@ MANIFEST_NAMES = ("__openerp__.py", "__manifest__.py")
 class ChecksOdooModuleFixit(BaseChecker):
     def __init__(self, manifest_path, enable, disable, changed=None, verbose=True, autofix=False):
         super().__init__(enable, disable, autofix=autofix, module_version=utils.manifest_version(manifest_path))
-        if not os.path.isfile(manifest_path) or os.path.basename(manifest_path) not in MANIFEST_NAMES:
+        manifest_path_obj = Path(manifest_path)
+        if not manifest_path_obj.is_file() or manifest_path_obj.name not in MANIFEST_NAMES:
             raise UserWarning(  # pragma: no cover
                 f"Not valid manifest file name {manifest_path} file expected {MANIFEST_NAMES}"
             )
-        self.manifest_path = manifest_path
+        self.manifest_path = manifest_path_obj
         self.changed = changed if changed is not None else []
         self.verbose = verbose
-        self.odoo_addon_path = os.path.dirname(self.manifest_path)
+        self.odoo_addon_path = manifest_path_obj.parent
         self.manifest_top_path = utils.top_path(self.odoo_addon_path)
-        self.odoo_addon_name = os.path.basename(self.odoo_addon_path)
+        self.odoo_addon_name = self.odoo_addon_path.name
         self.error = ""
         self.manifest_dict = self._manifest2dict()
         self.is_module_installable = self._is_installable()
         self.checks_errors = []
 
     def _manifest2dict(self):
-        if not os.path.isfile(os.path.join(self.odoo_addon_path, "__init__.py")):
+        if not (self.odoo_addon_path / "__init__.py").is_file():
             if self.verbose:
                 print(f"[bold]{self.manifest_path}[/bold]: missing `__init__.py` file")
             return {}
-        with open(self.manifest_path, encoding="UTF-8") as f_manifest:
+        with self.manifest_path.open(encoding="UTF-8") as f_manifest:
             try:
                 return ast.literal_eval(f_manifest.read())
             # Using same way than odoo
@@ -61,7 +62,7 @@ class ChecksOdooModuleFixit(BaseChecker):
             (
                 parse_rule(
                     f"{lint_rule.__module__.replace('fixit.local', '')}",
-                    Path(os.path.dirname(os.path.abspath(__file__))),
+                    Path(__file__).resolve().parent,
                 ),
                 lint_rule.name,
             )
@@ -141,7 +142,7 @@ class ChecksOdooModuleFixit(BaseChecker):
                 message = result.violation.message
                 if result.violation.autofixable and not self.autofix:
                     message += " (has autofix)"
-                filename_short = os.path.relpath(result.path.as_posix(), self.manifest_top_path)
+                filename_short = result.path.relative_to(self.manifest_top_path).as_posix()
                 self.register_error(
                     code=result.violation.rule_name,
                     message=message,
@@ -225,9 +226,10 @@ def lookup_manifest_paths(filenames_or_modules):
     # Ordered paths will have common ancestors closed to next item
     for filename_or_module in sorted(filenames_or_modules):
         filename_or_module = utils.full_norm_path(filename_or_module)
+        filename_or_module_obj = Path(filename_or_module)
         directory_path = (
-            os.path.dirname(filename_or_module) if os.path.isfile(filename_or_module) else filename_or_module
-        )
+            filename_or_module_obj.parent if filename_or_module_obj.is_file() else filename_or_module_obj
+        ).as_posix()
         manifest_path = utils.walk_up(directory_path, MANIFEST_NAMES, utils.top_path(directory_path))
         odoo_module_files_changed[manifest_path].add(filename_or_module)
     return odoo_module_files_changed
@@ -257,7 +259,12 @@ def run(files_or_modules, enable=None, disable=None, no_verbose=False, no_exit=F
         if not manifest_path:
             continue
         checks_obj = ChecksOdooModuleFixit(
-            os.path.realpath(manifest_path), enable, disable, changed=changed, verbose=not no_verbose, autofix=autofix
+            Path(manifest_path).resolve().as_posix(),
+            enable,
+            disable,
+            changed=changed,
+            verbose=not no_verbose,
+            autofix=autofix,
         )
         for check in utils.getattr_checks(checks_obj):
             check()
