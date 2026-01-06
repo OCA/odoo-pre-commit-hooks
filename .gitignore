@@ -79,3 +79,4 @@ docs/_build/
 # Auto-generated
 ChangeLog
 .pre-commit-config-local.yaml
+prof/
