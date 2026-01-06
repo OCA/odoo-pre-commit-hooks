@@ -7,7 +7,8 @@ score=n
 [MESSAGES CONTROL]
 enable=all
 # Enable all then relax disable instead of disable all and enable one-by-one
-disable=c-extension-no-member,
+disable=attribute-defined-outside-init,
+    c-extension-no-member,
     fixme,
     import-error,
     inconsistent-return-statements,
@@ -17,6 +18,7 @@ disable=c-extension-no-member,
     missing-class-docstring,
     missing-function-docstring,
     missing-module-docstring,
+    no-member,
     suppressed-message,
     too-few-public-methods,
     too-many-ancestors,
@@ -36,6 +38,7 @@ disable=c-extension-no-member,
     too-many-return-statements,
     too-many-star-expressions,
     too-many-statements,
+    unused-argument,
 
 [REPORTS]
 msg-template={path}:{line}: [{msg_id}({symbol}), {obj}] {msg}
