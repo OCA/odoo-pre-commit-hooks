@@ -5,6 +5,7 @@ pbr
 pre-commit
 pytest
 pytest-cov
+pytest-profiling
 pytest-xdist
 tox
 twine
