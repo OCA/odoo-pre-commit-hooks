@@ -358,8 +358,8 @@ options:
  * field-string-redundant
 
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.15/test_repo/broken_module/models/broken_model.py#L98 The 'string' attribute is redundant and should be removed. (has autofix) You can disable this check by adding the following comment to the affected line or just above it `# lint-ignore=field-string-redundant` or `# lint-ignore`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.15/test_repo/broken_module/models/broken_model.py#L102 The 'string' attribute is redundant and should be removed. (has autofix) You can disable this check by adding the following comment to the affected line or just above it `# lint-ignore=field-string-redundant` or `# lint-ignore`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.15/test_repo/broken_module/models/broken_model.py#L103 The 'string' attribute is redundant and should be removed. (has autofix) You can disable this check by adding the following comment to the affected line or just above it `# lint-ignore=field-string-redundant` or `# lint-ignore`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.15/test_repo/broken_module/models/broken_model.py#L130 The 'string' attribute is redundant and should be removed. (has autofix) You can disable this check by adding the following comment to the affected line or just above it `# lint-ignore=field-string-redundant` or `# lint-ignore`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.15/test_repo/broken_module/models/broken_model.py#L140 The 'string' attribute is redundant and should be removed. (has autofix) You can disable this check by adding the following comment to the affected line or just above it `# lint-ignore=field-string-redundant` or `# lint-ignore`
 
  * file-not-used
 
