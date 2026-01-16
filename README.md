@@ -233,6 +233,11 @@ It could raise `ValueError` exception if the language is changed.
 
 ** Special fixit checks
 
+* Check field-string-redundant
+Detects and removes the 'string' parameter in odoo.fields if it is redundant
+(matches the field name in Title Case), ensuring it only applies to
+Odoo Class definitions (Models).
+
 * Check manifest-superfluous-key
 Identifies and removes
 Identifies from Odoo manifest files (__manifest__.py) superfluous keys
@@ -349,6 +354,12 @@ options:
  * csv-syntax-error
 
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.14/test_repo/syntax_err_module/ir.model.access.csv#L1 'utf-8' codec can't decode byte 0xf1 in position 47: invalid continuation byte
+
+ * field-string-redundant
+
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.14/test_repo/broken_module/models/broken_model.py#L98 The 'string' attribute is redundant and should be removed. (has autofix) You can disable this check by adding the following comment to the affected line or just above it `# lint-ignore=field-string-redundant` or `# lint-ignore`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.14/test_repo/broken_module/models/broken_model.py#L102 The 'string' attribute is redundant and should be removed. (has autofix) You can disable this check by adding the following comment to the affected line or just above it `# lint-ignore=field-string-redundant` or `# lint-ignore`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.14/test_repo/broken_module/models/broken_model.py#L103 The 'string' attribute is redundant and should be removed. (has autofix) You can disable this check by adding the following comment to the affected line or just above it `# lint-ignore=field-string-redundant` or `# lint-ignore`
 
  * file-not-used
 
