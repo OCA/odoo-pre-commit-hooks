@@ -77,7 +77,7 @@ class FieldStringRedundant(CstLintRule):
                 return True
         return False
 
-    def visit_Assign(self, node: cst.Assign) -> None:  # noqa: B906 pylint:disable=invalid-name
+    def visit_Assign(self, node: cst.Assign) -> None:  # noqa: B906,C901 pylint:disable=invalid-name,too-complex
         if not self._is_inside_odoo_class or self._is_inside_function:
             return
 
@@ -96,13 +96,22 @@ class FieldStringRedundant(CstLintRule):
         if not self.is_odoo_field_call(func):
             return
 
+        for arg in call.args:
+            if arg.keyword and arg.keyword.value == "related":
+                return
+
         field_type = func.attr.value
         string_arg_node = None
 
         for arg in call.args:
-            if arg.keyword and arg.keyword.value == "string":
+            if not arg.keyword:
+                continue
+            kw_value = arg.keyword.value
+            if kw_value == "string":
                 string_arg_node = arg
-                break
+            elif kw_value == "related":
+                # skip related fields since that the name change with the original one
+                return
 
         if not string_arg_node:
             position = self.FIELD_STRING_POSITIONS.get(field_type, 0)
@@ -167,7 +176,15 @@ class FieldStringRedundant(CstLintRule):
             """
             from odoo import models
             class MyModel(models.Model):
-                name33 = fields.Char('Name33')
+                name = fields.Char('Name')
+            """
+        ),
+        # ignore related fields
+        ValidTestCase(
+            """
+            from odoo import fields, models
+            class MyModel(models.Model):
+                name33 = fields.Char('Name33', related="partner_id.name")
             """
         ),
     ]
