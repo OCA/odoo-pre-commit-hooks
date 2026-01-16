@@ -22,6 +22,7 @@ ALL_CHECK_CLASS = [
 EXPECTED_ERRORS = {
     "csv-duplicate-record-id": 1,
     "csv-syntax-error": 1,
+    "field-string-redundant": 32,
     "file-not-used": 1,
     "manifest-superfluous-key": 3,
     "manifest-syntax-error": 2,
