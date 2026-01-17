@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <!-- Deprecated QWeb directive 15 "t-esc" and "t-raw" -->
+    <template id="test_template_15" name="Test Template 15">
+        <div>
+            <span t-esc="price" />
+            <span t-raw="amount" />
+        </div>
+    </template>
+</odoo>
