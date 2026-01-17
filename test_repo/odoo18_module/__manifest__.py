@@ -8,5 +8,6 @@
     ],
     'data': [
         'views/deprecated_chatter.xml',
+        'views/deprecated_qweb_directives15.xml',
     ],
 }

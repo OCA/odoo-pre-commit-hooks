@@ -142,6 +142,10 @@ deprecated <openerp> xml node
 * Check xml-deprecated-qweb-directive
 for use of deprecated QWeb directives t-*-options
 
+* Check xml-deprecated-qweb-directive-15
+t-esc and t-raw directives are deprecated in Odoo v15.0, use t-out instead.
+For more details https://github.com/odoo/odoo/commit/01875541b1a8131cb and https://github.com/odoo/odoo/pull/70004
+
 * Check xml-header-missing
 Generated when the XML file is missing the XML declaration header '<?xml version="1.0" encoding="UTF-8" ?>'
 
@@ -424,6 +428,11 @@ options:
 
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.16/test_repo/test_module/website_templates.xml#L7 Deprecated QWeb directive `t-esc-options`. Use `t-options` instead
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.16/test_repo/test_module/website_templates.xml#L37 Deprecated QWeb directive `t-field-options`. Use `t-options` instead
+
+ * xml-deprecated-qweb-directive-15
+
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.16/test_repo/odoo18_module/views/deprecated_qweb_directives15.xml#L6 Deprecated QWeb directive `t-esc`. Use `t-out` instead
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.16/test_repo/odoo18_module/views/deprecated_qweb_directives15.xml#L7 Deprecated QWeb directive `t-raw`. Use `t-out` instead
 
  * xml-deprecated-tree-attribute
 

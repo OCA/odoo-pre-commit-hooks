@@ -63,6 +63,12 @@ class ChecksOdooModuleXML(BaseChecker):
         f"/odoo//template//*[{qweb_deprecated_attrs}] | " f"/openerp//template//*[{qweb_deprecated_attrs}]"
     )
 
+    qweb_deprecated_directives15 = {"t-esc", "t-raw"}
+    qweb_deprecated_attrs15 = "|".join(f"@{d}" for d in qweb_deprecated_directives15)
+    xpath_qweb_deprecated15 = etree.XPath(
+        f"/odoo//template//*[{qweb_deprecated_attrs15}] | " f"/openerp//template//*[{qweb_deprecated_attrs15}]"
+    )
+
     @staticmethod
     def _get_boolean_field_by_model(model_name):
         return utils.DFLT_BOOLEAN_FIELDS + (utils.DFLT_BOOLEAN_FIELDS_BY_MODEL.get(model_name) or [])
@@ -745,6 +751,39 @@ class ChecksOdooModuleXML(BaseChecker):
                     filepath=manifest_data["filename_short"],
                     line=node.sourceline,
                 )
+
+    @utils.only_required_for_checks("xml-deprecated-qweb-directive-15")
+    def check_xml_deprecated_qweb_directives_15(self):
+        """* Check xml-deprecated-qweb-directive-15
+        t-esc and t-raw directives are deprecated in Odoo v15.0, use t-out instead.
+        For more details https://github.com/odoo/odoo/commit/01875541b1a8131cb and https://github.com/odoo/odoo/pull/70004
+        """
+        if not self.module_version or (self.module_version and self.module_version < Version("15")):
+            return
+        for manifest_data in self.manifest_datas:
+            if not self.is_message_enabled("xml-deprecated-qweb-directive-15", manifest_data["disabled_checks"]):
+                continue
+            for node in self.xpath_qweb_deprecated15(manifest_data["node"]):
+                node_attrs = set(node.attrib)
+                node_attrs_deprecated = node_attrs & self.qweb_deprecated_directives15
+                self.register_error(
+                    code="xml-deprecated-qweb-directive-15",
+                    message=f"Deprecated QWeb directive `{', '.join(node_attrs_deprecated)}`. Use `t-out` instead",
+                    filepath=manifest_data["filename_short"],
+                    line=node.sourceline,
+                )
+                if self.autofix and "t-out" not in node_attrs:
+                    # if t-out already exists, skip autofix
+                    attr_deprecated = next(iter(node_attrs_deprecated))
+                    value_deprecated = node.attrib.get(attr_deprecated)
+                    bef, during, aft = self._read_node(manifest_data["filename"], node)
+                    pattern = rb"(?P<prefix>\b)" + re.escape(attr_deprecated).encode() + rb'(?P<suffix>\s*=\s*["\'])'
+                    during2 = re.sub(pattern, rb"\g<prefix>t-out\g<suffix>", during, count=1)
+                    if during2 != during:
+                        # Modify the record attrib to propagate the change to other checks
+                        node.attrib.pop(attr_deprecated)
+                        node.attrib["t-out"] = value_deprecated
+                        utils.perform_fix(manifest_data["filename"], bef + during2 + aft)
 
     @utils.only_required_for_checks("xml-xpath-translatable-item")
     def check_xml_xpath(self):
