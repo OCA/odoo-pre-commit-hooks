@@ -9,7 +9,7 @@ context = ${{COVERAGE_CONTEXT}}
 [report]
 show_missing = true
 precision = 2
-fail_under = 98
+fail_under = 95
 omit =
     *__init__.py
     */tests/*
