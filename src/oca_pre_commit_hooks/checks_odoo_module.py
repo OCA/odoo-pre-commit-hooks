@@ -37,6 +37,7 @@ MANIFEST_DATA_EXTS = [
     ".csv",
     ".xml",
 ]
+MAX_WEBLATE_NAME_LENGTH = 90
 DATA_MANUAL_KEY = "oca_data_manual"
 BLUE_PILL = "\033[94m🔵\033[0m"
 RED_PILL = "\033[91m🔴\033[0m"
@@ -153,6 +154,31 @@ class ChecksOdooModule(BaseChecker):
                 filepath=manifest_path_short,
                 line=1,
             )
+
+    @utils.only_required_for_installable()
+    @utils.only_required_for_checks("weblate-component-too-long")
+    def check_component_name_too_long(self):
+        """* Check weblate-component-too-long
+        Check if the component is too long
+        Weblate have 100 characters limit for repository name + Odoo Version + module name
+        e.g. The following module:
+            https://github.com/OCA/account-financial-reporting/tree/18.0/account_tax_balance
+        Generates the following component:
+            account-financial-reporting-18.0-account_tax_balance
+        """
+        manifest_path_short = os.path.relpath(self.manifest_path, self.manifest_top_path)
+        repo_name = utils.repo_name(self.manifest_top_path)
+        weblate_component_name = f"{repo_name}-00.0-{self.odoo_addon_name}"
+        component_length = len(weblate_component_name)
+        if component_length <= MAX_WEBLATE_NAME_LENGTH:
+            return
+        self.register_error(
+            code="weblate-component-too-long",
+            message="Repo Name + Odoo version + Module name is too long for weblate component",
+            info=f"'{weblate_component_name}' size {component_length} is longer than {MAX_WEBLATE_NAME_LENGTH} characters",
+            filepath=manifest_path_short,
+            line=1,
+        )
 
     @staticmethod
     def _get_module_data_files(module_root_path):
