@@ -254,6 +254,29 @@ def top_path(path):
         return path.root or Path.home()
 
 
+@lru_cache(maxsize=64)
+def repo_name(path):
+    """Get the repository name based on the first git remote URL."""
+    try:
+        # Get the list of remotes
+        remotes = (
+            subprocess.check_output(["git", "-C", path, "remote"], stderr=subprocess.STDOUT)
+            .decode(sys.stdout.encoding)
+            .splitlines()
+        )
+        # Get the URL of the remote
+        remote_url = (
+            subprocess.check_output(["git", "-C", path, "remote", "get-url", remotes[0]], stderr=subprocess.STDOUT)
+            .decode(sys.stdout.encoding)
+            .strip()
+        )
+        # Get the repo name
+        repo = os.path.splitext(os.path.basename(remote_url.rstrip("/")))[0]
+        return repo
+    except (FileNotFoundError, subprocess.CalledProcessError, IndexError):
+        return ""
+
+
 def full_norm_path(path):
     """Expand paths in all possible ways"""
     return os.path.normpath(os.path.realpath(os.path.abspath(os.path.expanduser(os.path.expandvars(path.strip())))))

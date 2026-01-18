@@ -30,6 +30,7 @@ EXPECTED_ERRORS = {
     "prefer-readme-rst": 1,
     "unused-logger": 1,
     "use-header-comments": 1,
+    "weblate-component-too-long": 1,
     "xml-create-user-wo-reset-password": 1,
     "xml-dangerous-qweb-replace-low-priority": 9,
     "xml-deprecated-data-node": 8,
