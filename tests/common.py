@@ -41,6 +41,10 @@ def create_dummy_repo(src_path, dest_path):
     copy_tree(src_path, dest_path)
     subprocess.check_call(["git", "init", dest_path, "--initial-branch=main"])
     subprocess.check_call(["git", "add", "*"], cwd=dest_path)
+    git_big_repo_name = "big-" * 17 + ".git"
+    subprocess.check_call(
+        ["git", "remote", "add", "my_remote", f"git@github.com:/OCA/{git_big_repo_name}"], cwd=dest_path
+    )
 
 
 class ChecksCommon:

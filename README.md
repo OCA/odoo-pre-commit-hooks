@@ -108,6 +108,14 @@ be disabled.
 
 # Checks
 
+* Check weblate-component-too-long
+Check if the component is too long
+Weblate have 100 characters limit for repository name + Odoo Version + module name
+e.g. The following module:
+    https://github.com/OCA/account-financial-reporting/tree/18.0/account_tax_balance
+Generates the following component:
+    account-financial-reporting-18.0-account_tax_balance
+
 * Check file-not-used
 Check if there is a file created but not referenced from __manifest__.py
 
@@ -397,6 +405,10 @@ options:
  * use-header-comments
 
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.17/test_repo/eleven_module/models.py#L9 Use of header comments in lines 3, 5, 6, 7, 9
+
+ * weblate-component-too-long
+
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.17/test_repo/syntax_err_module/__manifest__.py#L1 Repo Name + Odoo version + Module name is too long for weblate component 'big-big-big-big-big-big-big-big-big-big-big-big-big-big-big-big-big--00.0-syntax_err_module' size 91 is longer than 90 characters
 
  * xml-create-user-wo-reset-password
 

@@ -35,10 +35,13 @@ class TestProfiling:
         checks_module_run2 = oca_pre_commit_hooks.cli_fixit.main
         mp = pytest.MonkeyPatch()
         mp.setattr(sys, "argv", ["", "--no-exit", "--no-verbose"] + self.module_files)
+        module_errors = MODULES_ERRORS.copy()
+        # The remote repo used here is not too long (It is using the original of this package)
+        module_errors.pop("weblate-component-too-long", None)
         try:
             errors = checks_module_run()
             errors += checks_module_run2()
-            common.assertDictEqual(self, common.ChecksCommon.get_count_code_errors(errors), MODULES_ERRORS)
+            common.assertDictEqual(self, common.ChecksCommon.get_count_code_errors(errors), module_errors)
         finally:
             mp.undo()
 
