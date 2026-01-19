@@ -408,7 +408,7 @@ options:
 
  * weblate-component-too-long
 
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.18/test_repo/syntax_err_module/__manifest__.py#L1 Repo Name + Odoo version + Module name is too long for weblate component 'big-big-big-big-big-big-big-big-big-big-big-big-big-big-big-big-big--00.0-syntax_err_module' size 91 is longer than 90 characters
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.18/test_repo/syntax_err_module/__manifest__.py#L1 Repo Name + Odoo version + Module name is too long for weblate component 'biiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiig-00.0-syntax_err_module' size 101 is longer than 100 characters
 
  * xml-create-user-wo-reset-password
 

@@ -11,6 +11,7 @@ from distutils.dir_util import copy_tree  # pylint:disable=deprecated-module
 import pytest
 
 from oca_pre_commit_hooks import utils
+from oca_pre_commit_hooks.checks_odoo_module import MAX_WEBLATE_NAME_LENGTH
 from oca_pre_commit_hooks.global_parser import CONFIG_NAME, DISABLE_ENV_VAR, ENABLE_ENV_VAR
 
 RND = random.Random(987654321)
@@ -41,7 +42,8 @@ def create_dummy_repo(src_path, dest_path):
     copy_tree(src_path, dest_path)
     subprocess.check_call(["git", "init", dest_path, "--initial-branch=main"])
     subprocess.check_call(["git", "add", "*"], cwd=dest_path)
-    git_big_repo_name = "big-" * 17 + ".git"
+    git_big_repo_name = "b" + "i" * (MAX_WEBLATE_NAME_LENGTH - 24) + "g" + ".git"
+
     subprocess.check_call(
         ["git", "remote", "add", "my_remote", f"git@github.com:/OCA/{git_big_repo_name}"], cwd=dest_path
     )
