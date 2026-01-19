@@ -152,8 +152,12 @@
                 </form>
             </field>
         </record>
+
+    <!-- Comment Root -->
+
     <menuitem name="Root" id='broken_module.menu_root' />
 
+    <!-- Comment Root 2 -->
     <menuitem name="Root 2"
         id='broken_module.menu_root2'
         parent="menu_root"
