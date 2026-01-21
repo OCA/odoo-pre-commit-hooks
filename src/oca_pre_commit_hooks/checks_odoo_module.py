@@ -37,7 +37,7 @@ MANIFEST_DATA_EXTS = [
     ".csv",
     ".xml",
 ]
-MAX_WEBLATE_NAME_LENGTH = 90
+MAX_WEBLATE_NAME_LENGTH = 100
 DATA_MANUAL_KEY = "oca_data_manual"
 BLUE_PILL = "\033[94m🔵\033[0m"
 RED_PILL = "\033[91m🔴\033[0m"
