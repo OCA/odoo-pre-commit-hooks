@@ -539,8 +539,8 @@ options:
  * xml-redundant-module-name
 
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.18/test_repo/broken_module/model_view2.xml#L15 Redundant module name `<record id="broken_module.view_model_form2"` Use `<record id="view_model_form2"` instead
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.18/test_repo/broken_module/model_view_odoo2.xml#L155 Redundant module name `<menuitem id="broken_module.menu_root"` Use `<menuitem id="menu_root"` instead
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.18/test_repo/broken_module/model_view_odoo2.xml#L161 Redundant module name `<menuitem id="broken_module.menu_root2"` Use `<menuitem id="menu_root2"` instead
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.18/test_repo/broken_module/model_view_odoo2.xml#L158 Redundant module name `<menuitem id="broken_module.menu_root"` Use `<menuitem id="menu_root"` instead
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.18/test_repo/broken_module/model_view_odoo2.xml#L165 Redundant module name `<menuitem id="broken_module.menu_root2"` Use `<menuitem id="menu_root2"` instead
 
  * xml-syntax-error
 
