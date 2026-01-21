@@ -2,6 +2,7 @@ import os
 import re
 from collections import defaultdict, namedtuple
 from copy import deepcopy
+from pathlib import Path
 from typing import Dict, List
 
 from lxml import etree
@@ -15,6 +16,34 @@ DFTL_MIN_PRIORITY = 99
 XML_HEADER_EXPECTED = b'<?xml version="1.0" encoding="UTF-8" ?>'
 XML_HEADER_RE = re.compile(rb"^<\?xml[^>]*\?>", re.IGNORECASE | re.MULTILINE)
 NUMBER_RE = re.compile(r"^(?P<integer>[+-]?\d+)(?P<decimal>\.\d+)?$")
+XML_PYTHON_ATTRS_RE = re.compile(
+    r"^(t-.*|data-.*|decoration-.*|"
+    + "|".join(
+        map(
+            re.escape,
+            {
+                "add",
+                "attrs",
+                "class",
+                "colors",
+                "context",
+                "digits",
+                "domain",
+                "eval",
+                "filter_domain",
+                "options",
+                "placeholder",
+                "precision",
+                "remove",
+                "search",
+                "statusbar_colors",
+                "studio_groups",
+                "thumbnails",
+            },
+        )
+    )
+    + ")$"
+)
 
 
 # Same as Odoo: https://github.com/odoo/odoo/commit/9cefa76988ff94c3d590c6631b604755114d0297
@@ -647,6 +676,110 @@ class ChecksOdooModuleXML(BaseChecker):
             )
             # TODO: Autofix using the same node
 
+    def has_escaped_double_quotes(self, filename) -> bool:
+        """Check if filename contains escaped double quotes " -> &quot;
+
+        This is used to detect cases where prettier auto-fix converts
+        attributes like attr='""' into attr="&quot;&quot;", which is
+        technically valid XML but not human-readable.
+
+        :param filename: Path to the XML file to inspect
+        :return: True if escaped double quotes are found, False otherwise
+        """
+        filename_path = Path(filename)
+        if not filename_path.is_file():
+            return False
+        with filename_path.open("rb") as f_xml:
+            for line in f_xml:
+                if b"&quot;" in line:
+                    return True
+        return False
+
+    def is_compatible_single_quote(self, py_code):
+        try:
+            compile(py_code, "<string>", "exec")
+        except Exception:  # pylint:disable=broad-exception-caught
+            # Skip if it is already failed
+            return False
+        if py_code == (new_py_code := py_code.replace('"', "'")):
+            # Skip if no changes
+            return False
+        try:
+            compile(new_py_code, "<string>", "exec")
+        except Exception:  # pylint:disable=broad-exception-caught
+            # Skip if after changing it fails
+            return False
+        return new_py_code
+
+    @utils.only_required_for_checks("xml-double-quotes-py")
+    def check_xml_double_quotes_py(self):
+        """* Check xml-double-quotes-py
+        Detect XML attributes containing escaped double quotes " -> (&quot;)
+        for python expressions Python expressions (e.g. domain, context, eval, t-* or data-* attrs).
+        that originate from Prettier auto-fix and reduce human readability.
+
+        When Prettier rewrites values like attr='""' into attr="&quot;&quot;"
+        the result is valid XML but harder to read and maintain.
+
+        The check:
+        - Scans XML files that contain escaped double quotes (&quot;)
+        - Restricts analysis to attributes known to embed Python code
+        - Verifies that both the original and the proposed value are valid Python expressions
+        - Suggests replacing double quotes with single quotes when safe
+
+        This avoids false positives and prevents introducing syntax errors
+        while improving readability and Prettier compatibility."""
+        for manifest_data in self.manifest_datas:
+            if not self.is_message_enabled(
+                "xml-double-quotes-py", manifest_data["disabled_checks"]
+            ) or not self.has_escaped_double_quotes(manifest_data["filename"]):
+                continue
+            for elem in manifest_data["node"].iter():
+                if (
+                    (py_code := elem.text)
+                    and XML_PYTHON_ATTRS_RE.match(elem.get("name") or "")
+                    and (new_py_code := self.is_compatible_single_quote(py_code))
+                ):
+                    # Process text <field name="context">{}</field>
+                    bef, during, aft = self._read_node(manifest_data["filename"], elem)
+                    if b"&quot;" not in during:
+                        continue
+                    self.register_error(
+                        code="xml-double-quotes-py",
+                        message='Escaped double quotes " for python code detected',
+                        info=f"Use single quote instead: `{new_py_code}`",
+                        filepath=manifest_data["filename_short"],
+                        line=elem.sourceline,
+                    )
+                    during2 = during.replace(b"&quot;", b"'")
+                    if self.autofix and during2 != during:
+                        # Modify the xml node to propagate the change to other checks
+                        elem.text = new_py_code
+                        utils.perform_fix(manifest_data["filename"], bef + during2 + aft)
+
+                for attr_name, attr_value in elem.attrib.items():
+                    # Process attributes <field domain="[]" context="{}" ../>
+                    if not XML_PYTHON_ATTRS_RE.match(attr_name):
+                        # Skip if it is not a known attribute to embed Python code
+                        continue
+                    if not (new_py_code := self.is_compatible_single_quote(attr_value)):
+                        continue
+                    bef, during, aft = self._read_node(manifest_data["filename"], elem)
+                    if b"&quot;" not in during:
+                        continue
+                    self.register_error(
+                        code="xml-double-quotes-py",
+                        message='Escaped double quotes " for python code detected use',
+                        info=f"Use single quote instead: `{new_py_code}`",
+                        filepath=manifest_data["filename_short"],
+                        line=elem.sourceline,
+                    )
+                    during2 = during.replace(b"&quot;", b"'")
+                    if self.autofix and during2 != during:
+                        # Modify the xml node to propagate the change to other checks
+                        elem.attrib[attr_name] = new_py_code
+                        utils.perform_fix(manifest_data["filename"], bef + during2 + aft)
+
     @utils.only_required_for_checks(
         "xml-dangerous-qweb-replace-low-priority",
         "xml-duplicate-template-id",
@@ -773,9 +906,11 @@ class ChecksOdooModuleXML(BaseChecker):
                     line=node.sourceline,
                 )
                 if self.autofix and "t-out" not in node_attrs:
+                    # TODO: add autofix test
                     # if t-out already exists, skip autofix
                     attr_deprecated = next(iter(node_attrs_deprecated))
                     value_deprecated = node.attrib.get(attr_deprecated)
+                    # TODO: Fix read during
                     bef, during, aft = self._read_node(manifest_data["filename"], node)
                     pattern = rb"(?P<prefix>\b)" + re.escape(attr_deprecated).encode() + rb'(?P<suffix>\s*=\s*["\'])'
                     during2 = re.sub(pattern, rb"\g<prefix>t-out\g<suffix>", during, count=1)
