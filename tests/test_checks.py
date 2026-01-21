@@ -38,6 +38,7 @@ EXPECTED_ERRORS = {
     "xml-deprecated-qweb-directive-15": 2,
     "xml-deprecated-qweb-directive": 2,
     "xml-deprecated-tree-attribute": 3,
+    "xml-double-quotes-py": 3,
     "xml-duplicate-fields": 3,
     "xml-duplicate-record-id": 2,
     "xml-not-valid-char-link": 2,
@@ -249,6 +250,11 @@ class TestChecks(common.ChecksCommon):
             in content
         ), "The py Copyright was previously fixed"
 
+        escaped_double_quotes = os.path.join(self.test_repo_path, "test_module", "model_view.xml")
+        with open(escaped_double_quotes, "rb") as f:
+            content = f.read()
+        assert b"&quot;" in content, "The escaped double quotes was previously fixed"
+
         self.checks_run(self.file_paths, autofix=True, no_exit=True, no_verbose=False)
 
         # After autofix
@@ -325,3 +331,7 @@ class TestChecks(common.ChecksCommon):
 """
             in content
         ), "The py Copyright was not fixed"
+
+        with open(escaped_double_quotes, "rb") as f:
+            content = f.read()
+        assert b"&quot;" not in content, "The escaped double quotes was not fixed"

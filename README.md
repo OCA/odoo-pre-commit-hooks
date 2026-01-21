@@ -154,6 +154,23 @@ for use of deprecated QWeb directives t-*-options
 t-esc and t-raw directives are deprecated in Odoo v15.0, use t-out instead.
 For more details https://github.com/odoo/odoo/commit/01875541b1a8131cb and https://github.com/odoo/odoo/pull/70004
 
+* Check xml-double-quotes-py
+Detect XML attributes containing escaped double quotes " -> (&quot;)
+for python expressions Python expressions (e.g. domain, context, eval, t-* or data-* attrs).
+that originate from Prettier auto-fix and reduce human readability.
+
+When Prettier rewrites values like attr='""' into attr="&quot;&quot;"
+the result is valid XML but harder to read and maintain.
+
+The check:
+- Scans XML files that contain escaped double quotes (&quot;)
+- Restricts analysis to attributes known to embed Python code
+- Verifies that both the original and the proposed value are valid Python expressions
+- Suggests replacing double quotes with single quotes when safe
+
+This avoids false positives and prevents introducing syntax errors
+while improving readability and Prettier compatibility.
+
 * Check xml-header-missing
 Generated when the XML file is missing the XML declaration header '<?xml version="1.0" encoding="UTF-8" ?>'
 
@@ -451,6 +468,12 @@ options:
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.18/test_repo/broken_module/model_view_odoo.xml#L31 Deprecated "<tree string=..."
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.18/test_repo/broken_module/model_view_odoo.xml#L42 Deprecated "<tree colors=..."
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.18/test_repo/broken_module/model_view_odoo.xml#L53 Deprecated "<tree fonts=..."
+
+ * xml-double-quotes-py
+
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.18/test_repo/test_module/model_view.xml#L10 Escaped double quotes " for python code detected use Use single quote instead: `state in ('done')`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.18/test_repo/test_module/model_view.xml#L20 Escaped double quotes " for python code detected Use single quote instead: `{'group_by': ['name']}`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.18/test_repo/test_module/model_view.xml#L22 Escaped double quotes " for python code detected use Use single quote instead: `[('state', '=', 'done')]`
 
  * xml-duplicate-fields
 
