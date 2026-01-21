@@ -7,4 +7,11 @@
             <span t-raw="amount" />
         </div>
     </template>
+    <template id="test_template_15_2" name="test_template_15_2">
+        <div class="mt32">
+            <div class="text-left">
+                <strong>Name <t t-esc="o.name" /></strong>
+            </div>
+        </div>
+    </template>
 </odoo>

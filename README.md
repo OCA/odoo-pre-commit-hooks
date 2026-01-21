@@ -462,6 +462,7 @@ options:
 
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.18/test_repo/odoo18_module/views/deprecated_qweb_directives15.xml#L6 Deprecated QWeb directive `t-esc`. Use `t-out` instead
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.18/test_repo/odoo18_module/views/deprecated_qweb_directives15.xml#L7 Deprecated QWeb directive `t-raw`. Use `t-out` instead
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.18/test_repo/odoo18_module/views/deprecated_qweb_directives15.xml#L13 Deprecated QWeb directive `t-esc`. Use `t-out` instead
 
  * xml-deprecated-tree-attribute
 
