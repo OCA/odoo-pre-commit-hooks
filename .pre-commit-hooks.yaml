@@ -1,7 +1,7 @@
 # Do not use this file as example
 # Check the README
 - id: oca-checks-odoo-module
-  name: Checks for Odoo modules
+  name: Checks for py, csv and xml files of Odoo modules
   description: Multiple checks for Odoo modules
   entry: oca-checks-odoo-module
   args: []
@@ -11,6 +11,16 @@
   files: \.(csv|xml)$|/\_\_(manifest|openerp)\_\_.py$
   # require_serial to evaluate the whole module in-one-shot to have full context about other xmlids and so on
   require_serial: true
+- id: oca-checks-odoo-module-fixit
+  name: Checks for py files of Odoo modules with fixit
+  description: Multiple checks for Odoo modules with autofixes
+  entry: oca-checks-odoo-module-fixit
+  args: []
+  language: python
+  types_or: ["python"]
+  files: \.py$
+  # require_serial false to run parallels jobs faster
+  require_serial: false
 - id: oca-checks-po
   name: Checks for .po[t] files
   description: Multiple checks for PO files
@@ -22,14 +32,4 @@
   # returns "text"
   types_or: ["text"]
   files: \.(po|pot)$
-  require_serial: false
-- id: oca-checks-odoo-module-fixit
-  name: Checks for Odoo modules with autofixes
-  description: Multiple checks for Odoo modules with autofixes
-  entry: oca-checks-odoo-module-fixit
-  args: []
-  language: python
-  types_or: ["python"]
-  files: \.py$
-  # require_serial false to run parallels jobs faster
   require_serial: false
