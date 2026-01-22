@@ -892,8 +892,6 @@ class ChecksOdooModuleXML(BaseChecker):
                     attr_deprecated = next(iter(node_attrs_deprecated))
                     value_deprecated = node.attrib.get(attr_deprecated)
                     node_content = node_xml.NodeContent(manifest_data["filename"], node)
-                    if "directives" in manifest_data["filename"] and node.sourceline == 62:
-                        import pdb;pdb.set_trace()
                     pattern = rb"(?P<prefix>\b)" + re.escape(attr_deprecated).encode() + rb'(?P<suffix>\s*=\s*["\'])'
                     content_node2 = re.sub(pattern, rb"\g<prefix>t-out\g<suffix>", node_content.content_node, count=1)
                     if content_node2 != node_content.content_node:
