@@ -11,64 +11,12 @@
         <div class="mt32">
             <div class="text-left">
                 <strong>Name <t
-                    t-esc="o.name" />
+                    t-esc="o.name"
+                />
                 </strong>
             </div>
         </div>
     </template>
 
-    <template id="report_credit_cron">
-        <t t-call="sbd_endorsement.external_layout_credit_report">
-            <div class="page" style="font-size: 11px;">
-                <div class="o_sbd_liquidate_header" t-translation="off">
-                    <div class="row">
-                        <div class="col-3" />
-                        <div class="col-6 text-center" style="margin-top:22px;">
-                            <h6>
-                                <strong>FONDO NACIONAL PARA EL DESARROLLO</strong>
-                            </h6>
-                        </div>
-                        <div class="col-3 no-border">
-                            <img
-                                t-if="o.env.user.company_id.logo"
-                                t-att-src="image_data_uri(o.env.user.company_id.logo)"
-                                alt="Logo"
-                            />
-                        </div>
-                    </div>
-                </div>
-                <div t-translation="off">
-                    <br />
-                    <br />
-                    <div class="row mb-32">
-                        <div class="col-3" />
-                        <div class="col-6 text-center">
-                            <h6>
-                                <strong t-if="report_type == 'sicveca_sincronization'">REPORTE DE
-                                    SINCRONIZACIÓN CON SICVECA</strong>
-                                <strong t-if="report_type == 'sicveca_commissions'">REPORTE DE
-                                    COMISIONES</strong>
-                                <strong t-if="report_type == 'sicveca_errors'">REPORTE DE ERRORES DE
-                                    SICVECA</strong>
-                            </h6>
-                            <br />
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-5">
-                            <div class="text-right">
-                                <strong> Fecha impresión: <span
-                                    t-esc="context_timestamp(datetime.datetime.now()).strftime('%Y-%m-%d')"
-                                />
-                                </strong>
-                            </div>
-                        </div>
-                        <div class="col-3" />
-                        <div class="col-5" />
-                    </div>
-                </div>
-            </div>
-        </t>
-    </template>
 
 </odoo>
