@@ -258,7 +258,7 @@ class TestChecks(common.ChecksCommon):
 
         with open(t_out, "rb") as f:
             content = f.read()
-        assert b"t-out" not in content, "The deprecated t-out was previously fixed"
+        assert b"t-esc" in content, "The deprecated t-esc was previously fixed"
 
         self.checks_run(self.file_paths, autofix=True, no_exit=True, no_verbose=False)
 
@@ -343,4 +343,4 @@ class TestChecks(common.ChecksCommon):
 
         with open(t_out, "rb") as f:
             content = f.read()
-        assert b"t-out" in content, "The deprecated t-out was not fixed"
+        assert b"t-esc" not in content, "The deprecated t-esc was not fixed"
