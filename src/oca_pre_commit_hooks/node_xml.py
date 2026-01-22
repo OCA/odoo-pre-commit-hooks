@@ -24,12 +24,12 @@ class NodeContent:
 
     def _read_node(self):  # noqa:C901 pylint:disable=too-complex
         """Internal method to read the content of the file and extract node information."""
-        # TODO: Get the sourceline of a particular attribute
         # Determine the search start line
         if (node_previous := self.node.getprevious()) is not None:
             search_start_line = node_previous.sourceline + 1
         elif (node_parent := self.node.getparent()) is not None:
-            search_start_line = node_parent.sourceline + 1
+            # Start from parent line (not +1) because child tags can be on same line as parent
+            search_start_line = node_parent.sourceline
         else:
             search_start_line = 2  # first element and it is the root
 
@@ -42,13 +42,99 @@ class NodeContent:
 
         # Find the actual node start by looking for the tag
         node_start_idx = None
+        node_start_col = 0  # Column position within the line
+        
+        # When there are multiple tags on the same line, we need to find the RIGHT one
+        # We'll collect all candidates and use additional heuristics
+        candidates = []
+        
         for idx, (no_line, line) in enumerate(all_lines):
             if search_start_line <= no_line <= search_end_line:
-                stripped_line = line.lstrip()
-                if stripped_line.startswith(b"<" + node_tag):
-                    node_start_idx = idx
-                    self.start_sourceline = no_line
-                    break
+                # Look for the tag anywhere in the line, not just at the start
+                tag_pattern = b"<" + node_tag
+                tag_pos = 0
+                
+                # Find ALL occurrences of the tag in this line
+                while True:
+                    tag_pos = line.find(tag_pattern, tag_pos)
+                    if tag_pos == -1:
+                        break
+                    
+                    # Verify it's actually a tag start (followed by space, >, or /)
+                    check_pos = tag_pos + len(tag_pattern)
+                    is_valid = False
+                    
+                    if check_pos >= len(line):
+                        # Tag at end of line is valid
+                        is_valid = True
+                    else:
+                        next_char = line[check_pos:check_pos+1]
+                        # Valid tag if followed by space, >, /, or newline
+                        if next_char in (b" ", b">", b"/", b"\n", b"\r"):
+                            is_valid = True
+                    
+                    if is_valid:
+                        candidates.append({
+                            'idx': idx,
+                            'line_no': no_line,
+                            'col': tag_pos,
+                            'line': line
+                        })
+                    
+                    tag_pos += 1
+        
+        # Choose the best candidate
+        if candidates:
+            # If we only have one candidate, use it
+            if len(candidates) == 1:
+                best = candidates[0]
+                node_start_idx = best['idx']
+                node_start_col = best['col']
+                self.start_sourceline = best['line_no']
+            else:
+                # Multiple candidates - need to find the right one
+                # Strategy: use node attributes to identify the correct tag
+                best = None
+                
+                # Get the first attribute of the node if it exists
+                node_attrib_key = None
+                node_attrib_value = None
+                if self.node.attrib:
+                    node_attrib_key = list(self.node.attrib.keys())[0]
+                    node_attrib_value = self.node.attrib[node_attrib_key]
+                
+                # Try to match by attribute
+                if node_attrib_key:
+                    attr_pattern = f'{node_attrib_key}='.encode()
+                    for candidate in candidates:
+                        # Look in the line and following lines for this attribute
+                        idx = candidate['idx']
+                        # Check current line from the tag position
+                        search_text = candidate['line'][candidate['col']:]
+                        # Also check next few lines (in case attributes span lines)
+                        for i in range(idx, min(idx + 5, len(all_lines))):
+                            if i > idx:
+                                search_text += all_lines[i][1]
+                        
+                        if attr_pattern in search_text:
+                            best = candidate
+                            break
+                
+                # If we didn't find by attribute, use line number heuristic
+                if best is None:
+                    # Prefer candidates on the target line (node.sourceline)
+                    candidates_on_target_line = [c for c in candidates if c['line_no'] == search_end_line]
+                    
+                    if candidates_on_target_line:
+                        # If multiple on target line, prefer the last one
+                        best = candidates_on_target_line[-1]
+                    else:
+                        # Use the last candidate overall
+                        best = candidates[-1]
+                
+                node_start_idx = best['idx']
+                node_start_col = best['col']
+                self.start_sourceline = best['line_no']
 
         if node_start_idx is None:
             # Fallback: use search_end_line
@@ -60,33 +146,87 @@ class NodeContent:
 
         # Find the actual node end
         node_end_idx = node_start_idx
+        node_end_col = None  # Column position where node ends
         self.end_sourceline = self.start_sourceline
+        
+        # Track nesting level to handle cases where parent and child have same tag
+        nesting_level = 0
 
         for idx in range(node_start_idx, len(all_lines)):
             no_line, line = all_lines[idx]
-            stripped_line = line.lstrip()
 
             if idx == node_start_idx:
-                # Check if self-closing or single-line
-                if b"/>" in line:
+                # For the starting line, only look at content from node_start_col onwards
+                relevant_line = line[node_start_col:]
+                
+                # Check if self-closing on same line
+                self_close_pos = relevant_line.find(b"/>")
+                if self_close_pos != -1:
+                    # Verify this is the closing for our tag, not a nested one
+                    # Simple check: see if there's another opening tag between start and close
+                    between = relevant_line[:self_close_pos]
+                    # Count opening tags in between
+                    temp_count = between.count(b"<" + node_tag)
+                    if temp_count == 1:  # Only our opening tag
+                        node_end_idx = idx
+                        node_end_col = node_start_col + self_close_pos + 2
+                        self.end_sourceline = no_line
+                        break
+                
+                # Check if opening and closing tag on same line
+                close_tag = b"</" + node_tag + b">"
+                close_pos = relevant_line.find(close_tag)
+                if close_pos != -1:
                     node_end_idx = idx
+                    node_end_col = node_start_col + close_pos + len(close_tag)
                     self.end_sourceline = no_line
                     break
-                if b"<" + node_tag in line and b"</" + node_tag in line:
-                    node_end_idx = idx
-                    self.end_sourceline = no_line
-                    break
+                
+                # Node continues beyond this line
+                nesting_level = 1
             else:
+                # Look for closing patterns
+                stripped_line = line.lstrip()
+                
+                # Check for self-closing continuation (when tag opened in previous line)
+                # This handles cases like:
+                # <span
+                #    attr="value"
+                # />
+                if b"/>" in line:
+                    # Check if this is a standalone /> (not part of a new tag)
+                    # by seeing if the line starts with /> or has /> after attributes
+                    if stripped_line.startswith(b"/>") or (b">" not in line[:line.find(b"/>")] if b"/>" in line else False):
+                        node_end_idx = idx
+                        node_end_col = line.find(b"/>") + 2
+                        self.end_sourceline = no_line
+                        nesting_level -= 1
+                        if nesting_level == 0:
+                            break
+                
                 # Look for closing tag
-                if b"</" + node_tag + b">" in line or b"</" + node_tag + b" " in line:
+                close_tag = b"</" + node_tag + b">"
+                if close_tag in line:
                     node_end_idx = idx
+                    node_end_col = line.find(close_tag) + len(close_tag)
                     self.end_sourceline = no_line
-                    break
-                if b"/>" in stripped_line and not stripped_line.startswith(b"<"):
-                    # Self-closing continuation
-                    node_end_idx = idx
-                    self.end_sourceline = no_line
-                    break
+                    nesting_level -= 1
+                    if nesting_level == 0:
+                        break
+                
+                # Count any new opening tags to track nesting
+                pos = 0
+                while True:
+                    pos = line.find(b"<" + node_tag, pos)
+                    if pos == -1:
+                        break
+                    # Verify it's a real opening tag
+                    check_pos = pos + len(node_tag) + 1
+                    if check_pos < len(line):
+                        next_char = line[check_pos:check_pos+1]
+                        if next_char in (b" ", b">", b"/", b"\n", b"\r"):
+                            nesting_level += 1
+                    pos += 1
 
         # Look backwards from node start for comment
         for idx in range(node_start_idx - 1, -1, -1):
@@ -117,9 +257,25 @@ class NodeContent:
                     self.content_before += line
                     continue
                 self.content_before += line
-            elif node_start_idx <= idx <= node_end_idx:
+            elif idx == node_start_idx:
+                # For the start line, split at the column position
+                self.content_before += line[:node_start_col]
+                
+                if idx == node_end_idx:
+                    # Node starts and ends on same line
+                    self.content_node += line[node_start_col:node_end_col]
+                    self.content_after += line[node_end_col:]
+                else:
+                    # Node continues to next line(s)
+                    self.content_node += line[node_start_col:]
+            elif node_start_idx < idx < node_end_idx:
+                # Full lines that are part of the node
                 self.content_node += line
-            else:
+            elif idx == node_end_idx and idx != node_start_idx:
+                # Last line of the node
+                self.content_node += line[:node_end_col]
+                self.content_after += line[node_end_col:]
+            elif idx > node_end_idx:
                 self.content_after += line
 
         # Remove comment from content_before if present

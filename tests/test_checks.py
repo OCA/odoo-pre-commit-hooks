@@ -258,7 +258,8 @@ class TestChecks(common.ChecksCommon):
 
         with open(t_out, "rb") as f:
             content = f.read()
-        assert b"t-esc" in content, "The deprecated t-esc was previously fixed"
+        assert content.count(b"t-esc") > 1, "The deprecated t-esc was previously fixed"
+        assert content.count(b"t-raw") > 1, "The deprecated t-raw was previously fixed"
 
         self.checks_run(self.file_paths, autofix=True, no_exit=True, no_verbose=False)
 
@@ -343,4 +344,6 @@ class TestChecks(common.ChecksCommon):
 
         with open(t_out, "rb") as f:
             content = f.read()
-        assert b"t-esc" not in content, "The deprecated t-esc was not fixed"
+        # comments contain 1 valid deprecated
+        assert content.count(b"t-esc") == 1, "The deprecated t-esc was not fixed"
+        assert content.count(b"t-raw") == 1, "The deprecated t-esc was not fixed"
