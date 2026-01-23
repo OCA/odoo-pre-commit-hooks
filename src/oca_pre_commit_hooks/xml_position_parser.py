@@ -27,13 +27,14 @@ class ElementInfo:
 class XMLPositionParser:
     """Parser that finds exact positions of elements and attributes."""
     
-    def __init__(self, xml_source: str, is_file: bool = False):
-        if is_file:
-            with open(xml_source, 'r', encoding='utf-8') as f:
-                self.xml_text = f.read()
-        else:
-            self.xml_text = xml_source
-            
+    def __init__(self, xml_content: bytes):
+        """
+        Initialize the parser.
+        
+        Args:
+            xml_content: XML content as bytes
+        """
+        self.xml_text = xml_content.decode('utf-8')
         self.lines = self.xml_text.split('\n')
         self.elements: List[ElementInfo] = []
         
@@ -207,9 +208,14 @@ class LXMLPositionEnricher:
         print(element.position_attributes[0].start_line)
     """
     
-    def __init__(self, xml_source: str, is_file: bool = False):
-        self.xml_source = xml_source
-        self.is_file = is_file
+    def __init__(self, xml_content: bytes):
+        """
+        Initialize the enricher.
+        
+        Args:
+            xml_content: XML content as bytes
+        """
+        self.xml_content = xml_content
         
         # Create custom parser with our PositionElement class
         parser = etree.XMLParser()
@@ -217,14 +223,10 @@ class LXMLPositionEnricher:
         parser.set_element_class_lookup(lookup)
         
         # Parse with lxml using custom element class
-        if is_file:
-            self.tree = etree.parse(xml_source, parser)
-            self.root = self.tree.getroot()
-        else:
-            self.root = etree.fromstring(xml_source.encode('utf-8'), parser)
+        self.root = etree.fromstring(xml_content, parser)
         
         # Parse with position parser
-        self.position_parser = XMLPositionParser(xml_source, is_file)
+        self.position_parser = XMLPositionParser(xml_content)
         self.position_elements = self.position_parser.parse()
         
         # Enrich elements with position data
@@ -338,7 +340,7 @@ class LXMLPositionEnricher:
 
 def demo():
     """Demonstration of the enriched lxml parser."""
-    xml_test = """<?xml version="1.0" encoding="UTF-8" ?>
+    xml_test = b"""<?xml version="1.0" encoding="UTF-8" ?>
 <odoo>
     <!-- Test comment -->
     <template id="test_template_15" name="Test Template 15">
