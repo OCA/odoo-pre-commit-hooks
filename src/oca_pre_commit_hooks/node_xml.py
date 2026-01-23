@@ -1,3 +1,331 @@
+import re
+from dataclasses import dataclass
+from typing import List, Optional
+
+from lxml import etree
+
+
+@dataclass
+class AttributeInfo:
+    """Position information for an attribute."""
+
+    name: str
+    value: str
+    start_line: int
+    start_col: int
+    end_line: int
+    end_col: int
+
+
+@dataclass
+class ElementInfo:
+    """Position information for an XML element."""
+
+    name: str
+    start_line: int
+    start_col: int
+    end_line: int
+    end_col: int
+    attributes: List[AttributeInfo]
+    is_self_closing: bool
+
+
+class XMLPositionParser:
+    """Parser that finds exact positions of elements and attributes."""
+
+    def __init__(self, xml_source: str, is_file: bool = False):
+        if is_file:
+            with open(xml_source, encoding="utf-8") as f:
+                self.xml_text = f.read()
+        else:
+            self.xml_text = xml_source
+
+        self.lines = self.xml_text.split("\n")
+        self.elements: List[ElementInfo] = []
+
+    def parse(self) -> List[ElementInfo]:
+        """Parse XML and return position information for all elements."""
+        tag_pattern = r"<([a-zA-Z_][\w:.-]*)((?:\s+[^>]*?)?)(/?)>"
+
+        for match in re.finditer(tag_pattern, self.xml_text, re.MULTILINE | re.DOTALL):
+            tag_name = match.group(1)
+            attributes_str = match.group(2)
+            is_self_closing = match.group(3) == "/"
+
+            start_pos = match.start()
+            start_line, start_col = self._pos_to_line_col(start_pos)
+
+            end_pos = match.end()
+            end_line, end_col = self._pos_to_line_col(end_pos)
+
+            attrs = self._parse_attributes(attributes_str, start_pos + len(tag_name) + 1)
+
+            element = ElementInfo(
+                name=tag_name,
+                start_line=start_line,
+                start_col=start_col,
+                end_line=end_line,
+                end_col=end_col,
+                attributes=attrs,
+                is_self_closing=is_self_closing,
+            )
+
+            self.elements.append(element)
+
+        return self.elements
+
+    def _pos_to_line_col(self, pos: int) -> tuple:
+        """Convert an absolute position in text to (line, column)."""
+        line = 1
+        col = 1
+
+        for i, char in enumerate(self.xml_text):
+            if i >= pos:
+                break
+            if char == "\n":
+                line += 1
+                col = 1
+            else:
+                col += 1
+
+        return line, col
+
+    def _parse_attributes(self, attr_str: str, base_pos: int) -> List[AttributeInfo]:
+        """Parse attributes from a string and return their positions."""
+        attributes = []
+        attr_pattern = r'([a-zA-Z_][\w:.-]*)\s*=\s*(["\'])((?:(?!\2).)*)\2'
+
+        for match in re.finditer(attr_pattern, attr_str):
+            attr_name = match.group(1)
+            match.group(2)
+            attr_value = match.group(3)
+
+            attr_start_pos = base_pos + match.start()
+            attr_end_pos = base_pos + match.end()
+
+            start_line, start_col = self._pos_to_line_col(attr_start_pos)
+            end_line, end_col = self._pos_to_line_col(attr_end_pos)
+
+            attr_info = AttributeInfo(
+                name=attr_name,
+                value=attr_value,
+                start_line=start_line,
+                start_col=start_col,
+                end_line=end_line,
+                end_col=end_col,
+            )
+
+            attributes.append(attr_info)
+
+        return attributes
+
+
+class LXMLPositionEnricher:
+    """Enriches lxml nodes with precise position information from XMLPositionParser."""
+
+    def __init__(self, xml_source: str, is_file: bool = False):
+        self.xml_source = xml_source
+        self.is_file = is_file
+
+        # Parse with lxml
+        if is_file:
+            self.tree = etree.parse(xml_source)
+            self.root = self.tree.getroot()
+        else:
+            self.root = etree.fromstring(xml_source.encode("utf-8"))
+
+        # Parse with position parser
+        self.position_parser = XMLPositionParser(xml_source, is_file)
+        self.position_elements = self.position_parser.parse()
+
+        # Create index for matching
+        self._create_matching_index()
+
+    def _create_matching_index(self):
+        """Create an index to match lxml elements with position elements.
+        Uses tag name + document order as key."""
+        # Count elements by tag name as we traverse lxml tree
+        self.lxml_elements = []
+        self._traverse_lxml(self.root)
+
+        # Match lxml elements with position elements by order and tag name
+        self.position_map = {}
+
+        # Group position elements by tag name
+        pos_by_tag = {}
+        for pos_elem in self.position_elements:
+            if pos_elem.name not in pos_by_tag:
+                pos_by_tag[pos_elem.name] = []
+            pos_by_tag[pos_elem.name].append(pos_elem)
+
+        # Group lxml elements by tag name
+        lxml_by_tag = {}
+        for lxml_elem in self.lxml_elements:
+            tag = self._get_tag_name(lxml_elem)
+            if tag:  # Skip None values (comments, etc.)
+                if tag not in lxml_by_tag:
+                    lxml_by_tag[tag] = []
+                lxml_by_tag[tag].append(lxml_elem)
+
+        # Match elements with same tag name by order
+        for tag_name in lxml_by_tag:
+            if tag_name in pos_by_tag:
+                lxml_list = lxml_by_tag[tag_name]
+                pos_list = pos_by_tag[tag_name]
+
+                # Match by order (assumes same document structure)
+                for i in range(min(len(lxml_list), len(pos_list))):
+                    lxml_elem = lxml_list[i]
+                    pos_elem = pos_list[i]
+
+                    # Verify attributes match for extra safety
+                    if self._attributes_match(lxml_elem, pos_elem):
+                        self.position_map[id(lxml_elem)] = pos_elem
+
+    def _traverse_lxml(self, element):
+        """Traverse lxml tree in document order."""
+        # Only add actual elements (not comments, processing instructions, etc.)
+        if isinstance(element.tag, str):
+            self.lxml_elements.append(element)
+
+        for child in element:
+            self._traverse_lxml(child)
+
+    def _get_tag_name(self, element) -> str:
+        """Get tag name from lxml element, handling namespaces."""
+        tag = element.tag
+
+        # Skip non-element nodes (comments, processing instructions, etc.)
+        if not isinstance(tag, str):
+            return None
+
+        if "}" in tag:
+            # Remove namespace: {http://example.com}tag -> tag
+            tag = tag.split("}")[1]
+        return tag
+
+    def _attributes_match(self, lxml_elem, pos_elem: ElementInfo) -> bool:
+        """Check if attributes match between lxml element and position element.
+        Returns True if they match or if comparison is inconclusive.
+        """
+        lxml_attrs = dict(lxml_elem.attrib)
+        pos_attrs = {attr.name: attr.value for attr in pos_elem.attributes}
+
+        # If both have no attributes, they match
+        if not lxml_attrs and not pos_attrs:
+            return True
+
+        # If attribute counts differ, they don't match
+        if len(lxml_attrs) != len(pos_attrs):
+            return False
+
+        # Check if all attributes match
+        for key, value in lxml_attrs.items():
+            if key not in pos_attrs or pos_attrs[key] != value:
+                return False
+
+        return True
+
+    def get_position_info(self, lxml_element) -> Optional[ElementInfo]:
+        """Get position information for an lxml element.
+
+        Args:
+            lxml_element: An lxml Element object
+
+        Returns:
+            ElementInfo with position data, or None if not found
+        """
+        return self.position_map.get(id(lxml_element))
+
+    def enrich_element(self, lxml_element):
+        """Add position information as attributes to an lxml element.
+        Adds: _start_line, _start_col, _end_line, _end_col
+        """
+        pos_info = self.get_position_info(lxml_element)
+        if pos_info:
+            lxml_element.set("_start_line", str(pos_info.start_line))
+            lxml_element.set("_start_col", str(pos_info.start_col))
+            lxml_element.set("_end_line", str(pos_info.end_line))
+            lxml_element.set("_end_col", str(pos_info.end_col))
+
+    def enrich_all(self):
+        """Add position information to all elements in the tree."""
+        for elem in self.lxml_elements:
+            self.enrich_element(elem)
+
+
+def demo():
+    """Demonstration of the enricher."""
+    xml_test = """<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <!-- Test comment -->
+    <template id="test_template_15" name="Test Template 15">
+        <div>
+            <span t-esc="price" />
+            <span t-raw="amount" />
+        </div>
+    </template>
+    <template id="test_template_15_2" name="test_template_15_2">
+        <div class="mt32">
+            <div class="text-left">
+                <strong>Name <t
+                    t-esc="o.name"
+                />
+                </strong>
+            </div>
+        </div>
+    </template>
+</odoo>"""
+
+    print("=== lxml Position Enricher Demo ===\n")
+
+    # Create enricher
+    enricher = LXMLPositionEnricher(xml_test)
+
+    print("Matching lxml elements with position data...\n")
+    print("=" * 70)
+
+    # Iterate through lxml tree and show position info
+    for elem in enricher.lxml_elements:
+        tag = enricher._get_tag_name(elem)
+        pos_info = enricher.get_position_info(elem)
+
+        if pos_info:
+            attrs = ", ".join([f"{k}='{v}'" for k, v in elem.attrib.items()])
+            attrs_str = f" [{attrs}]" if attrs else ""
+
+            print(f"\n<{tag}>{attrs_str}")
+            print(f"  lxml sourceline: {elem.sourceline}")
+            print(f"  Precise position:")
+            print(f"    Start: line {pos_info.start_line}, col {pos_info.start_col}")
+            print(f"    End:   line {pos_info.end_line}, col {pos_info.end_col}")
+
+            if pos_info.attributes:
+                print(f"  Attributes with positions:")
+                for attr in pos_info.attributes:
+                    print(
+                        f"    • {attr.name}: ({attr.start_line},{attr.start_col}) → ({attr.end_line},{attr.end_col})"
+                    )
+
+    print("\n" + "=" * 70)
+    print("\nExample: Enrich elements with position attributes")
+    print("=" * 70)
+
+    enricher.enrich_all()
+
+    # Show enriched XML snippet
+    for elem in list(enricher.lxml_elements)[:3]:
+        tag = enricher._get_tag_name(elem)
+        print(f"\n<{tag}>")
+        for key, value in elem.attrib.items():
+            if key.startswith("_"):
+                print(f"  {key}: {value}")
+
+
+if __name__ == "__main__":
+    demo()
+
+
 class NodeContent:
     """Represents the content and metadata of an XML node."""
 
