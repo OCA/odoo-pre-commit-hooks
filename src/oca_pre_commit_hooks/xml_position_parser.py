@@ -12,6 +12,8 @@ class AttributeInfo:
     start_col: int
     end_line: int
     end_col: int
+    start_index: int  # Nuevo: índice de inicio en la cadena
+    end_index: int    # Nuevo: índice de fin en la cadena
 
 @dataclass
 class ElementInfo:
@@ -21,6 +23,8 @@ class ElementInfo:
     start_col: int
     end_line: int
     end_col: int
+    start_index: int  # Nuevo: índice de inicio en la cadena
+    end_index: int    # Nuevo: índice de fin en la cadena
     attributes: List[AttributeInfo]
     is_self_closing: bool
 
@@ -64,6 +68,8 @@ class XMLPositionParser:
                 start_col=start_col,
                 end_line=end_line,
                 end_col=end_col,
+                start_index=start_pos,  # Guardamos el índice absoluto
+                end_index=end_pos,      # Guardamos el índice absoluto
                 attributes=attrs,
                 is_self_closing=is_self_closing
             )
@@ -110,7 +116,9 @@ class XMLPositionParser:
                 start_line=start_line,
                 start_col=start_col,
                 end_line=end_line,
-                end_col=end_col
+                end_col=end_col,
+                start_index=attr_start_pos,  # Guardamos el índice absoluto
+                end_index=attr_end_pos       # Guardamos el índice absoluto
             )
             
             attributes.append(attr_info)
@@ -127,28 +135,27 @@ class PositionElement(etree.ElementBase):
         - start_col: Column where element starts
         - end_line: Line where element ends
         - end_col: Column where element ends
+        - start_index: Character index where element starts
+        - end_index: Character index where element ends
         - is_self_closing: Whether element is self-closing
         - position_attributes: List of AttributeInfo objects
     """
     
-    # Use __slots__ to store position data directly in the instance
-    # This works better with lxml's internal structure
     __slots__ = ()
     
-    def _set_position_data(self, start_line, start_col, end_line, end_col, is_self_closing, position_attributes):
+    def _set_position_data(self, start_line, start_col, end_line, end_col, 
+                          start_index, end_index, is_self_closing, position_attributes):
         """Internal method to set position data."""
-        # Store in a special namespace to avoid conflicts with XML attributes
         self.set('_pos_start_line', str(start_line))
         self.set('_pos_start_col', str(start_col))
         self.set('_pos_end_line', str(end_line))
         self.set('_pos_end_col', str(end_col))
+        self.set('_pos_start_index', str(start_index))  # Nuevo
+        self.set('_pos_end_index', str(end_index))      # Nuevo
         self.set('_pos_is_self_closing', str(is_self_closing))
-        # Store position_attributes in a way that survives
-        # We'll use the element's __dict__ if available, or fall back to a global dict
         try:
             object.__setattr__(self, '_pos_attrs_data', position_attributes)
         except (AttributeError, TypeError):
-            # Fallback: store in element's tail (not ideal but works)
             pass
     
     @property
@@ -173,6 +180,18 @@ class PositionElement(etree.ElementBase):
     def end_col(self) -> Optional[int]:
         """Column where element ends."""
         val = self.get('_pos_end_col')
+        return int(val) if val and val != 'None' else None
+    
+    @property
+    def start_index(self) -> Optional[int]:
+        """Character index where element starts."""
+        val = self.get('_pos_start_index')
+        return int(val) if val and val != 'None' else None
+    
+    @property
+    def end_index(self) -> Optional[int]:
+        """Character index where element ends."""
+        val = self.get('_pos_end_index')
         return int(val) if val and val != 'None' else None
     
     @property
@@ -204,8 +223,11 @@ class LXMLPositionEnricher:
         element = root.xpath("//record")[0]
         print(element.start_line)
         print(element.start_col)
-        print(element.is_self_closing)
-        print(element.position_attributes[0].start_line)
+        print(element.start_index)
+        
+        # Extract the exact text:
+        xml_text = xml_content.decode('utf-8')
+        element_text = xml_text[element.start_index:element.end_index]
     """
     
     def __init__(self, xml_content: bytes):
@@ -234,15 +256,12 @@ class LXMLPositionEnricher:
     
     def _enrich_elements(self):
         """Match and enrich lxml elements with position information."""
-        # Collect all lxml elements in document order
         lxml_elements = []
         self._traverse_lxml(self.root, lxml_elements)
         
-        # Debug: Print what we found
         print(f"DEBUG: Found {len(lxml_elements)} lxml elements")
         print(f"DEBUG: Found {len(self.position_elements)} position elements")
         
-        # Group position elements by tag name
         pos_by_tag = {}
         for pos_elem in self.position_elements:
             if pos_elem.name not in pos_by_tag:
@@ -251,7 +270,6 @@ class LXMLPositionEnricher:
         
         print(f"DEBUG: Position elements by tag: {list(pos_by_tag.keys())}")
         
-        # Group lxml elements by tag name
         lxml_by_tag = {}
         for lxml_elem in lxml_elements:
             tag = self._get_tag_name(lxml_elem)
@@ -262,7 +280,6 @@ class LXMLPositionEnricher:
         
         print(f"DEBUG: lxml elements by tag: {list(lxml_by_tag.keys())}")
         
-        # Match and enrich elements with same tag name by order
         for tag_name in lxml_by_tag:
             if tag_name in pos_by_tag:
                 lxml_list = lxml_by_tag[tag_name]
@@ -274,22 +291,21 @@ class LXMLPositionEnricher:
                     lxml_elem = lxml_list[i]
                     pos_elem = pos_list[i]
                     
-                    # Debug attributes
                     lxml_attrs = dict(lxml_elem.attrib)
                     pos_attrs = {attr.name: attr.value for attr in pos_elem.attributes}
                     print(f"  DEBUG: Comparing element {i}:")
                     print(f"    lxml attrs: {lxml_attrs}")
                     print(f"    pos attrs: {pos_attrs}")
                     
-                    # Verify attributes match
                     if self._attributes_match(lxml_elem, pos_elem):
                         print(f"    ✓ MATCH! Setting position data")
-                        # Set position information using the custom method
                         lxml_elem._set_position_data(
                             start_line=pos_elem.start_line,
                             start_col=pos_elem.start_col,
                             end_line=pos_elem.end_line,
                             end_col=pos_elem.end_col,
+                            start_index=pos_elem.start_index,  # Nuevo
+                            end_index=pos_elem.end_index,      # Nuevo
                             is_self_closing=pos_elem.is_self_closing,
                             position_attributes=pos_elem.attributes
                         )
@@ -308,12 +324,10 @@ class LXMLPositionEnricher:
         """Get tag name from lxml element, handling namespaces."""
         tag = element.tag
         
-        # Skip non-element nodes
         if not isinstance(tag, str):
             return None
         
         if '}' in tag:
-            # Remove namespace: {http://example.com}tag -> tag
             tag = tag.split('}')[1]
         return tag
     
@@ -322,15 +336,12 @@ class LXMLPositionEnricher:
         lxml_attrs = dict(lxml_elem.attrib)
         pos_attrs = {attr.name: attr.value for attr in pos_elem.attributes}
         
-        # If both have no attributes, they match
         if not lxml_attrs and not pos_attrs:
             return True
         
-        # If attribute counts differ, they don't match
         if len(lxml_attrs) != len(pos_attrs):
             return False
         
-        # Check if all attributes match
         for key, value in lxml_attrs.items():
             if key not in pos_attrs or pos_attrs[key] != value:
                 return False
@@ -364,69 +375,57 @@ def demo():
     print("=== Enhanced lxml Parser Demo ===\n")
     print("Creating enriched lxml tree...")
     
-    # Parse XML with position enrichment
     enricher = LXMLPositionEnricher(xml_test)
     root = enricher.root
+    xml_text = xml_test.decode('utf-8')
     
     print(f"Root element: <{root.tag}>\n")
     print("="*70)
     
-    # Example 1: Access position info directly
-    print("\nExample 1: Direct property access")
+    # Ejemplo con índices de caracteres
+    print("\nExample: Extract exact text using character indices")
     print("-"*70)
     
     templates = root.xpath("//template")
     for template in templates:
         print(f"\n<{template.tag} id='{template.get('id')}'>")
-        print(f"  start_line: {template.start_line}")
-        print(f"  start_col: {template.start_col}")
-        print(f"  end_line: {template.end_line}")
-        print(f"  end_col: {template.end_col}")
-        print(f"  is_self_closing: {template.is_self_closing}")
+        print(f"  start_index: {template.start_index}")
+        print(f"  end_index: {template.end_index}")
+        print(f"  start_line: {template.start_line}, start_col: {template.start_col}")
+        print(f"  end_line: {template.end_line}, end_col: {template.end_col}")
         
-        if template.position_attributes:
-            print(f"  Attributes with positions:")
-            for attr in template.position_attributes:
-                print(f"    • {attr.name}='{attr.value}'")
-                print(f"      ({attr.start_line},{attr.start_col}) → ({attr.end_line},{attr.end_col})")
+        # ¡Aquí está la magia! Extrae el texto exacto
+        if template.start_index is not None and template.end_index is not None:
+            exact_text = xml_text[template.start_index:template.end_index]
+            print(f"\n  Exact text from xml_content[{template.start_index}:{template.end_index}]:")
+            print(f"  '{exact_text}'")
     
-    # Example 2: Find specific element and check position
+    # Ejemplo con atributos
     print("\n" + "="*70)
-    print("\nExample 2: Find <t> element with t-esc attribute")
+    print("\nExample: Extract attribute text using indices")
     print("-"*70)
     
-    t_elements = root.xpath("//t[@t-esc]")
-    if t_elements:
-        t_elem = t_elements[0]
-        print(f"\nFound: <{t_elem.tag}>")
-        print(f"  Position: ({t_elem.start_line},{t_elem.start_col}) → ({t_elem.end_line},{t_elem.end_col})")
-        print(f"  Self-closing: {t_elem.is_self_closing}")
-        print(f"  Attributes:")
-        for attr in t_elem.position_attributes:
-            print(f"    {attr.name}='{attr.value}' @ line {attr.start_line}, col {attr.start_col}")
+    for template in templates:
+        if template.position_attributes:
+            print(f"\n<{template.tag}>")
+            for attr in template.position_attributes:
+                print(f"  Attribute: {attr.name}='{attr.value}'")
+                print(f"    indices: [{attr.start_index}:{attr.end_index}]")
+                if attr.start_index is not None and attr.end_index is not None:
+                    attr_text = xml_text[attr.start_index:attr.end_index]
+                    print(f"    exact text: '{attr_text}'")
     
-    # Example 3: Iterate all span elements
+    # Ejemplo con span
     print("\n" + "="*70)
-    print("\nExample 3: All <span> elements")
+    print("\nExample: All <span> elements with exact text")
     print("-"*70)
     
     for span in root.xpath("//span"):
-        attrs = ", ".join([f"{k}='{v}'" for k, v in span.attrib.items()])
-        print(f"\n<span {attrs} />")
-        print(f"  Lines: {span.start_line} → {span.end_line}")
-        print(f"  Columns: {span.start_col} → {span.end_col}")
-    
-    # Example 4: Demonstrate it's still a regular lxml element
-    print("\n" + "="*70)
-    print("\nExample 4: Still works as regular lxml element")
-    print("-"*70)
-    
-    print(f"\nCan use all lxml methods:")
-    print(f"  root.tag: {root.tag}")
-    print(f"  root.getchildren() count: {len(root.getchildren())}")
-    print(f"  root.xpath('//div') count: {len(root.xpath('//div'))}")
-    print(f"  isinstance(root, etree._Element): {isinstance(root, etree._Element)}")
-    print(f"  isinstance(root, PositionElement): {isinstance(root, PositionElement)}")
+        print(f"\nElement: <span>")
+        print(f"  Indices: [{span.start_index}:{span.end_index}]")
+        if span.start_index is not None and span.end_index is not None:
+            span_text = xml_text[span.start_index:span.end_index]
+            print(f"  Exact text: '{span_text}'")
 
 
 if __name__ == "__main__":

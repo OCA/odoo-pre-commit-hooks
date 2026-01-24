@@ -8,7 +8,7 @@ from typing import Dict, List
 from lxml import etree
 from packaging.version import Version
 
-from oca_pre_commit_hooks import node_xml, utils
+from oca_pre_commit_hooks import node_xml, xml_position_parser, utils
 from oca_pre_commit_hooks.base_checker import BaseChecker
 
 DFLT_DEPRECATED_TREE_ATTRS = ["colors", "fonts", "string"]
@@ -124,7 +124,14 @@ class ChecksOdooModuleXML(BaseChecker):
         Useful when the file is modified by autofix and a new line is inserted/removed.
         It will update the sourceline of the nodes"""
         with open(manifest_data["filename"], "rb") as f_xml:
-            node = etree.parse(f_xml)
+            xml_content = f_xml.read()
+            # node = etree.parse(f_xml)
+            # xml_position_parser_obj = xml_position_parser.XMLPositionParser(content)
+            # node = xml_position_parser_obj.
+            enricher = xml_position_parser.LXMLPositionEnricher(xml_content)
+            node = enricher.root
+            # import pdb;pdb.set_trace()
+
             manifest_data.update({"node": node})
             f_xml.seek(0)
             first_tag, first_tag_lineno = self._get_first_tag(f_xml)
@@ -133,6 +140,7 @@ class ChecksOdooModuleXML(BaseChecker):
                     "node": node,
                     "first_tag": first_tag,
                     "first_tag_lineno": first_tag_lineno,
+                    "xml_content": xml_content,
                 }
             )
             return node
@@ -471,7 +479,9 @@ class ChecksOdooModuleXML(BaseChecker):
 
     def autofix_id_position_first(self, node, first_attr, manifest_data):
         attrs = dict(node.attrib)
-        node_content = node_xml.NodeContent(manifest_data["filename"], node)
+        
+        xml_node_content = manifest_data["xml_content"][node.start_index:node.end_index]
+        # node_content = node_xml.NodeContent(manifest_data["filename"], node)
         # Build regex pattern to match the tag with all its known attributes
         # sourceline is the last line of the last attribute, so we need to search backwards
         tag_name = re.escape(node.tag)
@@ -481,6 +491,8 @@ class ChecksOdooModuleXML(BaseChecker):
         attr_patterns = []
         # Use the first attribute spaces since that id will be the new first attribute
         keys = [f"spaces_before_{first_attr}", "id"]
+        if node.get("id") == "view_ir_config_search":
+            import pdb;pdb.set_trace()
         for attr_name, attr_value in attrs.items():
             escaped_name = re.escape(attr_name)
             escaped_value = re.escape(attr_value)
@@ -513,21 +525,23 @@ class ChecksOdooModuleXML(BaseChecker):
         )
 
         # Search with multiline and dotall flags
-        match = re.search(pattern, node_content.content_node.decode(), re.DOTALL | re.MULTILINE)
+        match = re.search(pattern, xml_node_content.decode(), re.DOTALL | re.MULTILINE)
         if match:
             keys = [f"open_{node.tag}"] + keys + [f"close_{node.tag}"]
             match_dict = match.groupdict()
             recreate = "".join(match_dict[k] for k in keys)
             original = match.group()
-            content_node2 = node_content.content_node.replace(original.encode(), recreate.encode(), 1)
-            if content_node2 != node_content.content_node:
+            content_node2 = xml_node_content.replace(original.encode(), recreate.encode(), 1)
+            if content_node2 != xml_node_content:
                 # Modify the record attrib to propagate the change to other checks
                 id_value = attrs.pop("id")
                 node.attrib.clear()
                 new_attrs = {"id": id_value, **attrs}
                 node.attrib.update(new_attrs)
-                node_content.content_node = content_node2
-                utils.perform_fix(manifest_data["filename"], bytes(node_content))
+                before = manifest_data["xml_content"][0:node.start_index-1]
+                after = manifest_data["xml_content"][node.end_index:]
+                import pdb;pdb.set_trace()
+                utils.perform_fix(manifest_data["filename"], before + content_node2 + after)
 
     @utils.only_required_for_checks("xml-view-dangerous-replace-low-priority", "xml-deprecated-tree-attribute")
     def visit_xml_record_view(self, manifest_data, record):
