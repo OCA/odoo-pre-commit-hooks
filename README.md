@@ -543,6 +543,12 @@ options:
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.20/test_repo/broken_module/model_view_odoo2.xml#L158 Redundant module name `<menuitem id="broken_module.menu_root"` Use `<menuitem id="menu_root"` instead
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.20/test_repo/broken_module/model_view_odoo2.xml#L165 Redundant module name `<menuitem id="broken_module.menu_root2"` Use `<menuitem id="menu_root2"` instead
 
+ * xml-superfluous-attributeless
+
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.20/test_repo/broken_module/template1.xml#L30 Remove superfluous attributeless `<span` Serve no purpose and cause formatting inconsistencies with Prettier
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.20/test_repo/broken_module/template1.xml#L34 Remove superfluous attributeless `<span` Serve no purpose and cause formatting inconsistencies with Prettier
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.20/test_repo/test_module/website_templates.xml#L60 Remove superfluous attributeless `<span` Serve no purpose and cause formatting inconsistencies with Prettier
+
  * xml-syntax-error
 
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.20/test_repo/broken_module/file_no_exist.xml#L1 [Errno 2] No such file or directory: ''

@@ -787,6 +787,7 @@ class ChecksOdooModuleXML(BaseChecker):
         "xml-dangerous-qweb-replace-low-priority",
         "xml-duplicate-template-id",
         "xml-id-position-first",
+        "xml-superfluous-attributeless",
         "xml-template-prettier-incompatible",
     )
     def check_xml_templates(self):
@@ -800,6 +801,7 @@ class ChecksOdooModuleXML(BaseChecker):
         Indentify nodes incompatible with Prettier XML auto-fix generating possible unexpected text insertion
         """
         template_ids: Dict[str, List[FileElementPair]] = defaultdict(list)
+        pattern = re.compile(rb"<span>(.*?)</span>")
         for manifest_data in self.manifest_datas:
             for template in self.xpath_template(manifest_data["node"]):
                 if self.is_message_enabled(
@@ -811,6 +813,25 @@ class ChecksOdooModuleXML(BaseChecker):
                     if not template_id:  # pragma: no cover
                         continue
                     template_ids[template_id].append(FileElementPair(manifest_data["filename_short"], template))
+                if self.is_message_enabled("xml-superfluous-attributeless", manifest_data["disabled_checks"]):
+                    for node_attrless in template.xpath(".//span[not(@*)]"):
+                        self.register_error(
+                            code="xml-superfluous-attributeless",
+                            message=f"Remove superfluous attributeless `<{node_attrless.tag}`",
+                            info=f"Serve no purpose and cause formatting inconsistencies with Prettier",
+                            filepath=manifest_data["filename_short"],
+                            line=node_attrless.sourceline,
+                        )
+                        if self.autofix:
+                            node_content = node_xml.NodeContent(manifest_data["filename"], node_attrless)
+                            new_content_node = pattern.sub(rb"\1", node_content.content_node, count=1)
+                            if new_content_node != node_content.content_node:
+                                # Modify the record attrib to propagate the change to other checks
+                                node_content.content_node = new_content_node
+                                utils.perform_fix(manifest_data["filename"], bytes(node_content))
+                                # TODO: check if the "for" affects updating the nodes
+                                self.update_node(manifest_data)  # update sourceline after delete a node
+
                 if self.is_message_enabled("xml-template-prettier-incompatible", manifest_data["disabled_checks"]):
                     self.verify_template_prettier_incompatible(template, manifest_data)
 
