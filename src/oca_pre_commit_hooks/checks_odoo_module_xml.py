@@ -670,7 +670,7 @@ class ChecksOdooModuleXML(BaseChecker):
                             "incompatible for Prettier XML auto-fix. To prevent unexpected text insertion "
                             f"prefer `<{node_wrapper.tag} {found_attr}=...>` (move attribute to parent) or "
                             "using 'style' attribute instead of tag "
-                            "e.g. <tag style=\"font-weight: bold\">Black Text... instead of <b><tag..."
+                            'e.g. <tag style="font-weight: bold">Black Text... instead of <b><tag...'
                         ),
                         filepath=manifest_data["filename_short"],
                         line=node_wrapper_child.sourceline,
