@@ -550,9 +550,9 @@ options:
 
  * xml-template-prettier-incompatible
 
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.20/test_repo/test_module/website_templates.xml#L22 Node `<textarea ...><t t-out=...` incompatible for Prettier XML auto-fix. To prevent unexpected text insertion prefer `<textarea t-out=...>` (move attribute to parent)
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.20/test_repo/test_module/website_templates.xml#L24 Node `<textarea ...><t t-out=...` incompatible for Prettier XML auto-fix. To prevent unexpected text insertion prefer `<textarea t-out=...>` (move attribute to parent)
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.20/test_repo/test_module/website_templates.xml#L26 Node `<textarea ...><t t-out=...` incompatible for Prettier XML auto-fix. To prevent unexpected text insertion prefer `<textarea t-out=...>` (move attribute to parent)
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.20/test_repo/test_module/website_templates.xml#L22 Node `<textarea ...><t t-out=...` incompatible for Prettier XML auto-fix. To prevent unexpected text insertion prefer `<textarea t-out=...>` (move attribute to parent) or using 'style' attribute instead of tag e.g. <tag style="font-weight: bold">Black Text... instead of <b><tag...
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.20/test_repo/test_module/website_templates.xml#L24 Node `<textarea ...><t t-out=...` incompatible for Prettier XML auto-fix. To prevent unexpected text insertion prefer `<textarea t-out=...>` (move attribute to parent) or using 'style' attribute instead of tag e.g. <tag style="font-weight: bold">Black Text... instead of <b><tag...
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.20/test_repo/test_module/website_templates.xml#L26 Node `<textarea ...><t t-out=...` incompatible for Prettier XML auto-fix. To prevent unexpected text insertion prefer `<textarea t-out=...>` (move attribute to parent) or using 'style' attribute instead of tag e.g. <tag style="font-weight: bold">Black Text... instead of <b><tag...
 
  * xml-view-dangerous-replace-low-priority
 
