@@ -633,27 +633,47 @@ class ChecksOdooModuleXML(BaseChecker):
         """There are text tags incompatible with prettier xml autofix
         More info https://github.com/OCA/odoo-pre-commit-hooks/issues/149"""
         target_attrs = {"t-out", "t-esc", "t-raw"}
-        for node_textarea in template.xpath(".//textarea"):
-            if len(node_textarea_child := node_textarea.getchildren()) != 1:
-                continue
-            node_textarea_child = node_textarea_child[0]
-            has_text = node_textarea.text and node_textarea.text.strip()
-            has_tail = node_textarea_child.tail and node_textarea_child.tail.strip()
-            found_attr = set(node_textarea_child.attrib) & target_attrs
-            if node_textarea_child.tag != "t" or has_text or has_tail or not found_attr:
-                continue
-            found_attr = found_attr.pop()
-            self.register_error(
-                code="xml-template-prettier-incompatible",
-                message=(
-                    f"Node `<{node_textarea.tag} ...><{node_textarea_child.tag} {found_attr}=...` "
-                    "incompatible for Prettier XML auto-fix. To prevent unexpected text insertion "
-                    f"prefer `<{node_textarea.tag} {found_attr}=...`"
-                ),
-                filepath=manifest_data["filename_short"],
-                line=node_textarea_child.sourceline,
-            )
-            # TODO: Autofix using the same node
+        # Tags that wrap inline content and are affected by prettier formatting
+        inline_wrapper_tags = {"textarea", "b", "strong", "i", "em", "span", "a", "u", "s", "small", "mark"}
+
+        for wrapper_tag in inline_wrapper_tags:
+            for node_wrapper in template.xpath(f".//{wrapper_tag}"):
+                children = node_wrapper.getchildren()
+                if len(children) != 1:
+                    continue
+
+                node_wrapper_child = children[0]
+
+                # Check if child has template attributes
+                found_attr = set(node_wrapper_child.attrib) & target_attrs
+                if not found_attr:
+                    continue
+
+                # Only check for t or span tags with template attributes
+                if node_wrapper_child.tag not in ("t", "span"):
+                    continue
+
+                # Check if wrapper has ONLY whitespace (or nothing) before the child
+                wrapper_text = node_wrapper.text or ""
+                has_meaningful_text = wrapper_text.strip()
+
+                # The problem occurs when:
+                # 1. There's a template attribute on the child
+                # 2. The wrapper has no meaningful text before the child (only whitespace/newlines)
+                # This means prettier will reformat and add unwanted newlines
+                if not has_meaningful_text:
+                    found_attr = found_attr.pop()
+                    self.register_error(
+                        code="xml-template-prettier-incompatible",
+                        message=(
+                            f"Node `<{node_wrapper.tag} ...><{node_wrapper_child.tag} {found_attr}=...` "
+                            "incompatible for Prettier XML auto-fix. To prevent unexpected text insertion "
+                            f"prefer `<{node_wrapper.tag} {found_attr}=...>` (move attribute to parent)"
+                        ),
+                        filepath=manifest_data["filename_short"],
+                        line=node_wrapper_child.sourceline,
+                    )
+                    # TODO: Autofix using the same node
 
     def has_escaped_double_quotes(self, filename) -> bool:
         """Check if filename contains escaped double quotes " -> &quot;
