@@ -633,27 +633,49 @@ class ChecksOdooModuleXML(BaseChecker):
         """There are text tags incompatible with prettier xml autofix
         More info https://github.com/OCA/odoo-pre-commit-hooks/issues/149"""
         target_attrs = {"t-out", "t-esc", "t-raw"}
-        for node_textarea in template.xpath(".//textarea"):
-            if len(node_textarea_child := node_textarea.getchildren()) != 1:
-                continue
-            node_textarea_child = node_textarea_child[0]
-            has_text = node_textarea.text and node_textarea.text.strip()
-            has_tail = node_textarea_child.tail and node_textarea_child.tail.strip()
-            found_attr = set(node_textarea_child.attrib) & target_attrs
-            if node_textarea_child.tag != "t" or has_text or has_tail or not found_attr:
-                continue
-            found_attr = found_attr.pop()
-            self.register_error(
-                code="xml-template-prettier-incompatible",
-                message=(
-                    f"Node `<{node_textarea.tag} ...><{node_textarea_child.tag} {found_attr}=...` "
-                    "incompatible for Prettier XML auto-fix. To prevent unexpected text insertion "
-                    f"prefer `<{node_textarea.tag} {found_attr}=...`"
-                ),
-                filepath=manifest_data["filename_short"],
-                line=node_textarea_child.sourceline,
-            )
-            # TODO: Autofix using the same node
+        # Tags that wrap inline content and are affected by prettier formatting
+        inline_wrapper_tags = {"textarea", "b", "strong", "i", "em", "span", "a", "u", "s", "small", "mark"}
+
+        for wrapper_tag in inline_wrapper_tags:
+            for node_wrapper in template.xpath(f".//{wrapper_tag}"):
+                children = node_wrapper.getchildren()
+                if len(children) != 1:
+                    continue
+
+                node_wrapper_child = children[0]
+
+                # Check if child has template attributes
+                found_attr = set(node_wrapper_child.attrib) & target_attrs
+                if not found_attr:
+                    continue
+
+                # Only check for t or span tags with template attributes
+                if node_wrapper_child.tag not in ("t", "span"):
+                    continue
+
+                # Check if wrapper has ONLY whitespace (or nothing) before the child
+                wrapper_text = node_wrapper.text or ""
+                has_meaningful_text = wrapper_text.strip()
+
+                # The problem occurs when:
+                # 1. There's a template attribute on the child
+                # 2. The wrapper has no meaningful text before the child (only whitespace/newlines)
+                # This means prettier will reformat and add unwanted newlines
+                if not has_meaningful_text:
+                    found_attr = found_attr.pop()
+                    self.register_error(
+                        code="xml-template-prettier-incompatible",
+                        message=(
+                            f"Node `<{node_wrapper.tag} ...><{node_wrapper_child.tag} {found_attr}=...` "
+                            "incompatible for Prettier XML auto-fix. To prevent unexpected text insertion "
+                            f"prefer `<{node_wrapper.tag} {found_attr}=...>` (move attribute to parent) or "
+                            "using 'style' attribute instead of tag "
+                            'e.g. <tag style="font-weight: bold">Black Text... instead of <b><tag...'
+                        ),
+                        filepath=manifest_data["filename_short"],
+                        line=node_wrapper_child.sourceline,
+                    )
+                    # TODO: Autofix using the same node
 
     def has_escaped_double_quotes(self, filename) -> bool:
         """Check if filename contains escaped double quotes " -> &quot;
@@ -765,6 +787,7 @@ class ChecksOdooModuleXML(BaseChecker):
         "xml-dangerous-qweb-replace-low-priority",
         "xml-duplicate-template-id",
         "xml-id-position-first",
+        "xml-superfluous-attributeless",
         "xml-template-prettier-incompatible",
     )
     def check_xml_templates(self):
@@ -778,6 +801,7 @@ class ChecksOdooModuleXML(BaseChecker):
         Indentify nodes incompatible with Prettier XML auto-fix generating possible unexpected text insertion
         """
         template_ids: Dict[str, List[FileElementPair]] = defaultdict(list)
+        pattern = re.compile(rb"<span>(.*?)</span>")
         for manifest_data in self.manifest_datas:
             for template in self.xpath_template(manifest_data["node"]):
                 if self.is_message_enabled(
@@ -789,6 +813,25 @@ class ChecksOdooModuleXML(BaseChecker):
                     if not template_id:  # pragma: no cover
                         continue
                     template_ids[template_id].append(FileElementPair(manifest_data["filename_short"], template))
+                if self.is_message_enabled("xml-superfluous-attributeless", manifest_data["disabled_checks"]):
+                    for node_attrless in template.xpath(".//span[not(@*)]"):
+                        self.register_error(
+                            code="xml-superfluous-attributeless",
+                            message=f"Remove superfluous attributeless `<{node_attrless.tag}`",
+                            info=f"Serve no purpose and cause formatting inconsistencies with Prettier",
+                            filepath=manifest_data["filename_short"],
+                            line=node_attrless.sourceline,
+                        )
+                        if self.autofix:
+                            node_content = node_xml.NodeContent(manifest_data["filename"], node_attrless)
+                            new_content_node = pattern.sub(rb"\1", node_content.content_node, count=1)
+                            if new_content_node != node_content.content_node:
+                                # Modify the record attrib to propagate the change to other checks
+                                node_content.content_node = new_content_node
+                                utils.perform_fix(manifest_data["filename"], bytes(node_content))
+                                # TODO: check if the "for" affects updating the nodes
+                                self.update_node(manifest_data)  # update sourceline after delete a node
+
                 if self.is_message_enabled("xml-template-prettier-incompatible", manifest_data["disabled_checks"]):
                     self.verify_template_prettier_incompatible(template, manifest_data)
 

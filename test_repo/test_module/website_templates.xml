@@ -28,6 +28,24 @@
         <textarea name="fixed" t-out="campaign.description" />
         <!--prettier compatible-->
         <textarea name="mixed">   Ver: <t t-out="campaign.url" /></textarea>
+        <!--prettier compatible-->
+        <div>
+            <div class="page">
+                Dear
+                <b>
+                <span t-out="partner_name or ''" />
+            </b>:<br />
+                By this means, you are informed that the budget movement of
+                <span t-out="move_type" />
+                with the number:
+                <b>
+                <span t-out="move_name" />
+            </b>
+                    has been liquidated and transferred
+                to the available balance of the related budgetary item.<br />
+                Regards,
+            </div>
+        </div>
     </template>
 
     <!-- Deprecated QWeb directive "t-field-options". -->

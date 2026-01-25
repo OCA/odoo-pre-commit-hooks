@@ -44,7 +44,7 @@ EXPECTED_ERRORS = {
     "xml-not-valid-char-link": 2,
     "xml-redundant-module-name": 3,
     "xml-syntax-error": 2,
-    "xml-template-prettier-incompatible": 3,
+    "xml-template-prettier-incompatible": 5,
     "xml-view-dangerous-replace-low-priority": 7,
     "xml-xpath-translatable-item": 4,
     "xml-oe-structure-missing-id": 6,
@@ -56,6 +56,7 @@ EXPECTED_ERRORS = {
     "xml-deprecated-oe-chatter": 1,
     "xml-field-bool-without-eval": 2,
     "xml-field-numeric-without-eval": 7,
+    "xml-superfluous-attributeless": 5,
 }
 
 

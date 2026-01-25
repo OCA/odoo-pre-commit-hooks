@@ -456,7 +456,7 @@ options:
  * xml-deprecated-qweb-directive
 
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.20/test_repo/test_module/website_templates.xml#L7 Deprecated QWeb directive `t-esc-options`. Use `t-options` instead
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.20/test_repo/test_module/website_templates.xml#L37 Deprecated QWeb directive `t-field-options`. Use `t-options` instead
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.20/test_repo/test_module/website_templates.xml#L55 Deprecated QWeb directive `t-field-options`. Use `t-options` instead
 
  * xml-deprecated-qweb-directive-15
 
@@ -523,14 +523,14 @@ options:
 
  * xml-not-valid-char-link
 
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.20/test_repo/test_module/website_templates.xml#L59 The resource in in src/href contains a not valid character
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.20/test_repo/test_module/website_templates.xml#L61 The resource in in src/href contains a not valid character
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.20/test_repo/test_module/website_templates.xml#L77 The resource in in src/href contains a not valid character
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.20/test_repo/test_module/website_templates.xml#L79 The resource in in src/href contains a not valid character
 
  * xml-oe-structure-missing-id
 
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.20/test_repo/test_module/website_templates.xml#L9 Consider removing the class `oe_structure` or adding a proper id to the tag. The id must contain `oe_structure`
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.20/test_repo/test_module/website_templates.xml#L13 Consider removing the class `oe_structure` or adding a proper id to the tag. The id must contain `oe_structure`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.20/test_repo/test_module/website_templates.xml#L41 Consider removing the class `oe_structure` or adding a proper id to the tag. The id must contain `oe_structure`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.20/test_repo/test_module/website_templates.xml#L59 Consider removing the class `oe_structure` or adding a proper id to the tag. The id must contain `oe_structure`
 
  * xml-record-missing-id
 
@@ -543,6 +543,12 @@ options:
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.20/test_repo/broken_module/model_view_odoo2.xml#L158 Redundant module name `<menuitem id="broken_module.menu_root"` Use `<menuitem id="menu_root"` instead
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.20/test_repo/broken_module/model_view_odoo2.xml#L165 Redundant module name `<menuitem id="broken_module.menu_root2"` Use `<menuitem id="menu_root2"` instead
 
+ * xml-superfluous-attributeless
+
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.20/test_repo/broken_module/template1.xml#L30 Remove superfluous attributeless `<span` Serve no purpose and cause formatting inconsistencies with Prettier
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.20/test_repo/broken_module/template1.xml#L34 Remove superfluous attributeless `<span` Serve no purpose and cause formatting inconsistencies with Prettier
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.20/test_repo/test_module/website_templates.xml#L60 Remove superfluous attributeless `<span` Serve no purpose and cause formatting inconsistencies with Prettier
+
  * xml-syntax-error
 
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.20/test_repo/broken_module/file_no_exist.xml#L1 [Errno 2] No such file or directory: ''
@@ -550,9 +556,9 @@ options:
 
  * xml-template-prettier-incompatible
 
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.20/test_repo/test_module/website_templates.xml#L22 Node `<textarea ...><t t-out=...` incompatible for Prettier XML auto-fix. To prevent unexpected text insertion prefer `<textarea t-out=...`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.20/test_repo/test_module/website_templates.xml#L24 Node `<textarea ...><t t-out=...` incompatible for Prettier XML auto-fix. To prevent unexpected text insertion prefer `<textarea t-out=...`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.20/test_repo/test_module/website_templates.xml#L26 Node `<textarea ...><t t-out=...` incompatible for Prettier XML auto-fix. To prevent unexpected text insertion prefer `<textarea t-out=...`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.20/test_repo/test_module/website_templates.xml#L22 Node `<textarea ...><t t-out=...` incompatible for Prettier XML auto-fix. To prevent unexpected text insertion prefer `<textarea t-out=...>` (move attribute to parent) or using 'style' attribute instead of tag e.g. <tag style="font-weight: bold">Black Text... instead of <b><tag...
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.20/test_repo/test_module/website_templates.xml#L24 Node `<textarea ...><t t-out=...` incompatible for Prettier XML auto-fix. To prevent unexpected text insertion prefer `<textarea t-out=...>` (move attribute to parent) or using 'style' attribute instead of tag e.g. <tag style="font-weight: bold">Black Text... instead of <b><tag...
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.20/test_repo/test_module/website_templates.xml#L26 Node `<textarea ...><t t-out=...` incompatible for Prettier XML auto-fix. To prevent unexpected text insertion prefer `<textarea t-out=...>` (move attribute to parent) or using 'style' attribute instead of tag e.g. <tag style="font-weight: bold">Black Text... instead of <b><tag...
 
  * xml-view-dangerous-replace-low-priority
 
