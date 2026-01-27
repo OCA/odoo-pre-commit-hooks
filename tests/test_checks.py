@@ -35,7 +35,7 @@ EXPECTED_ERRORS = {
     "xml-dangerous-qweb-replace-low-priority": 9,
     "xml-deprecated-data-node": 8,
     "xml-deprecated-openerp-node": 4,
-    "xml-deprecated-qweb-directive-15": 3,
+    "xml-deprecated-qweb-directive-15": 4,
     "xml-deprecated-qweb-directive": 2,
     "xml-deprecated-tree-attribute": 3,
     "xml-double-quotes-py": 4,

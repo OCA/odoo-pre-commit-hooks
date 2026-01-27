@@ -16,7 +16,8 @@
                 </strong>
             </div>
         </div>
+        <p class="col"><strong>Line Template:</strong> <t
+                t-esc="lead.template_line_id.name"
+            /></p>
     </template>
-
-
 </odoo>
