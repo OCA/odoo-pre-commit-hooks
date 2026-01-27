@@ -8,7 +8,7 @@ from typing import Dict, List
 from lxml import etree
 from packaging.version import Version
 
-from oca_pre_commit_hooks import node_xml, xml_position_parser, utils
+from oca_pre_commit_hooks import node_xml, utils, xml_position_parser
 from oca_pre_commit_hooks.base_checker import BaseChecker
 
 DFLT_DEPRECATED_TREE_ATTRS = ["colors", "fonts", "string"]
@@ -130,7 +130,7 @@ class ChecksOdooModuleXML(BaseChecker):
             # node = xml_position_parser_obj.
             enricher = xml_position_parser.LXMLPositionEnricher(xml_content)
             node = enricher.root
-            # import pdb;pdb.set_trace()
+            # import pdb;pdb.set_trace()
 
             manifest_data.update({"node": node})
             f_xml.seek(0)
@@ -479,8 +479,8 @@ class ChecksOdooModuleXML(BaseChecker):
 
     def autofix_id_position_first(self, node, first_attr, manifest_data):
         attrs = dict(node.attrib)
-        
-        xml_node_content = manifest_data["xml_content"][node.start_index:node.end_index]
+
+        xml_node_content = manifest_data["xml_content"][node.start_index : node.end_index]
         # node_content = node_xml.NodeContent(manifest_data["filename"], node)
         # Build regex pattern to match the tag with all its known attributes
         # sourceline is the last line of the last attribute, so we need to search backwards
@@ -492,7 +492,9 @@ class ChecksOdooModuleXML(BaseChecker):
         # Use the first attribute spaces since that id will be the new first attribute
         keys = [f"spaces_before_{first_attr}", "id"]
         if node.get("id") == "view_ir_config_search":
-            import pdb;pdb.set_trace()
+            import pdb
+
+            pdb.set_trace()
         for attr_name, attr_value in attrs.items():
             escaped_name = re.escape(attr_name)
             escaped_value = re.escape(attr_value)
@@ -538,9 +540,11 @@ class ChecksOdooModuleXML(BaseChecker):
                 node.attrib.clear()
                 new_attrs = {"id": id_value, **attrs}
                 node.attrib.update(new_attrs)
-                before = manifest_data["xml_content"][0:node.start_index-1]
-                after = manifest_data["xml_content"][node.end_index:]
-                import pdb;pdb.set_trace()
+                before = manifest_data["xml_content"][0 : node.start_index - 1]
+                after = manifest_data["xml_content"][node.end_index :]
+                import pdb
+
+                pdb.set_trace()
                 utils.perform_fix(manifest_data["filename"], before + content_node2 + after)
 
     @utils.only_required_for_checks("xml-view-dangerous-replace-low-priority", "xml-deprecated-tree-attribute")
@@ -759,6 +763,30 @@ class ChecksOdooModuleXML(BaseChecker):
                     if not (new_py_code := self.is_compatible_single_quote(attr_value)):
                         continue
                     node_content = node_xml.NodeContent(manifest_data["filename"], elem)
+                    if "test_module/website_templates.xml" in manifest_data["filename"] and "t-options" == attr_name:
+                        # print(elem.position_attributes)
+                        print(f"Tag: {elem.tag}")
+                        print(f"Attributes from lxml: {dict(elem.attrib)}")
+                        print(f"position_attributes: {elem.position_attributes}")
+                        print(f"start_line  : {elem.start_line}")
+                        with open(manifest_data["filename"], "rb") as mf:
+                            xml_content = mf.read()
+                        import pdb
+                        from importlib import reload
+
+                        pdb.set_trace()
+                        from oca_pre_commit_hooks import xml_position_parser
+
+                        reload(xml_position_parser)
+                        xml_position_parser.LXMLPositionEnricher(xml_content)
+                        # enricher = LXMLPositionEnricher(xml_content)
+                        # root = enricher.root
+
+                        # Luego intenta acceder
+                    # enricher = utils.LXMLPositionEnricher(xml_test)
+                    # root = enricher.root
+                    # if not node_content.content_node.strip(b" ").strip(b"/>\n"):
+                    #     import pdb;pdb.set_trace()
                     if b"&quot;" not in node_content.content_node:
                         continue
                     self.register_error(

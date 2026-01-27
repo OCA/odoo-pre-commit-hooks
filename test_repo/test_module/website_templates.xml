@@ -28,7 +28,7 @@
         <textarea name="fixed" t-out="campaign.description" />
         <!--prettier compatible-->
         <textarea name="mixed">   Ver: <t t-out="campaign.url" /></textarea>
-                <li>text<strong
+        <li>text<strong
                 t-out="o.name"
                 t-options="{&quot;widget&quot;: &quot;float&quot;, &quot;precision&quot;: 2}"
             />
