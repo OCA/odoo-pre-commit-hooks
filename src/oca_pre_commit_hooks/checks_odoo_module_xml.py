@@ -491,10 +491,10 @@ class ChecksOdooModuleXML(BaseChecker):
         attr_patterns = []
         # Use the first attribute spaces since that id will be the new first attribute
         keys = [f"spaces_before_{first_attr}", "id"]
-        if node.get("id") == "view_ir_config_search":
-            import pdb
+        # if node.get("id") == "view_ir_config_search":
+        #     import pdb
 
-            pdb.set_trace()
+        #     pdb.set_trace()
         for attr_name, attr_value in attrs.items():
             escaped_name = re.escape(attr_name)
             escaped_value = re.escape(attr_value)
