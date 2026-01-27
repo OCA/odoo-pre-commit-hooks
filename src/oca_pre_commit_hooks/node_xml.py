@@ -29,7 +29,7 @@ class NodeContent:
         if (node_previous := self.node.getprevious()) is not None:
             search_start_line = node_previous.sourceline + 1
         elif (node_parent := self.node.getparent()) is not None:
-            search_start_line = node_parent.sourceline + 1
+            search_start_line = node_parent.sourceline
         else:
             search_start_line = 2  # first element and it is the root
 
@@ -40,12 +40,14 @@ class NodeContent:
         with open(self.filename, "rb") as f_content:
             all_lines = list((i, line) for i, line in enumerate(f_content, start=1))
 
+        search_start_line = min(search_start_line, search_end_line)
+
         # Find the actual node start by looking for the tag
         node_start_idx = None
         for idx, (no_line, line) in enumerate(all_lines):
             if search_start_line <= no_line <= search_end_line:
                 stripped_line = line.lstrip()
-                if stripped_line.startswith(b"<" + node_tag):
+                if b"<" + node_tag in stripped_line:
                     node_start_idx = idx
                     self.start_sourceline = no_line
                     break
@@ -82,7 +84,7 @@ class NodeContent:
                     node_end_idx = idx
                     self.end_sourceline = no_line
                     break
-                if b"/>" in stripped_line and not stripped_line.startswith(b"<"):
+                if b"/>" in stripped_line and b"<" not in stripped_line:
                     # Self-closing continuation
                     node_end_idx = idx
                     self.end_sourceline = no_line
