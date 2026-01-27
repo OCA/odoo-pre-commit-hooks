@@ -35,10 +35,10 @@ EXPECTED_ERRORS = {
     "xml-dangerous-qweb-replace-low-priority": 9,
     "xml-deprecated-data-node": 8,
     "xml-deprecated-openerp-node": 4,
-    "xml-deprecated-qweb-directive-15": 3,
+    "xml-deprecated-qweb-directive-15": 4,
     "xml-deprecated-qweb-directive": 2,
     "xml-deprecated-tree-attribute": 3,
-    "xml-double-quotes-py": 3,
+    "xml-double-quotes-py": 4,
     "xml-duplicate-fields": 3,
     "xml-duplicate-record-id": 2,
     "xml-not-valid-char-link": 2,
@@ -258,7 +258,8 @@ class TestChecks(common.ChecksCommon):
 
         with open(t_out, "rb") as f:
             content = f.read()
-        assert b"t-out" not in content, "The deprecated t-out was previously fixed"
+        assert content.count(b"t-esc") > 1, "The deprecated t-esc was previously fixed"
+        assert content.count(b"t-raw") > 1, "The deprecated t-raw was previously fixed"
 
         self.checks_run(self.file_paths, autofix=True, no_exit=True, no_verbose=False)
 
@@ -343,4 +344,6 @@ class TestChecks(common.ChecksCommon):
 
         with open(t_out, "rb") as f:
             content = f.read()
-        assert b"t-out" in content, "The deprecated t-out was not fixed"
+        # comments contain 1 valid deprecated
+        assert content.count(b"t-esc") == 1, "The deprecated t-esc was not fixed"
+        assert content.count(b"t-raw") == 1, "The deprecated t-esc was not fixed"
