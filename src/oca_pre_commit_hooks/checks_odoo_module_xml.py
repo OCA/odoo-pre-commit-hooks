@@ -877,6 +877,8 @@ class ChecksOdooModuleXML(BaseChecker):
         for manifest_data in self.manifest_datas:
             if not self.is_message_enabled("xml-deprecated-qweb-directive-15", manifest_data["disabled_checks"]):
                 continue
+            locator = node_xml.XMLStartTagLocator(manifest_data["filename"], manifest_data["node"]) if self.autofix else None
+            replacements = []
             for node in self.xpath_qweb_deprecated15(manifest_data["node"]):
                 node_attrs = set(node.attrib)
                 node_attrs_deprecated = node_attrs & self.qweb_deprecated_directives15
@@ -887,19 +889,20 @@ class ChecksOdooModuleXML(BaseChecker):
                     line=node.sourceline,
                 )
                 if self.autofix and "t-out" not in node_attrs:
-                    # TODO: add autofix test
-                    # if t-out already exists, skip autofix
-                    attr_deprecated = next(iter(node_attrs_deprecated))
-                    value_deprecated = node.attrib.get(attr_deprecated)
-                    node_content = node_xml.NodeContent(manifest_data["filename"], node)
-                    pattern = rb"(?P<prefix>\b)" + re.escape(attr_deprecated).encode() + rb'(?P<suffix>\s*=\s*["\'])'
-                    content_node2 = re.sub(pattern, rb"\g<prefix>t-out\g<suffix>", node_content.content_node, count=1)
-                    if content_node2 != node_content.content_node:
-                        # Modify the record attrib to propagate the change to other checks
-                        node_content.content_node = content_node2
-                        node.attrib.pop(attr_deprecated)
-                        node.attrib["t-out"] = value_deprecated
-                        utils.perform_fix(manifest_data["filename"], bytes(node_content))
+                    # If t-out already exists, skip autofix to avoid clobbering another value.
+                    attr_deprecated = next(attr for attr in node.attrib if attr in node_attrs_deprecated)
+                    attr_span = locator.get_attr(node, attr_deprecated)
+                    if not attr_span:
+                        continue
+                    replacements.append((attr_span.name_start, attr_span.name_end, b"t-out"))
+                    value_deprecated = node.attrib.pop(attr_deprecated)
+                    node.attrib["t-out"] = value_deprecated
+            if replacements:
+                content = locator.content
+                for start, end, new_name in reversed(replacements):
+                    content = content[:start] + new_name + content[end:]
+                utils.perform_fix(manifest_data["filename"], content)
+                self.update_node(manifest_data)
 
     @utils.only_required_for_checks("xml-xpath-translatable-item")
     def check_xml_xpath(self):

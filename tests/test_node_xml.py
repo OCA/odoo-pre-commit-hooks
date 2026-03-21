@@ -1,0 +1,43 @@
+import shutil
+import tempfile
+from pathlib import Path
+
+from lxml import etree
+
+from oca_pre_commit_hooks import checks_odoo_module, node_xml
+
+
+def test_xml_start_tag_locator_multiline_qweb_directives():
+    xml_path = Path("test_repo/odoo18_module/views/deprecated_qweb_directives15.xml")
+    tree = etree.parse(str(xml_path))
+    locator = node_xml.XMLStartTagLocator(str(xml_path), tree)
+
+    nodes = tree.xpath("/odoo//template//*[@t-esc or @t-raw]")
+    attrs = [("t-esc" if "t-esc" in node.attrib else "t-raw") for node in nodes]
+    spans = [locator.get_attr(node, attr_name) for node, attr_name in zip(nodes, attrs)]
+
+    assert [locator.content[span.name_start : span.name_end] for span in spans] == [b"t-esc", b"t-raw", b"t-esc", b"t-esc"]
+    assert [locator._element_tags[tree.getpath(node)].line for node in nodes] == [6, 7, 13, 19]
+
+
+def test_xml_deprecated_qweb_directive_15_autofix_preserves_format():
+    module_src = Path("test_repo/odoo18_module")
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        module_dst = Path(tmp_dir) / "odoo18_module"
+        shutil.copytree(module_src, module_dst)
+
+        checks_odoo_module.run(
+            [str(module_dst / "__manifest__.py")],
+            enable={"xml-deprecated-qweb-directive-15"},
+            no_exit=True,
+            autofix=True,
+        )
+
+        xml_content = (module_dst / "views" / "deprecated_qweb_directives15.xml").read_text()
+        assert xml_content.count("t-esc") == 1
+        assert xml_content.count("t-raw") == 1
+        assert xml_content.count("t-out") == 5
+        assert '<span t-out="price" />' in xml_content
+        assert '<span t-out="amount" />' in xml_content
+        assert '<strong>Name <t\n                    t-out="o.name"\n                />' in xml_content
+        assert '<p class="col"><strong>Line Template:</strong> <t\n                t-out="lead.template_line_id.name"\n            /></p>' in xml_content
