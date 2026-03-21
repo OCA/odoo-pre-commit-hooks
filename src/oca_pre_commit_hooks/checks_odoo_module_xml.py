@@ -135,7 +135,15 @@ class ChecksOdooModuleXML(BaseChecker):
                     "first_tag_lineno": first_tag_lineno,
                 }
             )
+            manifest_data.pop("_tag_locator", None)
             return node
+
+    def _get_tag_locator(self, manifest_data):
+        locator = manifest_data.get("_tag_locator")
+        if locator is None:
+            locator = node_xml.XMLStartTagLocator(manifest_data["filename"], manifest_data["node"])
+            manifest_data["_tag_locator"] = locator
+        return locator
 
     def __init__(self, manifest_datas, module_name, enable, disable, module_version, autofix):
         super().__init__(enable, disable, module_name, module_version, autofix)
@@ -446,16 +454,16 @@ class ChecksOdooModuleXML(BaseChecker):
                 line=record.sourceline,
             )
             if self.autofix:
-                node_content = node_xml.NodeContent(manifest_data["filename"], record)
-                pattern = rb'\bid\s*=\s*(?P<q>["\'])(?P<id>' + re.escape(record_id.encode()) + rb")(?P=q)"
-                content_node2 = re.sub(
-                    pattern, rb"id=\g<q>" + xmlid_name.encode() + rb"\g<q>", node_content.content_node, count=1
+                locator = self._get_tag_locator(manifest_data)
+                content = locator.rewrite_start_tag(
+                    locator.content,
+                    record,
+                    attr_value_replacements={"id": xmlid_name.encode()},
                 )
-                if content_node2 != node_content.content_node:
-                    # Modify the record attrib to propagate the change to other checks
+                if content != locator.content:
                     record.attrib["id"] = xmlid_name
-                    node_content.content_node = content_node2
-                    utils.perform_fix(manifest_data["filename"], bytes(node_content))
+                    utils.perform_fix(manifest_data["filename"], content)
+                    self.update_node(manifest_data)
 
         first_attr = record.keys()[0]
         if first_attr != "id" and self.is_message_enabled("xml-id-position-first", manifest_data["disabled_checks"]):
@@ -471,63 +479,14 @@ class ChecksOdooModuleXML(BaseChecker):
 
     def autofix_id_position_first(self, node, first_attr, manifest_data):
         attrs = dict(node.attrib)
-        node_content = node_xml.NodeContent(manifest_data["filename"], node)
-        # Build regex pattern to match the tag with all its known attributes
-        # sourceline is the last line of the last attribute, so we need to search backwards
-        tag_name = re.escape(node.tag)
-
-        # Create a pattern that matches all known attributes in any order
-        # Each attribute: attrname="attrvalue" with optional whitespace
-        attr_patterns = []
-        # Use the first attribute spaces since that id will be the new first attribute
-        keys = [f"spaces_before_{first_attr}", "id"]
-        for attr_name, attr_value in attrs.items():
-            escaped_name = re.escape(attr_name)
-            escaped_value = re.escape(attr_value)
-            # Match attribute with flexible whitespace and quotes
-            attr_patterns.append(
-                rf'(?P<spaces_before_{attr_name}>\s*)(?P<{attr_name}>{escaped_name}\s*=\s*(?P<quote_{attr_name}>["\'])({escaped_value})(?P=quote_{attr_name}))'
-            )
-            if attr_name == "id":
-                # skip the first key "id" because is already added
-                continue
-            if attr_name == first_attr:
-                # Use the same spaces_before_id for the first attribute
-                # <record name="test_name"
-                #     id="test_id"
-                # />
-                # <record id="test_id"
-                #     name="test_name"
-                # />
-                keys.extend(["spaces_before_id", attr_name])
-                continue
-            keys.extend([f"spaces_before_{attr_name}", attr_name])
-        # Pattern for the complete opening tag
-        # <tag_name whitespace attr1 whitespace attr2 ... whitespace>
-        # Using DOTALL to match across lines
-        attrs_regex = r"".join(attr_patterns)
-        pattern = (
-            rf"(?P<open_{node.tag}><{tag_name})"  # Opening tag with space
-            rf"{attrs_regex}"  # All attributes with whitespace between them
-            rf"(?P<close_{node.tag}>\s*(/?)>)"  # Optional self-closing and closing >
-        )
-
-        # Search with multiline and dotall flags
-        match = re.search(pattern, node_content.content_node.decode(), re.DOTALL | re.MULTILINE)
-        if match:
-            keys = [f"open_{node.tag}"] + keys + [f"close_{node.tag}"]
-            match_dict = match.groupdict()
-            recreate = "".join(match_dict[k] for k in keys)
-            original = match.group()
-            content_node2 = node_content.content_node.replace(original.encode(), recreate.encode(), 1)
-            if content_node2 != node_content.content_node:
-                # Modify the record attrib to propagate the change to other checks
-                id_value = attrs.pop("id")
-                node.attrib.clear()
-                new_attrs = {"id": id_value, **attrs}
-                node.attrib.update(new_attrs)
-                node_content.content_node = content_node2
-                utils.perform_fix(manifest_data["filename"], bytes(node_content))
+        locator = self._get_tag_locator(manifest_data)
+        content = locator.rewrite_start_tag(locator.content, node, first_attr="id")
+        if content != locator.content:
+            id_value = attrs.pop("id")
+            node.attrib.clear()
+            node.attrib.update({"id": id_value, **attrs})
+            utils.perform_fix(manifest_data["filename"], content)
+            self.update_node(manifest_data)
 
     @utils.only_required_for_checks("xml-view-dangerous-replace-low-priority", "xml-deprecated-tree-attribute")
     def visit_xml_record_view(self, manifest_data, record):
@@ -877,7 +836,7 @@ class ChecksOdooModuleXML(BaseChecker):
         for manifest_data in self.manifest_datas:
             if not self.is_message_enabled("xml-deprecated-qweb-directive-15", manifest_data["disabled_checks"]):
                 continue
-            locator = node_xml.XMLStartTagLocator(manifest_data["filename"], manifest_data["node"]) if self.autofix else None
+            locator = self._get_tag_locator(manifest_data) if self.autofix else None
             replacements = []
             for node in self.xpath_qweb_deprecated15(manifest_data["node"]):
                 node_attrs = set(node.attrib)

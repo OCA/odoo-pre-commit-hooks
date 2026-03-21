@@ -5,14 +5,18 @@ from dataclasses import dataclass
 @dataclass(frozen=True)
 class XMLAttributeSpan:
     name: str
+    value_start: int
+    value_end: int
     name_start: int
     name_end: int
+    attr_end: int
 
 
 @dataclass(frozen=True)
 class XMLStartTag:
     tag: str
     start: int
+    name_end: int
     end: int
     line: int
     attrs: tuple[XMLAttributeSpan, ...]
@@ -92,6 +96,7 @@ class XMLStartTagLocator:
             while i < content_len and content[i : i + 1] not in b" \t\r\n/>":
                 i += 1
             tag_name = content[name_start:i].decode("utf-8", errors="replace")
+            tag_name_end = i
             attrs = []
 
             while i < content_len:
@@ -129,17 +134,19 @@ class XMLStartTagLocator:
                     continue
                 quote = content[i : i + 1]
                 i += 1
+                value_start = i
                 while i < content_len:
                     if content[i : i + 1] == b"\n":
                         line += 1
                     if content[i : i + 1] == quote:
+                        value_end = i
                         i += 1
                         break
                     i += 1
 
-                attrs.append(XMLAttributeSpan(attr_name, attr_name_start, attr_name_end))
+                attrs.append(XMLAttributeSpan(attr_name, value_start, value_end, attr_name_start, attr_name_end, i))
 
-            tags.append(XMLStartTag(tag_name, tag_start, i, tag_line, tuple(attrs)))
+            tags.append(XMLStartTag(tag_name, tag_start, tag_name_end, i, tag_line, tuple(attrs)))
 
         return tags
 
@@ -153,11 +160,56 @@ class XMLStartTagLocator:
                 break
             self._element_tags[tree.getpath(element)] = tag_info
 
+    def get_tag(self, element):
+        return self._element_tags.get(element.getroottree().getpath(element))
+
     def get_attr(self, element, attr_name):
-        tag_info = self._element_tags.get(element.getroottree().getpath(element))
+        tag_info = self.get_tag(element)
         if not tag_info:
             return None
         return tag_info.get_attr(attr_name)
+
+    def rewrite_start_tag(self, content, element, attr_name_replacements=None, attr_value_replacements=None, first_attr=None):
+        tag_info = self.get_tag(element)
+        if not tag_info:
+            return content
+
+        attr_name_replacements = attr_name_replacements or {}
+        attr_value_replacements = attr_value_replacements or {}
+        attrs = list(tag_info.attrs)
+        if not attrs:
+            return content
+
+        open_part = content[tag_info.start : tag_info.name_end]
+        cursor = tag_info.name_end
+        spaces = []
+        attr_chunks = {}
+
+        for attr in attrs:
+            spaces.append(content[cursor:attr.name_start])
+            chunk = bytearray(content[attr.name_start : attr.attr_end])
+            if attr.name in attr_name_replacements:
+                new_name = attr_name_replacements[attr.name]
+                chunk[: len(attr.name)] = new_name
+            if attr.name in attr_value_replacements:
+                value_rel_start = attr.value_start - attr.name_start
+                value_rel_end = attr.value_end - attr.name_start
+                chunk[value_rel_start:value_rel_end] = attr_value_replacements[attr.name]
+            attr_chunks[attr.name] = bytes(chunk)
+            cursor = attr.attr_end
+
+        close_part = content[cursor : tag_info.end]
+        ordered_attrs = attrs
+        if first_attr:
+            target_attr = next((attr for attr in attrs if attr.name == first_attr), None)
+            if target_attr and attrs[0].name != first_attr:
+                ordered_attrs = [target_attr] + [attr for attr in attrs if attr.name != first_attr]
+
+        rebuilt = open_part
+        for idx, attr in enumerate(ordered_attrs):
+            rebuilt += spaces[idx] + attr_chunks[attr.name]
+        rebuilt += close_part
+        return content[: tag_info.start] + rebuilt + content[tag_info.end :]
 
 
 class NodeContent:

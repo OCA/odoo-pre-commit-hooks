@@ -41,3 +41,39 @@ def test_xml_deprecated_qweb_directive_15_autofix_preserves_format():
         assert '<span t-out="amount" />' in xml_content
         assert '<strong>Name <t\n                    t-out="o.name"\n                />' in xml_content
         assert '<p class="col"><strong>Line Template:</strong> <t\n                t-out="lead.template_line_id.name"\n            /></p>' in xml_content
+
+
+def test_xml_id_position_first_autofix_preserves_template_layout():
+    module_src = Path("test_repo/test_module")
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        module_dst = Path(tmp_dir) / "test_module"
+        shutil.copytree(module_src, module_dst)
+
+        checks_odoo_module.run(
+            [str(module_dst / "__openerp__.py")],
+            enable={"xml-id-position-first"},
+            no_exit=True,
+            autofix=True,
+        )
+
+        xml_content = (module_dst / "website_templates.xml").read_text()
+        assert '<template\n        id="assets_backend"\n        name="test_module_widget"\n        inherit_id="web.assets_backend"' in xml_content
+        assert "<template\n        id='assets_backend_2'\n        name='test_module_widget_2'\n        inherit_id=\"web.assets_backend\"\n    />" in xml_content
+
+
+def test_xml_record_id_autofixes_preserve_menuitem_layout():
+    module_src = Path("test_repo/broken_module")
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        module_dst = Path(tmp_dir) / "broken_module"
+        shutil.copytree(module_src, module_dst)
+
+        checks_odoo_module.run(
+            [str(module_dst / "__openerp__.py")],
+            enable={"xml-id-position-first", "xml-redundant-module-name"},
+            no_exit=True,
+            autofix=True,
+        )
+
+        xml_content = (module_dst / "model_view_odoo2.xml").read_text()
+        assert "<menuitem id='menu_root' name=\"Root\" />" in xml_content
+        assert "<menuitem id='menu_root2'\n        name=\"Root 2\"\n        parent=\"menu_root\"" in xml_content
