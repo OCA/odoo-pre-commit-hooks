@@ -169,7 +169,9 @@ class XMLStartTagLocator:
             return None
         return tag_info.get_attr(attr_name)
 
-    def rewrite_start_tag(self, content, element, attr_name_replacements=None, attr_value_replacements=None, first_attr=None):
+    def rewrite_start_tag(
+        self, content, element, attr_name_replacements=None, attr_value_replacements=None, first_attr=None
+    ):
         tag_info = self.get_tag(element)
         if not tag_info:
             return content
@@ -186,7 +188,7 @@ class XMLStartTagLocator:
         attr_chunks = {}
 
         for attr in attrs:
-            spaces.append(content[cursor:attr.name_start])
+            spaces.append(content[cursor : attr.name_start])
             chunk = bytearray(content[attr.name_start : attr.attr_end])
             if attr.name in attr_name_replacements:
                 new_name = attr_name_replacements[attr.name]
