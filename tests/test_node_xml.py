@@ -1,14 +1,27 @@
 import shutil
 import tempfile
+from contextlib import contextmanager
 from pathlib import Path
+from typing import Iterator
 
 from lxml import etree
 
 from oca_pre_commit_hooks import checks_odoo_module, node_xml
 
+REPO_ROOT = Path(__file__).resolve().parent.parent
+
+
+@contextmanager
+def temporary_module_copy(module_path: str) -> Iterator[Path]:
+    module_src = REPO_ROOT / module_path
+    with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
+        module_dst = Path(tmp_dir) / module_src.name
+        shutil.copytree(module_src, module_dst)
+        yield module_dst
+
 
 def test_xml_start_tag_locator_multiline_qweb_directives():
-    xml_path = Path("test_repo/odoo18_module/views/deprecated_qweb_directives15.xml")
+    xml_path = REPO_ROOT / "test_repo/odoo18_module/views/deprecated_qweb_directives15.xml"
     tree = etree.parse(str(xml_path))
     locator = node_xml.XMLStartTagLocator(str(xml_path), tree)
 
@@ -27,11 +40,7 @@ def test_xml_start_tag_locator_multiline_qweb_directives():
 
 
 def test_xml_deprecated_qweb_directive_15_autofix_preserves_format():
-    module_src = Path("test_repo/odoo18_module")
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        module_dst = Path(tmp_dir) / "odoo18_module"
-        shutil.copytree(module_src, module_dst)
-
+    with temporary_module_copy("test_repo/odoo18_module") as module_dst:
         checks_odoo_module.run(
             [str(module_dst / "__manifest__.py")],
             enable={"xml-deprecated-qweb-directive-15"},
@@ -53,11 +62,7 @@ def test_xml_deprecated_qweb_directive_15_autofix_preserves_format():
 
 
 def test_xml_id_position_first_autofix_preserves_template_layout():
-    module_src = Path("test_repo/test_module")
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        module_dst = Path(tmp_dir) / "test_module"
-        shutil.copytree(module_src, module_dst)
-
+    with temporary_module_copy("test_repo/test_module") as module_dst:
         checks_odoo_module.run(
             [str(module_dst / "__openerp__.py")],
             enable={"xml-id-position-first"},
@@ -77,11 +82,7 @@ def test_xml_id_position_first_autofix_preserves_template_layout():
 
 
 def test_xml_record_id_autofixes_preserve_menuitem_layout():
-    module_src = Path("test_repo/broken_module")
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        module_dst = Path(tmp_dir) / "broken_module"
-        shutil.copytree(module_src, module_dst)
-
+    with temporary_module_copy("test_repo/broken_module") as module_dst:
         checks_odoo_module.run(
             [str(module_dst / "__openerp__.py")],
             enable={"xml-id-position-first", "xml-redundant-module-name"},
