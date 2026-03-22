@@ -456,13 +456,13 @@ options:
  * xml-deprecated-qweb-directive
 
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.20/test_repo/test_module/website_templates.xml#L7 Deprecated QWeb directive `t-esc-options`. Use `t-options` instead
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.20/test_repo/test_module/website_templates.xml#L37 Deprecated QWeb directive `t-field-options`. Use `t-options` instead
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.20/test_repo/test_module/website_templates.xml#L42 Deprecated QWeb directive `t-field-options`. Use `t-options` instead
 
  * xml-deprecated-qweb-directive-15
 
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.20/test_repo/odoo18_module/views/deprecated_qweb_directives15.xml#L6 Deprecated QWeb directive `t-esc`. Use `t-out` instead
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.20/test_repo/odoo18_module/views/deprecated_qweb_directives15.xml#L7 Deprecated QWeb directive `t-raw`. Use `t-out` instead
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.20/test_repo/odoo18_module/views/deprecated_qweb_directives15.xml#L13 Deprecated QWeb directive `t-esc`. Use `t-out` instead
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.20/test_repo/odoo18_module/views/deprecated_qweb_directives15.xml#L15 Deprecated QWeb directive `t-esc`. Use `t-out` instead
 
  * xml-deprecated-tree-attribute
 
@@ -523,14 +523,14 @@ options:
 
  * xml-not-valid-char-link
 
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.20/test_repo/test_module/website_templates.xml#L59 The resource in in src/href contains a not valid character
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.20/test_repo/test_module/website_templates.xml#L61 The resource in in src/href contains a not valid character
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.20/test_repo/test_module/website_templates.xml#L64 The resource in in src/href contains a not valid character
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.20/test_repo/test_module/website_templates.xml#L66 The resource in in src/href contains a not valid character
 
  * xml-oe-structure-missing-id
 
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.20/test_repo/test_module/website_templates.xml#L9 Consider removing the class `oe_structure` or adding a proper id to the tag. The id must contain `oe_structure`
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.20/test_repo/test_module/website_templates.xml#L13 Consider removing the class `oe_structure` or adding a proper id to the tag. The id must contain `oe_structure`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.20/test_repo/test_module/website_templates.xml#L41 Consider removing the class `oe_structure` or adding a proper id to the tag. The id must contain `oe_structure`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.20/test_repo/test_module/website_templates.xml#L46 Consider removing the class `oe_structure` or adding a proper id to the tag. The id must contain `oe_structure`
 
  * xml-record-missing-id
 

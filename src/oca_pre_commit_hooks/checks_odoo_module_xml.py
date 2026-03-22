@@ -680,21 +680,20 @@ class ChecksOdooModuleXML(BaseChecker):
                 ):
                     # Process text <field name="context">{}</field>
                     node_content = node_xml.NodeContent(manifest_data["filename"], elem)
-                    if b"&quot;" not in node_content.content_node:
-                        continue
-                    self.register_error(
-                        code="xml-double-quotes-py",
-                        message='Escaped double quotes " for python code detected',
-                        info=f"Use single quote instead: `{new_py_code}`",
-                        filepath=manifest_data["filename_short"],
-                        line=elem.sourceline,
-                    )
-                    during2 = node_content.content_node.replace(b"&quot;", b"'")
-                    if self.autofix and during2 != node_content.content_node:
-                        # Modify the xml node to propagate the change to other checks
-                        elem.text = new_py_code
-                        node_content.content_node = during2
-                        utils.perform_fix(manifest_data["filename"], bytes(node_content))
+                    if b"&quot;" in node_content.content_node:
+                        self.register_error(
+                            code="xml-double-quotes-py",
+                            message='Escaped double quotes " for python code detected',
+                            info=f"Use single quote instead: `{new_py_code}`",
+                            filepath=manifest_data["filename_short"],
+                            line=elem.sourceline,
+                        )
+                        during2 = node_content.content_node.replace(b"&quot;", b"'")
+                        if self.autofix and during2 != node_content.content_node:
+                            # Modify the xml node to propagate the change to other checks
+                            elem.text = new_py_code
+                            node_content.content_node = during2
+                            utils.perform_fix(manifest_data["filename"], bytes(node_content))
 
                 for attr_name, attr_value in elem.attrib.items():
                     # Process attributes <field domain="[]" context="{}" ../>
