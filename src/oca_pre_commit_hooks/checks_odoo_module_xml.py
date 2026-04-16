@@ -117,7 +117,7 @@ class ChecksOdooModuleXML(BaseChecker):
                 if line_stripped not in buffer:
                     buffer.append(line_stripped)
                 return b" ".join(buffer), buffer_lineno
-        return "", 0
+        return b"", 0
 
     def update_node(self, manifest_data):
         """Update the etree node of the manifest_data.
