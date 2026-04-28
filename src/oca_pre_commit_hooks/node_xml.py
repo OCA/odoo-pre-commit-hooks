@@ -1,4 +1,5 @@
 # Based on https://github.com/mitsuhiko/sloppy-xml-py
+import re
 from dataclasses import dataclass
 
 
@@ -243,11 +244,11 @@ class NodeContent:
         # TODO: Get the sourceline of a particular attribute
         # Determine the search start line
         if (node_previous := self.node.getprevious()) is not None:
-            search_start_line = node_previous.sourceline + 1
+            search_start_line = node_previous.sourceline
         elif (node_parent := self.node.getparent()) is not None:
-            search_start_line = node_parent.sourceline + 1
+            search_start_line = node_parent.sourceline
         else:
-            search_start_line = 2  # first element and it is the root
+            search_start_line = 1  # first element and it is the root
 
         search_end_line = self.node.sourceline
         node_tag = self.node.tag.encode() if isinstance(self.node.tag, str) else self.node.tag
@@ -257,14 +258,19 @@ class NodeContent:
             all_lines = list((i, line) for i, line in enumerate(f_content, start=1))
 
         # Find the actual node start by looking for the tag
+
+        node_start_re = re.compile(b"<" + node_tag + b"(?:[ />\n\r\t]|$)")
         node_start_idx = None
-        for idx, (no_line, line) in enumerate(all_lines):
-            if search_start_line <= no_line <= search_end_line:
-                stripped_line = line.lstrip()
-                if stripped_line.startswith(b"<" + node_tag):
-                    node_start_idx = idx
-                    self.start_sourceline = no_line
-                    break
+
+        end_idx = min(search_end_line - 1, len(all_lines) - 1)
+        start_idx = max(search_start_line - 1, 0)
+
+        for idx in range(end_idx, start_idx - 1, -1):
+            no_line, line = all_lines[idx]
+            if node_start_re.search(line):
+                node_start_idx = idx
+                self.start_sourceline = no_line
+                break
 
         if node_start_idx is None:
             # Fallback: use search_end_line
