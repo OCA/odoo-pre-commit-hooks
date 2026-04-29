@@ -93,3 +93,36 @@ def test_xml_record_id_autofixes_preserve_menuitem_layout():
         xml_content = (module_dst / "model_view_odoo2.xml").read_text()
         assert "<menuitem id='menu_root' name=\"Root\" />" in xml_content
         assert '<menuitem id=\'menu_root2\'\n        name="Root 2"\n        parent="menu_root"' in xml_content
+
+
+def test_xml_double_quotes_py_reports_correct_line_for_inline_and_multiline_tags():
+    """Regression test: xml-double-quotes-py must report the line where the
+    *attribute* is declared, not the closing line of the opening tag.
+
+    Covers two scenarios:
+    1. model_view.xml line 35: a <strong> tag with t-options spanning multiple
+       lines and starting AFTER other text on the same line as <li>.
+    2. website_templates.xml line 33: same pattern in a different file.
+    """
+    manifest_path = str(REPO_ROOT / "test_repo/test_module/__openerp__.py")
+    result = checks_odoo_module.run(
+        [manifest_path],
+        enable={"xml-double-quotes-py"},
+        no_exit=True,
+    )
+    errors = [e for e in result if getattr(e, "code", None) == "xml-double-quotes-py"]
+
+    # model_view.xml: <strong t-out="o.coverage*100" t-options="{&quot;...&quot;}">
+    # The tag <strong starts after <li>text on line 33, t-options is on line 35
+    model_view_lines = {e.position.line for e in errors if "model_view.xml" in e.position.filepath}
+    assert 35 in model_view_lines, (
+        f"Expected xml-double-quotes-py error on model_view.xml:35 (t-options with &quot;), "
+        f"got lines: {sorted(model_view_lines)}"
+    )
+
+    # website_templates.xml: <strong t-options on line 33
+    tmpl_lines = {e.position.line for e in errors if "website_templates.xml" in e.position.filepath}
+    assert 33 in tmpl_lines, (
+        f"Expected xml-double-quotes-py error on website_templates.xml:33 (t-options with &quot;), "
+        f"got lines: {sorted(tmpl_lines)}"
+    )

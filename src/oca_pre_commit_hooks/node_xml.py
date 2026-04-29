@@ -1,4 +1,5 @@
 # Based on https://github.com/mitsuhiko/sloppy-xml-py
+import re
 from dataclasses import dataclass
 
 
@@ -217,15 +218,19 @@ class XMLStartTagLocator:
 class NodeContent:
     """Represents the content and metadata of an XML node."""
 
-    def __init__(self, filename, node):
+    def __init__(self, filename, node, locator=None):
         """Initialize by reading and parsing the node from the file.
 
         Args:
             filename: Path to the XML file
             node: lxml node element to extract
+            locator: Optional XMLStartTagLocator already built for this file.
+                     When provided it is used as the authoritative source for
+                     tag start position and line, avoiding fragile heuristics.
         """
         self.filename = filename
         self.node = node
+        self._locator = locator
 
         # Initialize attributes
         self.content_before = b""
@@ -240,28 +245,43 @@ class NodeContent:
 
     def _read_node(self):  # noqa:C901 pylint:disable=too-complex
         """Internal method to read the content of the file and extract node information."""
-        # TODO: Get the sourceline of a particular attribute
-        # Determine the search start line
-        if (node_previous := self.node.getprevious()) is not None:
-            search_start_line = node_previous.sourceline + 1
-        elif (node_parent := self.node.getparent()) is not None:
-            search_start_line = node_parent.sourceline + 1
-        else:
-            search_start_line = 2  # first element and it is the root
-
-        search_end_line = self.node.sourceline
         node_tag = self.node.tag.encode() if isinstance(self.node.tag, str) else self.node.tag
 
         # Read all lines from file
         with open(self.filename, "rb") as f_content:
             all_lines = list((i, line) for i, line in enumerate(f_content, start=1))
 
-        # Find the actual node start by looking for the tag
+        # --- Determine tag start using the locator when available ---
+        # XMLStartTagLocator already did a full byte-accurate parse of the file,
+        # so use it as the authoritative source instead of re-scanning with heuristics.
         node_start_idx = None
-        for idx, (no_line, line) in enumerate(all_lines):
-            if search_start_line <= no_line <= search_end_line:
-                stripped_line = line.lstrip()
-                if stripped_line.startswith(b"<" + node_tag):
+        if self._locator is not None:
+            tag_info = self._locator.get_tag(self.node)
+            if tag_info is not None:
+                self.start_sourceline = tag_info.line
+                # Find the matching line index in all_lines
+                for idx, (no_line, _line) in enumerate(all_lines):
+                    if no_line == tag_info.line:
+                        node_start_idx = idx
+                        break
+
+        # --- Fallback: scan backwards from sourceline using a regex ---
+        # This handles tags that appear mid-line (e.g. "<li>text<strong").
+        if node_start_idx is None:
+            if (node_previous := self.node.getprevious()) is not None:
+                search_start_line = node_previous.sourceline + 1
+            elif (node_parent := self.node.getparent()) is not None:
+                search_start_line = node_parent.sourceline + 1
+            else:
+                search_start_line = 2  # first element and it is the root
+
+            search_end_line = self.node.sourceline
+            node_start_re = re.compile(b"<" + node_tag + b"(?:[ /><\n\r\t]|$)")
+            end_idx = min(search_end_line - 1, len(all_lines) - 1)
+            start_idx = max(search_start_line - 1, 0)
+            for idx in range(end_idx, start_idx - 1, -1):
+                no_line, line = all_lines[idx]
+                if node_start_re.search(line):
                     node_start_idx = idx
                     self.start_sourceline = no_line
                     break
