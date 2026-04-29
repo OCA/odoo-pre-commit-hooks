@@ -679,14 +679,16 @@ class ChecksOdooModuleXML(BaseChecker):
                     and (new_py_code := self.is_compatible_single_quote(py_code))
                 ):
                     # Process text <field name="context">{}</field>
-                    node_content = node_xml.NodeContent(manifest_data["filename"], elem)
+                    node_content = node_xml.NodeContent(
+                        manifest_data["filename"], elem, locator=self._get_tag_locator(manifest_data)
+                    )
                     if b"&quot;" in node_content.content_node:
                         self.register_error(
                             code="xml-double-quotes-py",
                             message='Escaped double quotes " for python code detected',
                             info=f"Use single quote instead: `{new_py_code}`",
                             filepath=manifest_data["filename_short"],
-                            line=elem.sourceline,
+                            line=node_content.start_sourceline or elem.sourceline,
                         )
                         during2 = node_content.content_node.replace(b"&quot;", b"'")
                         if self.autofix and during2 != node_content.content_node:
@@ -702,15 +704,22 @@ class ChecksOdooModuleXML(BaseChecker):
                         continue
                     if not (new_py_code := self.is_compatible_single_quote(attr_value)):
                         continue
-                    node_content = node_xml.NodeContent(manifest_data["filename"], elem)
+                    locator = self._get_tag_locator(manifest_data)
+                    node_content = node_xml.NodeContent(manifest_data["filename"], elem, locator=locator)
                     if b"&quot;" not in node_content.content_node:
                         continue
+                    # Use the attribute's exact line from the locator (most precise)
+                    attr_span = locator.get_attr(elem, attr_name)
+                    if attr_span is not None:
+                        line_no = locator.content[: attr_span.name_start].count(b"\n") + 1
+                    else:
+                        line_no = node_content.start_sourceline or elem.sourceline
                     self.register_error(
                         code="xml-double-quotes-py",
                         message='Escaped double quotes " for python code detected use',
                         info=f"Use single quote instead: `{new_py_code}`",
                         filepath=manifest_data["filename_short"],
-                        line=elem.sourceline,
+                        line=line_no,
                     )
                     during2 = node_content.content_node.replace(b"&quot;", b"'")
                     if self.autofix and during2 != node_content.content_node:
