@@ -53,6 +53,7 @@ EXPECTED_ERRORS = {
     "xml-header-missing": 2,
     "xml-header-wrong": 18,
     "xml-id-position-first": 9,
+    "xml-deprecated-css-class": 12,
     "xml-deprecated-oe-chatter": 1,
     "xml-field-bool-without-eval": 2,
     "xml-field-numeric-without-eval": 7,
