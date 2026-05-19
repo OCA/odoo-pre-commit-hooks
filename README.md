@@ -193,14 +193,6 @@ If the module is called "module_a" and the xmlid is
 The "module_a." is redundant it could be replaced to only
 `<record id="xmlid_name1" ...`
 
-* Check xml-id-position-first
-
-If the record id is not in the first position
-`<record ... id="xmlid_name1"`
-
-It should be the first
-`<record id="xmlid_name1" ...`
-
 * Check xml-field-bool-without-eval
 
 if the record is boolean but without eval attribute
@@ -246,6 +238,14 @@ file2.xml
 
 * Check xml-syntax-error
 Check syntax of XML files declared in the Odoo manifest
+
+* Check xml-tag-position
+Check the position of XML attributes.
+- t-if, t-else, t-elif must be the first attribute of any tag.
+- id, t-att-id, t-attf-id must be the first attribute of record, menuitem, and template tags.
+  If t-if/t-else/t-elif is also present, it must be the first and id/t-att-id/t-attf-id must be
+  the second attribute.
+- class, t-att-class, t-attf-class must be placed after conditional and id in that relative order.
 
 * Check xml-dangerous-qweb-replace-low-priority
 Dangerous qweb view defined with low priority
@@ -515,12 +515,6 @@ options:
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.22/test_repo/broken_module/deprecated_disable.xml#L1 XML header expected '<?xml version="1.0" encoding="UTF-8" ?>' but received '<?xml version="1.0" encoding="utf-8" ?>'
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.22/test_repo/broken_module/model_view.xml#L1 XML header expected '<?xml version="1.0" encoding="UTF-8" ?>' but received '<?xml version="1.0" encoding="utf-8"?>'
 
- * xml-id-position-first
-
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.22/test_repo/broken_module/deprecated_disable.xml#L4 The "id" attribute must be first `<record id="duplicate_record" model=...` Use `<record id="duplicate_record"  model=...` instead
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.22/test_repo/broken_module/model_view_odoo2.xml#L43 The "id" attribute must be first `<record id="view_ir_config_search" model=...` Use `<record id="view_ir_config_search"  model=...` instead
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.22/test_repo/broken_module/model_view_odoo2.xml#L68 The "id" attribute must be first `<record id="access_rule" model=...` Use `<record id="access_rule"  model=...` instead
-
  * xml-not-valid-char-link
 
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.22/test_repo/test_module/website_templates.xml#L64 The resource in in src/href contains a not valid character
@@ -547,6 +541,12 @@ options:
 
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.22/test_repo/broken_module/file_no_exist.xml#L1 [Errno 2] No such file or directory: ''
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.22/test_repo/broken_module/file_no_exist.xml#L1 [Errno 2] No such file or directory: ''
+
+ * xml-tag-position
+
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.22/test_repo/broken_module/deprecated_disable.xml#L4 The expected attributes order is `<record id=... ...>` Use `<record id=... ...` instead
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.22/test_repo/broken_module/model_view_odoo2.xml#L43 The expected attributes order is `<record id=... ...>` Use `<record id=... ...` instead
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.22/test_repo/broken_module/model_view_odoo2.xml#L68 The expected attributes order is `<record id=... ...>` Use `<record id=... ...` instead
 
  * xml-template-prettier-incompatible
 

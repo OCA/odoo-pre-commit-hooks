@@ -52,7 +52,7 @@ EXPECTED_ERRORS = {
     "xml-duplicate-template-id": 9,
     "xml-header-missing": 2,
     "xml-header-wrong": 18,
-    "xml-id-position-first": 9,
+    "xml-tag-position": 612,
     "xml-deprecated-oe-chatter": 1,
     "xml-field-bool-without-eval": 2,
     "xml-field-numeric-without-eval": 7,
@@ -232,6 +232,32 @@ class TestChecks(common.ChecksCommon):
             in content
         ), "The XML wrong xmlid order was previously fixed"
 
+        template1_xml = os.path.join(self.test_repo_path, "broken_module", "template1.xml")
+        with open(template1_xml, "rb") as f_template1:
+            content_t1 = f_template1.read()
+        # Test some combinations from the matrix before autofix
+        assert (
+            b'<template t-att-class="dynamic_class" id="test_tmpl_17" name="dummy">' in content_t1
+        ), "The template dynamic class and id combination was previously fixed"
+        assert (
+            b'<span t-attf-class="dynamic_fclass" t-if="cond" name="dummy">Hello</span>' in content_t1
+        ), "The span dynamic class and t-if combination was previously fixed"
+        assert (
+            b'<span t-attf-class="dynamic_fclass" id="span_id_19" name="dummy">Hello</span>' in content_t1
+        ), "The span dynamic class and id combination was previously fixed"
+        assert (
+            b'<template t-att-id="dynamic_id" t-if="cond" name="dummy">' in content_t1
+        ), "The template t-att-id and t-if combination was previously fixed"
+        assert (
+            b'<template class="my-class" t-att-id="dynamic_id" name="dummy">' in content_t1
+        ), "The template class and t-att-id combination was previously fixed"
+        assert (
+            b'<span t-att-id="dynamic_id" t-if="cond" name="dummy">Hello</span>' in content_t1
+        ), "The span t-att-id and t-if combination was previously fixed"
+        assert (
+            b'<span class="my-class" t-att-id="dynamic_id" name="dummy">Hello</span>' in content_t1
+        ), "The span class and t-att-id combination was previously fixed"
+
         py_comment = os.path.join(self.test_repo_path, "eleven_module", "models.py")
         with open(py_comment, "rb") as f:
             content = f.read()
@@ -326,6 +352,35 @@ class TestChecks(common.ChecksCommon):
     />"""
             in content
         ), "The XML xmlid order was not fixed"
+
+        with open(template1_xml, "rb") as f_template1:
+            content_t1 = f_template1.read()
+        # Test some combinations from the matrix after autofix
+        assert (
+            b'<template id="test_tmpl_17" t-att-class="dynamic_class" name="dummy">' in content_t1
+        ), "The template dynamic class and id combination was not fixed"
+        assert (
+            b'<span t-if="cond" t-attf-class="dynamic_fclass" name="dummy">Hello</span>' in content_t1
+        ), "The span dynamic class and t-if combination was not fixed"
+        assert (
+            b'<span id="span_id_19" t-attf-class="dynamic_fclass" name="dummy">Hello</span>' in content_t1
+        ), "The span dynamic class and id combination was not fixed"
+        assert (
+            b'<span t-if="cond" id="span_id_43" t-attf-class="dynamic_fclass" name="dummy">Hello</span>' in content_t1
+        ), "The span dynamic class, id and t-if combination was not fixed"
+
+        assert (
+            b'<template t-if="cond" t-att-id="dynamic_id" name="dummy">' in content_t1
+        ), "The template t-att-id and t-if combination was not fixed"
+        assert (
+            b'<template t-att-id="dynamic_id" class="my-class" name="dummy">' in content_t1
+        ), "The template class and t-att-id combination was not fixed"
+        assert (
+            b'<span t-if="cond" t-att-id="dynamic_id" name="dummy">Hello</span>' in content_t1
+        ), "The span t-att-id and t-if combination was not fixed"
+        assert (
+            b'<span t-att-id="dynamic_id" class="my-class" name="dummy">Hello</span>' in content_t1
+        ), "The span class and t-att-id combination was not fixed"
 
         with open(py_comment, "rb") as f:
             content = f.read()

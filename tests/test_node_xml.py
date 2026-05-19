@@ -61,11 +61,11 @@ def test_xml_deprecated_qweb_directive_15_autofix_preserves_format():
         )
 
 
-def test_xml_id_position_first_autofix_preserves_template_layout():
+def test_xml_tag_position_autofix_preserves_template_layout():
     with temporary_module_copy("test_repo/test_module") as module_dst:
         checks_odoo_module.run(
             [str(module_dst / "__openerp__.py")],
-            enable={"xml-id-position-first"},
+            enable={"xml-tag-position"},
             no_exit=True,
             autofix=True,
         )
@@ -85,7 +85,7 @@ def test_xml_record_id_autofixes_preserve_menuitem_layout():
     with temporary_module_copy("test_repo/broken_module") as module_dst:
         checks_odoo_module.run(
             [str(module_dst / "__openerp__.py")],
-            enable={"xml-id-position-first", "xml-redundant-module-name"},
+            enable={"xml-tag-position", "xml-redundant-module-name"},
             no_exit=True,
             autofix=True,
         )
