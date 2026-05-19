@@ -235,7 +235,16 @@ def lookup_manifest_paths(filenames_or_modules):
     return odoo_module_files_changed
 
 
-def run(files_or_modules, enable=None, disable=None, no_verbose=False, no_exit=False, list_msgs=False, autofix=False):
+def run(
+    files_or_modules,
+    enable=None,
+    disable=None,
+    no_verbose=False,
+    no_exit=False,
+    list_msgs=False,
+    autofix=False,
+    xml_attributes_order=None,
+):
     # pylint: disable=duplicate-code
     if list_msgs:
         _, checks_docstring = utils.get_checks_docstring([ChecksOdooModuleFixit])

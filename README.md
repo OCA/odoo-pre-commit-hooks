@@ -97,6 +97,23 @@ enable=check-enable1,check-enable2
 disable=check-to-disable
 ```
 
+To customize the `xml-tag-position` check, you can also define `xml_attributes_order` in the same section.
+Each group declares equivalent attributes, and groups are enforced from left to right.
+
+```
+[MESSAGES_CONTROL]
+xml_attributes_order=[t-if, t-else, t-elif], [id, t-att-id, t-attf-id], [class, t-att-class, t-attf-class]
+```
+
+Custom example:
+
+```
+[MESSAGES_CONTROL]
+xml_attributes_order=[class], [id], [t-if]
+```
+
+The same value can also be passed from CLI with `--xml-attributes-order`.
+
 As stated before, each source has a certain priority. This means that if the environment variable `OCA_HOOKS_ENABLE=check1`
 exists, the configuration file above would not have any effect when it comes to enabling checks, and the only enabled
 check will be `check1`.
@@ -176,14 +193,6 @@ If the module is called "module_a" and the xmlid is
 The "module_a." is redundant it could be replaced to only
 `<record id="xmlid_name1" ...`
 
-* Check xml-id-position-first
-
-If the record id is not in the first position
-`<record ... id="xmlid_name1"`
-
-It should be the first
-`<record id="xmlid_name1" ...`
-
 * Check xml-field-bool-without-eval
 
 if the record is boolean but without eval attribute
@@ -229,6 +238,10 @@ file2.xml
 
 * Check xml-syntax-error
 Check syntax of XML files declared in the Odoo manifest
+
+* Check xml-tag-position
+Check the position of XML attributes.
+The order is dynamically configurable via xml_attributes_order.
 
 * Check xml-dangerous-qweb-replace-low-priority
 Dangerous qweb view defined with low priority
@@ -310,7 +323,7 @@ Check syntax of PO files from i18n* folders
 
 # Help
 ```bash
-usage: oca-checks-odoo-module [-h] [--no-verbose] [--no-exit] [--disable DISABLE] [--enable ENABLE] [--config CONFIG] [--list-msgs] [--fix] [files_or_modules ...]
+usage: oca-checks-odoo-module [-h] [--no-verbose] [--no-exit] [--disable DISABLE] [--enable ENABLE] [--config CONFIG] [--list-msgs] [--fix] [--xml-attributes-order XML_ATTRIBUTES_ORDER] [files_or_modules ...]
 
 positional arguments:
  files_or_modules Odoo __manifest__.py paths or Odoo module paths.
@@ -324,6 +337,7 @@ options:
  --config, -c CONFIG Path to a configuration file (default: .oca_hooks.cfg)
  --list-msgs List all currently enabled messages.
  --fix Automatically fix files when possible
+ --xml-attributes-order XML_ATTRIBUTES_ORDER Define a group of XML attributes to order with priority, comma-separated values. Repeat this option to add multiple groups. Example: --xml- attributes-order=t-if,t-else --xml-attributes-order=id,t-att-id --xml- attributes-order=class
 
 ```
 
@@ -334,7 +348,7 @@ options:
 
 # Help PO
 ```bash
-usage: oca-checks-po [-h] [--no-verbose] [--no-exit] [--disable DISABLE] [--enable ENABLE] [--config CONFIG] [--list-msgs] [--fix] [po_files ...]
+usage: oca-checks-po [-h] [--no-verbose] [--no-exit] [--disable DISABLE] [--enable ENABLE] [--config CONFIG] [--list-msgs] [--fix] [--xml-attributes-order XML_ATTRIBUTES_ORDER] [po_files ...]
 
 positional arguments:
  po_files PO files.
@@ -348,6 +362,7 @@ options:
  --config, -c CONFIG Path to a configuration file (default: .oca_hooks.cfg)
  --list-msgs List all currently enabled messages.
  --fix Automatically fix files when possible
+ --xml-attributes-order XML_ATTRIBUTES_ORDER Define a group of XML attributes to order with priority, comma-separated values. Repeat this option to add multiple groups. Example: --xml- attributes-order=t-if,t-else --xml-attributes-order=id,t-att-id --xml- attributes-order=class
 
 ```
 
@@ -492,12 +507,6 @@ options:
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.23/test_repo/broken_module/deprecated_disable.xml#L1 XML header expected '<?xml version="1.0" encoding="UTF-8" ?>' but received '<?xml version="1.0" encoding="utf-8" ?>'
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.23/test_repo/broken_module/model_view.xml#L1 XML header expected '<?xml version="1.0" encoding="UTF-8" ?>' but received '<?xml version="1.0" encoding="utf-8"?>'
 
- * xml-id-position-first
-
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.23/test_repo/broken_module/deprecated_disable.xml#L4 The "id" attribute must be first `<record id="duplicate_record" model=...` Use `<record id="duplicate_record"  model=...` instead
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.23/test_repo/broken_module/model_view_odoo2.xml#L43 The "id" attribute must be first `<record id="view_ir_config_search" model=...` Use `<record id="view_ir_config_search"  model=...` instead
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.23/test_repo/broken_module/model_view_odoo2.xml#L68 The "id" attribute must be first `<record id="access_rule" model=...` Use `<record id="access_rule"  model=...` instead
-
  * xml-not-valid-char-link
 
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.23/test_repo/test_module/website_templates.xml#L64 The resource in in src/href contains a not valid character
@@ -524,6 +533,12 @@ options:
 
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.23/test_repo/broken_module/file_no_exist.xml#L1 [Errno 2] No such file or directory: ''
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.23/test_repo/broken_module/file_no_exist.xml#L1 [Errno 2] No such file or directory: ''
+
+ * xml-tag-position
+
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.23/test_repo/broken_module/deprecated_disable.xml#L4 The expected attributes order is `<record id="duplicate_record" ...>` Use `<record id="duplicate_record" ...>` instead
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.23/test_repo/broken_module/model_view_odoo2.xml#L43 The expected attributes order is `<record id="view_ir_config_search" ...>` Use `<record id="view_ir_config_search" ...>` instead
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.23/test_repo/broken_module/model_view_odoo2.xml#L68 The expected attributes order is `<record id="access_rule" ...>` Use `<record id="access_rule" ...>` instead
 
  * xml-template-prettier-incompatible
 

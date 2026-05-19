@@ -44,8 +44,11 @@ RED_PILL = "\033[91m🔴\033[0m"
 
 
 class ChecksOdooModule(BaseChecker):
-    def __init__(self, manifest_path, enable, disable, changed=None, verbose=True, autofix=False):
+    def __init__(
+        self, manifest_path, enable, disable, changed=None, verbose=True, autofix=False, xml_attributes_order=None
+    ):
         super().__init__(enable, disable, autofix=autofix, module_version=utils.manifest_version(manifest_path))
+        self.xml_attributes_order = xml_attributes_order
         if not os.path.isfile(manifest_path) or os.path.basename(manifest_path) not in MANIFEST_NAMES:
             raise UserWarning(  # pragma: no cover
                 f"Not valid manifest file name {manifest_path} file expected {MANIFEST_NAMES}"
@@ -265,6 +268,7 @@ class ChecksOdooModule(BaseChecker):
             self.disable,
             module_version=self.module_version,
             autofix=self.autofix,
+            xml_attributes_order=self.xml_attributes_order,
         )
         for check_meth in utils.getattr_checks(checks_obj):
             check_meth()
@@ -301,7 +305,16 @@ def lookup_manifest_paths(filenames_or_modules):
     return odoo_module_files_changed
 
 
-def run(files_or_modules, enable=None, disable=None, no_verbose=False, no_exit=False, list_msgs=False, autofix=False):
+def run(
+    files_or_modules,
+    enable=None,
+    disable=None,
+    no_verbose=False,
+    no_exit=False,
+    list_msgs=False,
+    autofix=False,
+    xml_attributes_order=None,
+):
     if list_msgs:
         _, checks_docstring = utils.get_checks_docstring(
             [
@@ -330,7 +343,13 @@ def run(files_or_modules, enable=None, disable=None, no_verbose=False, no_exit=F
         if not manifest_path:
             continue
         checks_obj = ChecksOdooModule(
-            os.path.realpath(manifest_path), enable, disable, changed=changed, verbose=not no_verbose, autofix=autofix
+            os.path.realpath(manifest_path),
+            enable,
+            disable,
+            changed=changed,
+            verbose=not no_verbose,
+            autofix=autofix,
+            xml_attributes_order=xml_attributes_order,
         )
         for check in utils.getattr_checks(checks_obj):
             check()

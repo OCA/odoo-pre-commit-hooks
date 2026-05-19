@@ -204,9 +204,14 @@ class XMLStartTagLocator:
         close_part = content[cursor : tag_info.end]
         ordered_attrs = attrs
         if first_attr:
-            target_attr = next((attr for attr in attrs if attr.name == first_attr), None)
-            if target_attr and attrs[0].name != first_attr:
-                ordered_attrs = [target_attr] + [attr for attr in attrs if attr.name != first_attr]
+            first_attrs = [first_attr] if isinstance(first_attr, str) else list(first_attr)
+            priority_attrs = []
+            for fa in first_attrs:
+                target_attr = next((attr for attr in attrs if attr.name == fa), None)
+                if target_attr:
+                    priority_attrs.append(target_attr)
+            remaining_attrs = [attr for attr in attrs if attr not in priority_attrs]
+            ordered_attrs = priority_attrs + remaining_attrs
 
         rebuilt = open_part
         for idx, attr in enumerate(ordered_attrs):

@@ -116,9 +116,19 @@ class ChecksOdooModuleXML(BaseChecker):
             manifest_data["_tag_locator"] = locator
         return locator
 
-    def __init__(self, manifest_datas, module_name, enable, disable, module_version, autofix):
+    def __init__(
+        self, manifest_datas, module_name, enable, disable, module_version, autofix, xml_attributes_order=None
+    ):
         super().__init__(enable, disable, module_name, module_version, autofix)
         self.manifest_datas = manifest_datas or []
+        if xml_attributes_order is None:
+            self.xml_attributes_order = [
+                ("t-if", "t-else", "t-elif"),
+                ("id", "t-att-id", "t-attf-id"),
+                ("class", "t-att-class", "t-attf-class"),
+            ]
+        else:
+            self.xml_attributes_order = xml_attributes_order
         self.autofix = autofix
         for manifest_data in self.manifest_datas:
             try:
@@ -311,6 +321,56 @@ class ChecksOdooModuleXML(BaseChecker):
                 line=1,
             )
 
+    def _get_expected_tag_position_order(self, record):
+        expected_order = []
+        if not self.xml_attributes_order:
+            return expected_order
+        for group in self.xml_attributes_order:
+            present = [attr for attr in group if attr in record.attrib]
+            expected_order.extend(present)
+        # Only enforce if there are multiple configured attributes, or if it is a special tag
+        is_special_tag = record.tag in ("record", "menuitem", "template")
+        if len(expected_order) > 1 or (len(expected_order) == 1 and is_special_tag):
+            return expected_order
+        # if only one attribute is present and it is a non-special tag, do not enforce its absolute position as first
+        return []
+
+    def _report_tag_position_error(self, record, expected_order, manifest_data):
+        keys = list(record.attrib.keys())
+        if keys[: len(expected_order)] == expected_order:
+            return
+
+        expected_str = " ".join(f'{attr}="{record.attrib[attr]}"' for attr in expected_order)
+        message = f"The expected attributes order is " f"`<{record.tag} {expected_str} ...>`"
+        info = f"Use `<{record.tag} {expected_str} ...>` instead"
+
+        self.register_error(
+            code="xml-tag-position",
+            message=message,
+            info=info,
+            filepath=manifest_data["filename_short"],
+            line=record.sourceline,
+        )
+        if self.autofix:
+            self.autofix_tag_position(record, expected_order, manifest_data)
+
+    @utils.only_required_for_checks("xml-tag-position")
+    def check_xml_tag_position(self):
+        """* Check xml-tag-position
+        Check the position of XML attributes.
+        The order is dynamically configurable via xml_attributes_order.
+        """
+        for manifest_data in self.manifest_datas:
+            if not self.is_message_enabled("xml-tag-position", manifest_data["disabled_checks"]):
+                continue
+            for record in manifest_data["node"].iter():
+                if not isinstance(record.tag, str) or not record.attrib:
+                    continue
+
+                expected_order = self._get_expected_tag_position_order(record)
+                if expected_order:
+                    self._report_tag_position_error(record, expected_order, manifest_data)
+
     def _check_xml_field_eval(self, manifest_data, record):
         if not (
             self.is_message_enabled("xml-field-bool-without-eval", manifest_data["disabled_checks"])
@@ -374,7 +434,6 @@ class ChecksOdooModuleXML(BaseChecker):
     @utils.only_required_for_checks(
         "xml-field-bool-without-eval",
         "xml-field-numeric-without-eval",
-        "xml-id-position-first",
         "xml-redundant-module-name",
     )
     def visit_xml_record(self, manifest_data, record):
@@ -384,14 +443,6 @@ class ChecksOdooModuleXML(BaseChecker):
         `<record id="module_a.xmlid_name1" ...`
 
         The "module_a." is redundant it could be replaced to only
-        `<record id="xmlid_name1" ...`
-
-        * Check xml-id-position-first
-
-        If the record id is not in the first position
-        `<record ... id="xmlid_name1"`
-
-        It should be the first
         `<record id="xmlid_name1" ...`
 
         * Check xml-field-bool-without-eval
@@ -436,26 +487,14 @@ class ChecksOdooModuleXML(BaseChecker):
                     utils.perform_fix(manifest_data["filename"], content)
                     self.update_node(manifest_data)
 
-        first_attr = record.keys()[0]
-        if first_attr != "id" and self.is_message_enabled("xml-id-position-first", manifest_data["disabled_checks"]):
-            self.register_error(
-                code="xml-id-position-first",
-                message=f'The "id" attribute must be first `<{record.tag} id="{record_id}" {first_attr}=...`',
-                info=f'Use `<{record.tag} id="{record_id}"  {first_attr}=...` instead',
-                filepath=manifest_data["filename_short"],
-                line=record.sourceline,
-            )
-            if self.autofix:
-                self.autofix_id_position_first(record, first_attr, manifest_data)
-
-    def autofix_id_position_first(self, node, first_attr, manifest_data):
+    def autofix_tag_position(self, node, expected_attrs, manifest_data):
         attrs = dict(node.attrib)
         locator = self._get_tag_locator(manifest_data)
-        content = locator.rewrite_start_tag(locator.content, node, first_attr="id")
+        content = locator.rewrite_start_tag(locator.content, node, first_attr=expected_attrs)
         if content != locator.content:
-            id_value = attrs.pop("id")
+            priority_attrs = {k: attrs.pop(k) for k in expected_attrs if k in attrs}
             node.attrib.clear()
-            node.attrib.update({"id": id_value, **attrs})
+            node.attrib.update({**priority_attrs, **attrs})
             utils.perform_fix(manifest_data["filename"], content)
             self.update_node(manifest_data)
 
@@ -588,7 +627,6 @@ class ChecksOdooModuleXML(BaseChecker):
     @utils.only_required_for_checks(
         "xml-dangerous-qweb-replace-low-priority",
         "xml-duplicate-template-id",
-        "xml-id-position-first",
         "xml-template-prettier-incompatible",
     )
     def check_xml_templates(self):
@@ -615,21 +653,6 @@ class ChecksOdooModuleXML(BaseChecker):
                     template_ids[template_id].append(FileElementPair(manifest_data["filename_short"], template))
                 if self.is_message_enabled("xml-template-prettier-incompatible", manifest_data["disabled_checks"]):
                     self.verify_template_prettier_incompatible(template, manifest_data)
-
-                if (
-                    self.is_message_enabled("xml-id-position-first", manifest_data["disabled_checks"])
-                    and (first_attr := template.keys()[0]) != "id"
-                    and (template_id_short := template.get("id"))
-                ):
-                    self.register_error(
-                        code="xml-id-position-first",
-                        message=f'The "id" attribute must be first `<{template.tag} id="{template_id_short}" {first_attr}=...`',
-                        info=f'Use `<{template.tag} id="{template_id_short}"  {first_attr}=...` instead',
-                        filepath=manifest_data["filename_short"],
-                        line=template.sourceline,
-                    )
-                    if self.autofix:
-                        self.autofix_id_position_first(template, first_attr, manifest_data)
 
         for xmlid_key, records in template_ids.items():
             if len(records) < 2:

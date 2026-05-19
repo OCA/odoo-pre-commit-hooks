@@ -1,5 +1,6 @@
 import argparse
 import configparser
+import re
 from os import environ, getcwd
 from os.path import isfile, join
 
@@ -11,9 +12,31 @@ MSG_CTRL = "MESSAGES_CONTROL"
 ENABLE_ENV_VAR = "OCA_HOOKS_ENABLE"
 DISABLE_ENV_VAR = "OCA_HOOKS_DISABLE"
 
+DEFAULT_XML_ATTRIBUTES_ORDER = [
+    ["t-if", "t-else", "t-elif"],
+    ["id", "t-att-id", "t-attf-id"],
+    ["class", "t-att-class", "t-attf-class"],
+]
+
 
 def parse_csv(comma_sep_str):
     return set(map(str.strip, comma_sep_str.split(",")))
+
+
+def parse_csv_list(comma_sep_str):
+    return [attr.strip() for attr in comma_sep_str.split(",") if attr.strip()]
+
+
+def parse_xml_attributes_order(order_str):
+    if not order_str:
+        return []
+    groups = re.findall(r"\[(.*?)\]", order_str)
+    result = []
+    for group in groups:
+        attrs = [attr.strip() for attr in group.split(",") if attr.strip()]
+        if attrs:
+            result.append(attrs)
+    return result
 
 
 class GlobalParser(argparse.ArgumentParser):
@@ -63,6 +86,20 @@ class GlobalParser(argparse.ArgumentParser):
             dest="autofix",
             help="Automatically fix files when possible",
         )
+        self.add_argument(
+            "--xml-attributes-order",
+            action="append",
+            type=parse_csv_list,
+            default=None,
+            help=(
+                "Define a group of XML attributes to order with priority, comma-separated values. "
+                "Repeat this option to add multiple groups. "
+                "Example: "
+                "--xml-attributes-order=t-if,t-else "
+                "--xml-attributes-order=id,t-att-id "
+                "--xml-attributes-order=class"
+            ),
+        )
 
     @staticmethod
     def _default_env_csv(env_var):
@@ -93,6 +130,12 @@ class GlobalParser(argparse.ArgumentParser):
                     res.enable = parse_csv(message_conf.get("enable"))
                 if not res.disable and message_conf.get("disable"):
                     res.disable = parse_csv(message_conf.get("disable"))
+                # If the default value was kept and config has the key, overwrite it.
+                if res.xml_attributes_order is None and message_conf.get("xml_attributes_order"):
+                    res.xml_attributes_order = parse_xml_attributes_order(message_conf.get("xml_attributes_order"))
+
+        if res.xml_attributes_order is None:
+            res.xml_attributes_order = DEFAULT_XML_ATTRIBUTES_ORDER
 
         # Not expected/used by any other program component as of now.
         delattr(res, "config")
