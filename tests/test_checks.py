@@ -52,7 +52,7 @@ EXPECTED_ERRORS = {
     "xml-duplicate-template-id": 9,
     "xml-header-missing": 2,
     "xml-header-wrong": 18,
-    "xml-id-position-first": 9,
+    "xml-tag-position": 11,
     "xml-deprecated-oe-chatter": 1,
     "xml-field-bool-without-eval": 2,
     "xml-field-numeric-without-eval": 7,
@@ -232,6 +232,16 @@ class TestChecks(common.ChecksCommon):
             in content
         ), "The XML wrong xmlid order was previously fixed"
 
+        template1_xml = os.path.join(self.test_repo_path, "broken_module", "template1.xml")
+        with open(template1_xml, "rb") as f_template1:
+            content_t1 = f_template1.read()
+        assert (
+            b'<span class="my-class" t-if="some_condition">Hello</span>' in content_t1
+        ), "The QWeb t-if position was previously fixed"
+        assert (
+            b'<template id="my_id_and_t_if" t-if="condition">' in content_t1
+        ), "The template id and t-if position was previously fixed"
+
         py_comment = os.path.join(self.test_repo_path, "eleven_module", "models.py")
         with open(py_comment, "rb") as f:
             content = f.read()
@@ -326,6 +336,15 @@ class TestChecks(common.ChecksCommon):
     />"""
             in content
         ), "The XML xmlid order was not fixed"
+
+        with open(template1_xml, "rb") as f_template1:
+            content_t1 = f_template1.read()
+        assert (
+            b'<span t-if="some_condition" class="my-class">Hello</span>' in content_t1
+        ), "The QWeb t-if position was not fixed"
+        assert (
+            b'<template t-if="condition" id="my_id_and_t_if">' in content_t1
+        ), "The template id and t-if position was not fixed"
 
         with open(py_comment, "rb") as f:
             content = f.read()

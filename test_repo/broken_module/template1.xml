@@ -43,5 +43,10 @@
             </xpath>
         </t>
     </templates>
-
+    <template id="my_t_if_template">
+        <span class="my-class" t-if="some_condition">Hello</span>
+    </template>
+    <template id="my_id_and_t_if" t-if="condition">
+        <span>Both</span>
+    </template>
 </odoo>
