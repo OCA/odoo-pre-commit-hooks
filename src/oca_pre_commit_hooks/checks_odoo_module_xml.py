@@ -145,9 +145,19 @@ class ChecksOdooModuleXML(BaseChecker):
             manifest_data["_tag_locator"] = locator
         return locator
 
-    def __init__(self, manifest_datas, module_name, enable, disable, module_version, autofix):
+    def __init__(
+        self, manifest_datas, module_name, enable, disable, module_version, autofix, xml_attributes_order=None
+    ):
         super().__init__(enable, disable, module_name, module_version, autofix)
         self.manifest_datas = manifest_datas or []
+        if xml_attributes_order is None:
+            self.xml_attributes_order = [
+                ("t-if", "t-else", "t-elif"),
+                ("id", "t-att-id", "t-attf-id"),
+                ("class", "t-att-class", "t-attf-class"),
+            ]
+        else:
+            self.xml_attributes_order = xml_attributes_order
         self.autofix = autofix
         for manifest_data in self.manifest_datas:
             try:
@@ -340,21 +350,19 @@ class ChecksOdooModuleXML(BaseChecker):
                 line=1,
             )
 
-    def _get_expected_tag_position_order(self, record, is_special_tag, present_id, present_t):
+    def _get_expected_tag_position_order(self, record):
         expected_order = []
-        if present_t:
-            expected_order.append(present_t[0])
-        id_attrs = ("id", "t-att-id", "t-attf-id")
-        present_id = [attr for attr in id_attrs if attr in record.attrib]
-        class_attrs = ("class", "t-att-class", "t-attf-class")
-        present_class = [attr for attr in class_attrs if attr in record.attrib]
-        has_id = bool(present_id)
-        has_class = bool(present_class)
-        if has_id and (is_special_tag or present_t or has_class):
-            expected_order.extend(present_id)
-        if has_class and (is_special_tag or present_t or has_id or len(present_class) > 1):
-            expected_order.extend(present_class)
-        return expected_order
+        if not self.xml_attributes_order:
+            return expected_order
+        for group in self.xml_attributes_order:
+            present = [attr for attr in group if attr in record.attrib]
+            expected_order.extend(present)
+        # Only enforce if there are multiple configured attributes, or if it is a special tag
+        is_special_tag = record.tag in ("record", "menuitem", "template")
+        if len(expected_order) > 1 or (len(expected_order) == 1 and is_special_tag):
+            return expected_order
+        # if only one attribute is present and it is a non-special tag, do not enforce its absolute position as first
+        return []
 
     def _report_tag_position_error(self, record, expected_order, manifest_data):
         keys = list(record.attrib.keys())
@@ -382,13 +390,8 @@ class ChecksOdooModuleXML(BaseChecker):
     def check_xml_tag_position(self):
         """* Check xml-tag-position
         Check the position of XML attributes.
-        - t-if, t-else, t-elif must be the first attribute of any tag.
-        - id, t-att-id, t-attf-id must be the first attribute of record, menuitem, and template tags.
-          If t-if/t-else/t-elif is also present, it must be the first and id/t-att-id/t-attf-id must be
-          the second attribute.
-        - class, t-att-class, t-attf-class must be placed after conditional and id in that relative order.
+        The order is dynamically configurable via xml_attributes_order.
         """
-        t_attrs = ("t-if", "t-else", "t-elif")
         for manifest_data in self.manifest_datas:
             if not self.is_message_enabled("xml-tag-position", manifest_data["disabled_checks"]):
                 continue
@@ -396,11 +399,7 @@ class ChecksOdooModuleXML(BaseChecker):
                 if not isinstance(record.tag, str) or not record.attrib:
                     continue
 
-                present_t = [attr for attr in t_attrs if attr in record.attrib]
-                record_id = record.get("id")
-                is_special_tag = record.tag in ("record", "menuitem", "template")
-
-                expected_order = self._get_expected_tag_position_order(record, is_special_tag, record_id, present_t)
+                expected_order = self._get_expected_tag_position_order(record)
                 if expected_order:
                     self._report_tag_position_error(record, expected_order, manifest_data)
 

@@ -1,5 +1,6 @@
 import argparse
 import configparser
+import re
 from os import environ, getcwd
 from os.path import isfile, join
 
@@ -14,6 +15,18 @@ DISABLE_ENV_VAR = "OCA_HOOKS_DISABLE"
 
 def parse_csv(comma_sep_str):
     return set(map(str.strip, comma_sep_str.split(",")))
+
+
+def parse_xml_attributes_order(order_str):
+    if not order_str:
+        return []
+    groups = re.findall(r"\[(.*?)\]", order_str)
+    result = []
+    for group in groups:
+        attrs = tuple(attr.strip() for attr in group.split(",") if attr.strip())
+        if attrs:
+            result.append(attrs)
+    return result
 
 
 class GlobalParser(argparse.ArgumentParser):
@@ -63,6 +76,14 @@ class GlobalParser(argparse.ArgumentParser):
             dest="autofix",
             help="Automatically fix files when possible",
         )
+        self.add_argument(
+            "--xml-attributes-order",
+            type=parse_xml_attributes_order,
+            default=parse_xml_attributes_order(
+                "[t-if, t-else, t-elif], [id, t-att-id, t-attf-id], [class, t-att-class, t-attf-class]"
+            ),
+            help="Order of XML attributes in groups (e.g. '[t-if, t-else], [id, t-att-id], [class]')",
+        )
 
     @staticmethod
     def _default_env_csv(env_var):
@@ -93,6 +114,11 @@ class GlobalParser(argparse.ArgumentParser):
                     res.enable = parse_csv(message_conf.get("enable"))
                 if not res.disable and message_conf.get("disable"):
                     res.disable = parse_csv(message_conf.get("disable"))
+                # If the default value was kept and config has the key, overwrite it.
+                if res.xml_attributes_order == parse_xml_attributes_order(
+                    "[t-if, t-else, t-elif], [id, t-att-id, t-attf-id], [class, t-att-class, t-attf-class]"
+                ) and message_conf.get("xml_attributes_order"):
+                    res.xml_attributes_order = parse_xml_attributes_order(message_conf.get("xml_attributes_order"))
 
         # Not expected/used by any other program component as of now.
         delattr(res, "config")

@@ -9,6 +9,7 @@ from pathlib import Path
 import pytest
 
 import oca_pre_commit_hooks
+import oca_pre_commit_hooks.global_parser
 from . import common
 
 ALL_CHECK_CLASS = [
@@ -402,3 +403,12 @@ class TestChecks(common.ChecksCommon):
         # comments contain 1 valid deprecated
         assert content.count(b"t-esc") == 1, "The deprecated t-esc was not fixed"
         assert content.count(b"t-raw") == 1, "The deprecated t-esc was not fixed"
+
+    def test_xml_attributes_order_custom(self):
+        custom_order = oca_pre_commit_hooks.global_parser.parse_xml_attributes_order("[class], [id], [t-if]")
+        all_check_errors = self.checks_run(
+            self.file_paths, no_exit=True, no_verbose=True, xml_attributes_order=custom_order
+        )
+        real_errors = self.get_grouped_errors(all_check_errors)
+        assert "xml-tag-position" in real_errors
+        assert real_errors["xml-tag-position"] != EXPECTED_ERRORS.get("xml-tag-position", 0)

@@ -97,6 +97,23 @@ enable=check-enable1,check-enable2
 disable=check-to-disable
 ```
 
+To customize the `xml-tag-position` check, you can also define `xml_attributes_order` in the same section.
+Each group declares equivalent attributes, and groups are enforced from left to right.
+
+```
+[MESSAGES_CONTROL]
+xml_attributes_order=[t-if, t-else, t-elif], [id, t-att-id, t-attf-id], [class, t-att-class, t-attf-class]
+```
+
+Custom example:
+
+```
+[MESSAGES_CONTROL]
+xml_attributes_order=[class], [id], [t-if]
+```
+
+The same value can also be passed from CLI with `--xml-attributes-order`.
+
 As stated before, each source has a certain priority. This means that if the environment variable `OCA_HOOKS_ENABLE=check1`
 exists, the configuration file above would not have any effect when it comes to enabling checks, and the only enabled
 check will be `check1`.
@@ -241,11 +258,7 @@ Check syntax of XML files declared in the Odoo manifest
 
 * Check xml-tag-position
 Check the position of XML attributes.
-- t-if, t-else, t-elif must be the first attribute of any tag.
-- id, t-att-id, t-attf-id must be the first attribute of record, menuitem, and template tags.
-  If t-if/t-else/t-elif is also present, it must be the first and id/t-att-id/t-attf-id must be
-  the second attribute.
-- class, t-att-class, t-attf-class must be placed after conditional and id in that relative order.
+The order is dynamically configurable via xml_attributes_order.
 
 * Check xml-dangerous-qweb-replace-low-priority
 Dangerous qweb view defined with low priority
@@ -327,7 +340,7 @@ Check syntax of PO files from i18n* folders
 
 # Help
 ```bash
-usage: oca-checks-odoo-module [-h] [--no-verbose] [--no-exit] [--disable DISABLE] [--enable ENABLE] [--config CONFIG] [--list-msgs] [--fix] [files_or_modules ...]
+usage: oca-checks-odoo-module [-h] [--no-verbose] [--no-exit] [--disable DISABLE] [--enable ENABLE] [--config CONFIG] [--list-msgs] [--fix] [--xml-attributes-order XML_ATTRIBUTES_ORDER] [files_or_modules ...]
 
 positional arguments:
  files_or_modules Odoo __manifest__.py paths or Odoo module paths.
@@ -341,6 +354,7 @@ options:
  --config, -c CONFIG Path to a configuration file (default: .oca_hooks.cfg)
  --list-msgs List all currently enabled messages.
  --fix Automatically fix files when possible
+ --xml-attributes-order XML_ATTRIBUTES_ORDER Order of XML attributes in groups (e.g. '[t-if, t-else], [id, t-att-id], [class]')
 
 ```
 
@@ -351,7 +365,7 @@ options:
 
 # Help PO
 ```bash
-usage: oca-checks-po [-h] [--no-verbose] [--no-exit] [--disable DISABLE] [--enable ENABLE] [--config CONFIG] [--list-msgs] [--fix] [po_files ...]
+usage: oca-checks-po [-h] [--no-verbose] [--no-exit] [--disable DISABLE] [--enable ENABLE] [--config CONFIG] [--list-msgs] [--fix] [--xml-attributes-order XML_ATTRIBUTES_ORDER] [po_files ...]
 
 positional arguments:
  po_files PO files.
@@ -365,6 +379,7 @@ options:
  --config, -c CONFIG Path to a configuration file (default: .oca_hooks.cfg)
  --list-msgs List all currently enabled messages.
  --fix Automatically fix files when possible
+ --xml-attributes-order XML_ATTRIBUTES_ORDER Order of XML attributes in groups (e.g. '[t-if, t-else], [id, t-att-id], [class]')
 
 ```
 
