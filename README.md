@@ -122,6 +122,19 @@ Check if there is a file created but not referenced from __manifest__.py
 * Check manifest-syntax-error
 Check if the manifest file has syntax error
 
+* Check no-translation-format
+Check if a translation is interpolated using `str.format`.
+`str.format` should not be used to interpolate translations
+because it allows a translator to execute arbitrary code, like:
+
+```
+>>> 'class of {0} is {0.__class__}'.format(42)
+"class of 42 is <class 'int'>"
+
+```
+
+See https://lucumr.pocoo.org/2016/12/29/careful-with-str-format for a more detailed explanation.
+
 * Check prefer-readme-rst
 Check if the module has README.md file to prefer README.rst file
 
@@ -404,6 +417,12 @@ options:
 
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.22/test_repo/manifest_werror/__manifest__.py#L1 Manifest could not be loaded manifest malformed
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.22/test_repo/woinit_module/__manifest__.py#L1 Manifest could not be loaded
+
+ * no-translation-format
+
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.22/test_repo/broken_module/models/broken_model.py#L275 Format is used to interpolate translations, use the args/kwargs of `_` instead.
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.22/test_repo/broken_module/models/broken_model.py#L283 Format is used to interpolate translations, use the args/kwargs of `_` instead.
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.22/test_repo/broken_module/models/broken_model.py#L389 Format is used to interpolate translations, use the args/kwargs of `_` instead.
 
  * prefer-env-translation
 

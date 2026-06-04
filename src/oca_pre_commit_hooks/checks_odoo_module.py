@@ -180,6 +180,39 @@ class ChecksOdooModule(BaseChecker):
             line=1,
         )
 
+    @utils.only_required_for_installable()
+    @utils.only_required_for_checks("no-translation-format")
+    def check_no_translation_format(self):
+        """* Check no-translation-format
+        Check if a translation is interpolated using `str.format`.
+        `str.format` should not be used to interpolate translations
+        because it allows a translator to execute arbitrary code, like:
+
+        ```
+        >>> 'class of {0} is {0.__class__}'.format(42)
+        "class of 42 is <class 'int'>"
+
+        ```
+
+        See https://lucumr.pocoo.org/2016/12/29/careful-with-str-format for a more detailed explanation.
+        """
+
+        def is_translation_function_call(ast_node):
+            return isinstance(ast_node, ast.Call) and isinstance(ast_node.func, ast.Name) and ast_node.func.id == "_"
+
+        for py_file_path in Path(self.odoo_addon_path).rglob("*.py"):
+            parsed = ast.parse(py_file_path.read_bytes())
+            for node in ast.walk(parsed):
+                for child in ast.iter_child_nodes(node):
+                    if is_translation_function_call(child) and getattr(node, "attr", None) == "format":
+                        self.register_error(
+                            code="no-translation-format",
+                            message="Format is used to interpolate translations, use the args/kwargs of `_` instead.",
+                            filepath=os.path.relpath(py_file_path, self.manifest_top_path),
+                            line=node.lineno,
+                            column=node.col_offset,
+                        )
+
     @staticmethod
     def _get_module_data_files(module_root_path):
         module_root_path_obj = Path(module_root_path).resolve()
