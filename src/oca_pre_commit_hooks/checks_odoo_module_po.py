@@ -378,7 +378,16 @@ class ChecksOdooModulePO(BaseChecker):
             self.perform_autofix()
 
 
-def run(po_files, enable=None, disable=None, no_verbose=False, no_exit=False, list_msgs=False, autofix=False):
+def run(
+    po_files,
+    enable=None,
+    disable=None,
+    no_verbose=False,
+    no_exit=False,
+    list_msgs=False,
+    autofix=False,
+    xml_attributes_order=None,
+):
     if list_msgs:
         _, checks_docstring = utils.get_checks_docstring([ChecksOdooModulePO])
         if not no_verbose:
