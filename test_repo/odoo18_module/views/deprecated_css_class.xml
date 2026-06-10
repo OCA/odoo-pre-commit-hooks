@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<record id="deprecated_css_class_view" model="ir.ui.view">
+    <field name="name">deprecated.css.view</field>
+    <field name="model">random.model</field>
+    <field name="arch" type="xml">
+        <form>
+            <div class="pull-right">Right-floated content</div>
+            <div class="panel panel-default">
+                <div class="panel-heading"><h3 class="panel-title">Title</h3></div>
+                <div class="panel-body">Body</div>
+                <div class="panel-footer">Footer</div>
+            </div>
+            <img src="logo.png" class="img-responsive"/>
+            <button class="btn btn-default">Cancel</button>
+            <div class="oe_left">Old-style left</div>
+            <div class="oe_right">Old-style right</div>
+            <span class="oe_grey">Faded label</span>
+        </form>
+    </field>
+</record>
