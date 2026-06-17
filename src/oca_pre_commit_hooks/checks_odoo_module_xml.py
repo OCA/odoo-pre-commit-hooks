@@ -50,6 +50,33 @@ class ChecksOdooModuleXML(BaseChecker):
     xpath_xpath = etree.XPath("//xpath")
     xpath_oe_chatter = etree.XPath("//div[hasclass('oe_chatter')]")
 
+    # Mapping ``{deprecated_class: replacement}`` for ``check_xml_deprecated_css_class``.
+    # Each entry is a one-to-one substitution that does not depend on the
+    # element's tag, parent, or surrounding markup. Ambiguous cases (e.g.
+    # ``oe_inline``, where the BS5 replacement depends on context) are
+    # intentionally omitted.
+    deprecated_css_classes = {
+        # Bootstrap 3 → 5 utility renames. Odoo bundles Bootstrap 5 since
+        # version 15.0.
+        "pull-left": "float-start",
+        "pull-right": "float-end",
+        "panel": "card",
+        "panel-default": "card",
+        "panel-heading": "card-header",
+        "panel-body": "card-body",
+        "panel-title": "card-title",
+        "panel-footer": "card-footer",
+        "img-responsive": "img-fluid",
+        "btn-default": "btn-secondary",
+        # Odoo legacy classes that were superseded by BS5 utilities.
+        "oe_left": "float-start",
+        "oe_right": "float-end",
+        "oe_grey": "text-muted",
+    }
+    xpath_deprecated_css_class = {
+        css_class: etree.XPath(f"//*[hasclass('{css_class}')]") for css_class in deprecated_css_classes
+    }
+
     tree_deprecate_attrs = {"string", "colors", "fonts"}
     xpath_tree_deprecated = etree.XPath(f'.//tree[{"|".join(f"@{a}" for a in tree_deprecate_attrs)}]')
 
@@ -783,3 +810,37 @@ class ChecksOdooModuleXML(BaseChecker):
                     filepath=manifest_data["filename_short"],
                     line=xpath_node.sourceline,
                 )
+
+    @utils.only_required_for_checks("xml-deprecated-css-class")
+    def check_xml_deprecated_css_class(self):
+        """* Check xml-deprecated-css-class
+
+        Detect legacy CSS classes in XML / QWeb views and suggest the
+        modern replacement. Two sources are covered:
+
+        * Bootstrap 3 utility classes that were renamed in Bootstrap 5.
+          Odoo bundles Bootstrap 5 since version 15.0, so any module
+          targeting 15.0+ should drop the legacy names.
+        * Odoo legacy classes (``oe_left``, ``oe_right``, ``oe_grey``)
+          that were superseded by Bootstrap 5 utilities.
+
+        Only unambiguous one-to-one mappings are flagged here; ambiguous
+        classes (``oe_inline``, ``oe_button_box``, …) are left out so the
+        rule can be enabled without manual review of every hit.
+        """
+        if not self.module_version or (self.module_version and self.module_version < Version("15")):
+            return
+
+        for manifest_data in self.manifest_datas:
+            for css_class, replacement in self.deprecated_css_classes.items():
+                xpath = self.xpath_deprecated_css_class[css_class]
+                for xpath_node in xpath(manifest_data["node"]):
+                    self.register_error(
+                        code="xml-deprecated-css-class",
+                        message=(
+                            f"Deprecated CSS class {css_class!r}; "
+                            f"replace with {replacement!r}."
+                        ),
+                        filepath=manifest_data["filename_short"],
+                        line=xpath_node.sourceline,
+                    )
