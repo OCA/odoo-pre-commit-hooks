@@ -12,7 +12,7 @@ class FixitTest(unittest.TestCase):
     def test_fixit(self):
         """Run 'fixit test' based on fixit.cli.test method"""
         mp = pytest.MonkeyPatch()
-        mp.setenv("FIXIT_ODOO_VERSION", "18.0")
+        mp.setenv("FIXIT_ODOO_VERSION", "20.0")
         mp.setenv("FIXIT_AUTOFIX", "True")
         rule = utils.fixit_parse_rule()
         lint_rules = collect_rules(Config(enable=[rule], disable=[], python_version=None))

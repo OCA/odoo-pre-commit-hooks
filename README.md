@@ -263,6 +263,12 @@ Detects and removes the 'string' parameter in odoo.fields if it is redundant
 (matches the field name in Title Case), ensuring it only applies to
 Odoo Class definitions (Models).
 
+* Check manifest-summary-multiline
+Ensure the manifest `summary` is a single-line short description.
+
+For Odoo 20.0+, multiline summaries are reported and can be autofixed by
+replacing newline separators with spaces.
+
 * Check manifest-superfluous-key
 Identifies and removes
 Identifies from Odoo manifest files (__manifest__.py) superfluous keys

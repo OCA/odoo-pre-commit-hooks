@@ -77,7 +77,16 @@ class ChecksOdooModuleFixit(BaseChecker):
 
     def _get_fixit_enabled_rules(self, manifest_rule):
         lint_rules = self._get_fixit_rules(manifest_rule)
-        return [lint_rule for lint_rule, lint_rule_name in lint_rules if self.is_message_enabled(lint_rule_name)]
+        return [
+            lint_rule
+            for lint_rule, lint_rule_name in lint_rules
+            if self.is_message_enabled(lint_rule_name)
+            and (
+                not manifest_rule
+                or self.manifest_path.name == "__manifest__.py"
+                or lint_rule_name != "manifest-summary-multiline"
+            )
+        ]
 
     def _get_changed(self):
         """Return files to process if manifest is the unique file so it returns the directory of the module"""

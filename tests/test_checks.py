@@ -1,4 +1,5 @@
 # pylint: disable=duplicate-code,useless-suppression
+import ast
 import glob
 import os
 import re
@@ -398,6 +399,79 @@ class TestChecks(common.ChecksCommon):
         # comments contain 1 valid deprecated
         assert content.count(b"t-esc") == 1, "The deprecated t-esc was not fixed"
         assert content.count(b"t-raw") == 1, "The deprecated t-esc was not fixed"
+
+    def test_manifest_summary_multiline_fixit_only_applies_to_odoo20_plus(self):
+        manifest_path = Path(self.test_repo_path) / "odoo18_module" / "__manifest__.py"
+        with open(manifest_path, encoding="UTF-8") as manifest_fd:
+            manifest_content = manifest_fd.read()
+        with open(manifest_path, "w", encoding="UTF-8") as manifest_fd:
+            manifest_fd.write(
+                manifest_content.replace(
+                    "    'license': 'AGPL-3',\n",
+                    "    'summary': '''First line\n    second line''',\n    'license': 'AGPL-3',\n",
+                    1,
+                )
+            )
+
+        errors = self.checks_run(
+            [str(manifest_path)], enable={"manifest-summary-multiline"}, no_exit=True, no_verbose=True
+        )
+        assert not errors
+
+        mp = pytest.MonkeyPatch()
+        mp.setenv("FIXIT_ODOO_VERSION", "20.0")
+        try:
+            errors = self.checks_run(
+                [str(manifest_path)], enable={"manifest-summary-multiline"}, no_exit=True, no_verbose=True
+            )
+            assert self.get_count_code_errors(errors) == {"manifest-summary-multiline": 1}
+            self.checks_run(
+                [str(manifest_path)],
+                enable={"manifest-summary-multiline"},
+                no_exit=True,
+                no_verbose=True,
+                autofix=True,
+            )
+        finally:
+            mp.undo()
+
+        with open(manifest_path, encoding="UTF-8") as manifest_fd:
+            manifest_data = ast.literal_eval(manifest_fd.read())
+        assert manifest_data["summary"] == "First line second line"
+
+    def test_manifest_summary_multiline_skips_openerp_manifest(self):
+        manifest_path = Path(self.test_repo_path) / "test_module" / "__openerp__.py"
+        with open(manifest_path, encoding="UTF-8") as manifest_fd:
+            manifest_content = manifest_fd.read()
+        with open(manifest_path, "w", encoding="UTF-8") as manifest_fd:
+            manifest_fd.write(
+                manifest_content.replace(
+                    "    'license': 'AGPL-3',\n",
+                    "    'summary': '''First line\n    second line''',\n    'license': 'AGPL-3',\n",
+                    1,
+                )
+            )
+
+        mp = pytest.MonkeyPatch()
+        mp.setenv("FIXIT_ODOO_VERSION", "20.0")
+        try:
+            errors = self.checks_run(
+                [str(manifest_path)], enable={"manifest-summary-multiline"}, no_exit=True, no_verbose=True
+            )
+            assert not errors
+            self.checks_run(
+                [str(manifest_path)],
+                enable={"manifest-summary-multiline"},
+                no_exit=True,
+                no_verbose=True,
+                autofix=True,
+            )
+        finally:
+            mp.undo()
+
+        with open(manifest_path, encoding="UTF-8") as manifest_fd:
+            manifest_data = ast.literal_eval(manifest_fd.read())
+        assert "\n" in manifest_data["summary"]
 
     def test_xml_attributes_order_custom(self):
         custom_order = oca_pre_commit_hooks.global_parser.parse_xml_attributes_order("[class], [id], [t-if]")
