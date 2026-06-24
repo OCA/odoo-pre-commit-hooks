@@ -5,7 +5,8 @@ from fixit import InvalidTestCase, ValidTestCase
 from libcst import matchers as m
 from libcst.metadata import ParentNodeProvider, QualifiedName, QualifiedNameProvider
 
-from .. import checks_odoo_module_fixit_common as common, utils
+from .. import checks_odoo_module_fixit_common as common
+from .. import utils
 
 ODOO_SUPER_CLASSES = (
     "odoo.http.Controller",
@@ -48,37 +49,30 @@ class PreferEnvTranslationRule(common.Common):
     METADATA_DEPENDENCIES = (QualifiedNameProvider, ParentNodeProvider)
 
     VALID = [
-        ValidTestCase(
-            code="""
+        ValidTestCase(code="""
     from odoo import models, _
 
 
     class TestModel(models.Model):
         def my_method(self):
             self.env._("ok")
-    """
-        ),
-        ValidTestCase(
-            code="""
+    """),
+        ValidTestCase(code="""
     from gettext import gettext as _
 
 
     def outside_model():
         _("not Odoo")
-    """
-        ),
-        ValidTestCase(
-            code="""
+    """),
+        ValidTestCase(code="""
     _ = lambda *a: True
 
 
     class TestModel(models.Model):
         def my_method(self):
             _("is not a Odoo translation")
-    """
-        ),
-        ValidTestCase(
-            code="""
+    """),
+        ValidTestCase(code="""
     from odoo import _
 
     MAP = {
@@ -88,10 +82,8 @@ class PreferEnvTranslationRule(common.Common):
     class TestModel(object):
         def my_method(self):
             _("ok")
-    """
-        ),
-        ValidTestCase(
-            code="""
+    """),
+        ValidTestCase(code="""
     from odoo import http, _ as lt
 
 
@@ -99,8 +91,7 @@ class PreferEnvTranslationRule(common.Common):
         @staticmethod
         def my_method():
             lt("old translated")
-    """
-        ),
+    """),
     ]
 
     INVALID = [

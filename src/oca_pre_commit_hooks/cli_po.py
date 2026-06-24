@@ -10,6 +10,7 @@ Why does this file exist, and why not put this in __main__?
     there's no ``pre_commit_vauxoo.__main__`` in ``sys.modules``.
   Also see (1) from http://click.pocoo.org/5/setuptools/#setuptools-integration
 """
+
 import sys
 
 from oca_pre_commit_hooks import checks_odoo_module_po

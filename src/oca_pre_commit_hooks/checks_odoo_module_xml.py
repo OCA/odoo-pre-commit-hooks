@@ -51,7 +51,7 @@ class ChecksOdooModuleXML(BaseChecker):
     xpath_oe_chatter = etree.XPath("//div[hasclass('oe_chatter')]")
 
     tree_deprecate_attrs = {"string", "colors", "fonts"}
-    xpath_tree_deprecated = etree.XPath(f'.//tree[{"|".join(f"@{a}" for a in tree_deprecate_attrs)}]')
+    xpath_tree_deprecated = etree.XPath(f".//tree[{'|'.join(f'@{a}' for a in tree_deprecate_attrs)}]")
 
     qweb_deprecated_directives = {
         "t-esc-options",
@@ -79,6 +79,7 @@ class ChecksOdooModuleXML(BaseChecker):
 
     def _get_first_tag(self, fileobj_xml):
         buffer = []
+        buffer_lineno = 0
         for lineno, line in enumerate(fileobj_xml):
             line_stripped = line.strip(b" \n")
             if not buffer and line_stripped.startswith(b"<"):
@@ -117,7 +118,14 @@ class ChecksOdooModuleXML(BaseChecker):
         return locator
 
     def __init__(
-        self, manifest_datas, module_name, enable, disable, module_version, autofix, xml_attributes_order=None
+        self,
+        manifest_datas,
+        module_name,
+        enable,
+        disable,
+        module_version,
+        autofix,
+        xml_attributes_order=None,
     ):
         super().__init__(enable, disable, module_name, module_version, autofix)
         self.manifest_datas = manifest_datas or []
@@ -139,7 +147,11 @@ class ChecksOdooModuleXML(BaseChecker):
                         "disabled_checks": self._get_disabled_checks(node, manifest_data),
                     }
                 )
-            except (FileNotFoundError, etree.XMLSyntaxError, UnicodeDecodeError) as xml_err:
+            except (
+                FileNotFoundError,
+                etree.XMLSyntaxError,
+                UnicodeDecodeError,
+            ) as xml_err:
                 manifest_data.update(
                     {
                         "node": etree.Element("__empty__"),
@@ -218,8 +230,8 @@ class ChecksOdooModuleXML(BaseChecker):
                     self.register_error(
                         code="xml-header-wrong",
                         message=(
-                            f'XML header expected \'{XML_HEADER_EXPECTED.decode("UTF-8")}\' '
-                            f'but received \'{first_tag.decode("UTF-8")}\''
+                            f"XML header expected '{XML_HEADER_EXPECTED.decode('UTF-8')}' "
+                            f"but received '{first_tag.decode('UTF-8')}'"
                         ),
                         filepath=manifest_data["filename_short"],
                         line=manifest_data["first_tag_lineno"],
@@ -228,7 +240,8 @@ class ChecksOdooModuleXML(BaseChecker):
                         with open(manifest_data["filename"], "rb") as f_xml:
                             content = f_xml.read()
                         utils.perform_fix(
-                            manifest_data["filename"], XML_HEADER_RE.sub(XML_HEADER_EXPECTED, content, count=1)
+                            manifest_data["filename"],
+                            XML_HEADER_RE.sub(XML_HEADER_EXPECTED, content, count=1),
                         )
                         self.update_node(manifest_data)  # update sourceline after remove a possible line
 
@@ -341,7 +354,7 @@ class ChecksOdooModuleXML(BaseChecker):
             return
 
         expected_str = " ".join(f'{attr}="{record.attrib[attr]}"' for attr in expected_order)
-        message = f"The expected attributes order is " f"`<{record.tag} {expected_str} ...>`"
+        message = f"The expected attributes order is `<{record.tag} {expected_str} ...>`"
         info = f"Use `<{record.tag} {expected_str} ...>` instead"
 
         self.register_error(
@@ -643,7 +656,8 @@ class ChecksOdooModuleXML(BaseChecker):
         for manifest_data in self.manifest_datas:
             for template in self.xpath_template(manifest_data["node"]):
                 if self.is_message_enabled(
-                    "xml-dangerous-qweb-replace-low-priority", manifest_data["disabled_checks"]
+                    "xml-dangerous-qweb-replace-low-priority",
+                    manifest_data["disabled_checks"],
                 ):
                     self.verify_qweb_replace(template, manifest_data)
                 if self.is_message_enabled("xml-duplicate-template-id", manifest_data["disabled_checks"]):
@@ -651,7 +665,10 @@ class ChecksOdooModuleXML(BaseChecker):
                     if not template_id:  # pragma: no cover
                         continue
                     template_ids[template_id].append(FileElementPair(manifest_data["filename_short"], template))
-                if self.is_message_enabled("xml-template-prettier-incompatible", manifest_data["disabled_checks"]):
+                if self.is_message_enabled(
+                    "xml-template-prettier-incompatible",
+                    manifest_data["disabled_checks"],
+                ):
                     self.verify_template_prettier_incompatible(template, manifest_data)
 
         for xmlid_key, records in template_ids.items():

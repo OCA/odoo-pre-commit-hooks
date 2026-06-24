@@ -337,7 +337,7 @@ options:
  --config, -c CONFIG Path to a configuration file (default: .oca_hooks.cfg)
  --list-msgs List all currently enabled messages.
  --fix Automatically fix files when possible
- --xml-attributes-order XML_ATTRIBUTES_ORDER Define a group of XML attributes to order with priority, comma-separated values. Repeat this option to add multiple groups. Example: --xml- attributes-order=t-if,t-else --xml-attributes-order=id,t-att-id --xml- attributes-order=class
+ --xml-attributes-order XML_ATTRIBUTES_ORDER Define a group of XML attributes to order with priority, comma-separated values. Repeat this option to add multiple groups. Example: --xml-attributes-order=t-if,t-else --xml- attributes-order=id,t-att-id --xml-attributes-order=class
 
 ```
 
@@ -362,7 +362,7 @@ options:
  --config, -c CONFIG Path to a configuration file (default: .oca_hooks.cfg)
  --list-msgs List all currently enabled messages.
  --fix Automatically fix files when possible
- --xml-attributes-order XML_ATTRIBUTES_ORDER Define a group of XML attributes to order with priority, comma-separated values. Repeat this option to add multiple groups. Example: --xml- attributes-order=t-if,t-else --xml-attributes-order=id,t-att-id --xml- attributes-order=class
+ --xml-attributes-order XML_ATTRIBUTES_ORDER Define a group of XML attributes to order with priority, comma-separated values. Repeat this option to add multiple groups. Example: --xml-attributes-order=t-if,t-else --xml- attributes-order=id,t-att-id --xml-attributes-order=class
 
 ```
 

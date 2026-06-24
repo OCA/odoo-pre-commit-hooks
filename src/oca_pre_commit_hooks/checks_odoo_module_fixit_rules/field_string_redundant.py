@@ -140,365 +140,281 @@ class FieldStringRedundant(CstLintRule):
 
     # --- Test Cases ---
     VALID = [
-        ValidTestCase(
-            """
+        ValidTestCase("""
             from odoo import fields, models
             class OrdinaryPythonClass:
                 name = fields.Char(string='Name')
-            """
-        ),
-        ValidTestCase(
-            """
+            """),
+        ValidTestCase("""
             from odoo import fields, models
             class MyModel(models.Model):
                 def my_method(self):
                     name = fields.Char(string='Name')
-            """
-        ),
-        ValidTestCase(
-            """
+            """),
+        ValidTestCase("""
             from odoo import fields, models
             class MyModel(models.Model):
                 name = fields.Char()
                 other = fields.Char(string='Different Label')
-            """
-        ),
+            """),
         # not odoo.models
-        ValidTestCase(
-            """
+        ValidTestCase("""
             from odoo import fields
             class MyModel(models.Model):
                 name = fields.Char('Name')
-            """
-        ),
+            """),
         # not odoo.fields
-        ValidTestCase(
-            """
+        ValidTestCase("""
             from odoo import models
             class MyModel(models.Model):
                 name = fields.Char('Name')
-            """
-        ),
+            """),
         # ignore related fields
-        ValidTestCase(
-            """
+        ValidTestCase("""
             from odoo import fields, models
             class MyModel(models.Model):
                 name33 = fields.Char('Name33', related="partner_id.name")
-            """
-        ),
+            """),
     ]
 
     INVALID = [
         # --- Default Position 0 Types (Char, Text, Boolean, Integer, etc.) ---
         # Char: Positional
         InvalidTestCase(
-            code=(
-                """
+            code=("""
             from odoo import fields, models
             class MyModel(models.Model):
                 name = fields.Char('Name')
-            """
-            ),
-            expected_replacement=(
-                """
+            """),
+            expected_replacement=("""
             from odoo import fields, models
             class MyModel(models.Model):
                 name = fields.Char()
-            """
-            ),
+            """),
         ),
         # Char: Keyword
         InvalidTestCase(
-            code=(
-                """
+            code=("""
             from odoo import fields, models
             class MyModel(models.Model):
                 name = fields.Char(string='Name', required=True)
-            """
-            ),
-            expected_replacement=(
-                """
+            """),
+            expected_replacement=("""
             from odoo import fields, models
             class MyModel(models.Model):
                 name = fields.Char(required=True)
-            """
-            ),
+            """),
         ),
         # Text
         InvalidTestCase(
-            code=(
-                """
+            code=("""
             from odoo import fields, models
             class MyModel(models.Model):
                 description = fields.Text(string='Description')
-            """
-            ),
-            expected_replacement=(
-                """
+            """),
+            expected_replacement=("""
             from odoo import fields, models
             class MyModel(models.Model):
                 description = fields.Text()
-            """
-            ),
+            """),
         ),
         # Boolean
         InvalidTestCase(
-            code=(
-                """
+            code=("""
             from odoo import fields, models
             class MyModel(models.Model):
                 active = fields.Boolean("Active", default=True)
-            """
-            ),
-            expected_replacement=(
-                """
+            """),
+            expected_replacement=("""
             from odoo import fields, models
             class MyModel(models.Model):
                 active = fields.Boolean(default=True)
-            """
-            ),
+            """),
         ),
         # Integer
         InvalidTestCase(
-            code=(
-                """
+            code=("""
             from odoo import fields, models
             class MyModel(models.Model):
                 age = fields.Integer(string="Age")
-            """
-            ),
-            expected_replacement=(
-                """
+            """),
+            expected_replacement=("""
             from odoo import fields, models
             class MyModel(models.Model):
                 age = fields.Integer()
-            """
-            ),
+            """),
         ),
         # Float
         InvalidTestCase(
-            code=(
-                """
+            code=("""
             from odoo import fields, models
             class MyModel(models.Model):
                 score = fields.Float('Score')
-            """
-            ),
-            expected_replacement=(
-                """
+            """),
+            expected_replacement=("""
             from odoo import fields, models
             class MyModel(models.Model):
                 score = fields.Float()
-            """
-            ),
+            """),
         ),
         # Html
         InvalidTestCase(
-            code=(
-                """
+            code=("""
             from odoo import fields, models
             class MyModel(models.Model):
                 body = fields.Html(string='Body')
-            """
-            ),
-            expected_replacement=(
-                """
+            """),
+            expected_replacement=("""
             from odoo import fields, models
             class MyModel(models.Model):
                 body = fields.Html()
-            """
-            ),
+            """),
         ),
         # Date / Datetime
         InvalidTestCase(
-            code=(
-                """
+            code=("""
             from odoo import fields, models
             class MyModel(models.Model):
                 date_order = fields.Date(string='Date Order')
                 create_date = fields.Datetime('Create Date')
-            """
-            ),
-            expected_replacement=(
-                """
+            """),
+            expected_replacement=("""
             from odoo import fields, models
             class MyModel(models.Model):
                 date_order = fields.Date()
                 create_date = fields.Datetime()
-            """
-            ),
+            """),
         ),
         # Monetary
         InvalidTestCase(
-            code=(
-                """
+            code=("""
             from odoo import fields, models
             class MyModel(models.Model):
                 amount = fields.Monetary(string="Amount")
-            """
-            ),
-            expected_replacement=(
-                """
+            """),
+            expected_replacement=("""
             from odoo import fields, models
             class MyModel(models.Model):
                 amount = fields.Monetary()
-            """
-            ),
+            """),
         ),
         # Binary
         InvalidTestCase(
-            code=(
-                """
+            code=("""
             from odoo import fields, models
             class MyModel(models.Model):
                 file_data = fields.Binary(string='File Data')
-            """
-            ),
-            expected_replacement=(
-                """
+            """),
+            expected_replacement=("""
             from odoo import fields, models
             class MyModel(models.Model):
                 file_data = fields.Binary()
-            """
-            ),
+            """),
         ),
         # --- Position 1 Types (Selection, Reference, Many2one, Many2many) ---
         # Selection: Positional (selection, string)
         InvalidTestCase(
-            code=(
-                """
+            code=("""
             from odoo import fields, models
             class MyModel(models.Model):
                 state = fields.Selection([('a', 'A')], 'State')
-            """
-            ),
-            expected_replacement=(
-                """
+            """),
+            expected_replacement=("""
             from odoo import fields, models
             class MyModel(models.Model):
                 state = fields.Selection([('a', 'A')], )
-            """
-            ),
+            """),
         ),
         # Selection: Keyword
         InvalidTestCase(
-            code=(
-                """
+            code=("""
             from odoo import fields, models
             class MyModel(models.Model):
                 type = fields.Selection(selection=[], string='Type')
-            """
-            ),
-            expected_replacement=(
-                """
+            """),
+            expected_replacement=("""
             from odoo import fields, models
             class MyModel(models.Model):
                 type = fields.Selection(selection=[], )
-            """
-            ),
+            """),
         ),
         # Reference: Positional
         InvalidTestCase(
-            code=(
-                """
+            code=("""
             from odoo import fields, models
             class MyModel(models.Model):
                 res_id = fields.Reference([], 'Res')
-            """
-            ),
-            expected_replacement=(
-                """
+            """),
+            expected_replacement=("""
             from odoo import fields, models
             class MyModel(models.Model):
                 res_id = fields.Reference([], )
-            """
-            ),
+            """),
         ),
         # Many2one: Positional
         InvalidTestCase(
-            code=(
-                """
+            code=("""
             from odoo import fields, models
             class MyModel(models.Model):
                 partner_id = fields.Many2one('res.partner', 'Partner')
-            """
-            ),
-            expected_replacement=(
-                """
+            """),
+            expected_replacement=("""
             from odoo import fields, models
             class MyModel(models.Model):
                 partner_id = fields.Many2one('res.partner', )
-            """
-            ),
+            """),
         ),
         # Many2one: Keyword
         InvalidTestCase(
-            code=(
-                """
+            code=("""
             from odoo import fields, models
             class MyModel(models.Model):
                 user_id = fields.Many2one('res.users', string='User')
-            """
-            ),
-            expected_replacement=(
-                """
+            """),
+            expected_replacement=("""
             from odoo import fields, models
             class MyModel(models.Model):
                 user_id = fields.Many2one('res.users', )
-            """
-            ),
+            """),
         ),
         # Many2many: Positional (comodel, string) -> A veces es pos 2 si lleva relation, pero lo común es 1
         InvalidTestCase(
-            code=(
-                """
+            code=("""
             from odoo import fields, models
             class MyModel(models.Model):
                 tag_ids = fields.Many2many('res.tag', 'Tag')
-            """
-            ),
-            expected_replacement=(
-                """
+            """),
+            expected_replacement=("""
             from odoo import fields, models
             class MyModel(models.Model):
                 tag_ids = fields.Many2many('res.tag', )
-            """
-            ),
+            """),
         ),
         # --- Position 2 Types (One2many) ---
         # One2many: Positional (comodel, inverse, string)
         InvalidTestCase(
-            code=(
-                """
+            code=("""
             from odoo import fields, models
             class MyModel(models.Model):
                 line_ids = fields.One2many('my.line', 'link_id', 'Line')
-            """
-            ),
-            expected_replacement=(
-                """
+            """),
+            expected_replacement=("""
             from odoo import fields, models
             class MyModel(models.Model):
                 line_ids = fields.One2many('my.line', 'link_id', )
-            """
-            ),
+            """),
         ),
         # One2many: Keyword
         InvalidTestCase(
-            code=(
-                """
+            code=("""
             from odoo import fields, models
             class MyModel(models.Model):
                 child_ids = fields.One2many('my.child', 'parent_id', string='Child')
-            """
-            ),
-            expected_replacement=(
-                """
+            """),
+            expected_replacement=("""
             from odoo import fields, models
             class MyModel(models.Model):
                 child_ids = fields.One2many('my.child', 'parent_id', )
-            """
-            ),
+            """),
         ),
     ]

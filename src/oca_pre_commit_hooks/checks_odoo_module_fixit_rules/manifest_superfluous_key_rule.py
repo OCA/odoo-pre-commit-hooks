@@ -65,24 +65,20 @@ class ManifestSuperfluousKeyRule(common.Common):
     ]
 
     VALID = [
-        ValidTestCase(
-            code="""
+        ValidTestCase(code="""
     {
         'name': 'My Module',
         'depends': ['base'],
         'installable': False,
         'active': False,
     }
-    """
-        ),
-        ValidTestCase(
-            code="""
+    """),
+        ValidTestCase(code="""
     {
         'name': 'My Module',
         'depends': ['base'],
     }
-    """
-        ),
+    """),
     ]
 
     manifest_keys_values_true = ["active", "installable"]

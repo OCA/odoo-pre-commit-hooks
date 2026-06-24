@@ -78,7 +78,10 @@ class GlobalParser(argparse.ArgumentParser):
             help=f"Path to a configuration file (default: {CONFIG_NAME})",
         )
         self.add_argument(
-            "--list-msgs", default=False, action="store_true", help="List all currently enabled messages."
+            "--list-msgs",
+            default=False,
+            action="store_true",
+            help="List all currently enabled messages.",
         )
         self.add_argument(
             "--fix",
@@ -138,5 +141,5 @@ class GlobalParser(argparse.ArgumentParser):
             res.xml_attributes_order = DEFAULT_XML_ATTRIBUTES_ORDER
 
         # Not expected/used by any other program component as of now.
-        delattr(res, "config")
+        res.__dict__.pop("config", None)
         return res

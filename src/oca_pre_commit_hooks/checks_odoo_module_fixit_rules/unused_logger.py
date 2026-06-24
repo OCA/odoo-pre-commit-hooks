@@ -12,17 +12,14 @@ class NoUnusedLoggerInModels(common.Common):
 
     VALID = [
         # Logger not defined at all
-        ValidTestCase(
-            """
+        ValidTestCase("""
             from odoo import models
 
             class Test(models.Model):
                 _name = "x.test"
-            """
-        ),
+            """),
         # Logger defined and actually used
-        ValidTestCase(
-            """
+        ValidTestCase("""
             import logging
             from odoo import models
 
@@ -33,30 +30,25 @@ class NoUnusedLoggerInModels(common.Common):
 
                 def foo(self):
                     _logger.info("hello")
-            """
-        ),
+            """),
         # Logger defined in non-models context (rule will be disabled by path)
-        ValidTestCase(
-            """
+        ValidTestCase("""
             import logging
 
             _logger = logging.getLogger(__name__)
 
             def helper():
                 _logger.warning("ok")
-            """
-        ),
+            """),
         # Logger different to the expected it could be to import from other places
-        ValidTestCase(
-            """
+        ValidTestCase("""
             import logging
 
             _logger = logging.getLogger('other name')
 
             class Test(models.Model):
                 _name = "x.test"
-            """
-        ),
+            """),
     ]
 
     INVALID = [

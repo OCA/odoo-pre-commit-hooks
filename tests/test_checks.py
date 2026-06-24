@@ -4,9 +4,8 @@ import os
 import re
 import subprocess
 import sys
-from pathlib import Path
-
 import tempfile
+from pathlib import Path
 
 import pytest
 
@@ -62,7 +61,6 @@ EXPECTED_ERRORS = {
 
 
 class TestChecks(common.ChecksCommon):
-
     def setup_method(self, method):
         super().setup_method(method)
         self.file_paths = glob.glob(os.path.join(self.test_repo_path, "*", "__openerp__.py")) + glob.glob(
@@ -88,7 +86,10 @@ class TestChecks(common.ChecksCommon):
     def test_checks_enable_one_by_one_with_random_cli_env_conf(self, check2enable):
         self._test_checks_enable_one_by_one_with_random_cli_env_conf(check2enable)
 
-    @pytest.mark.skipif(not os.getenv("BUILD_README"), reason="BUILD_README environment variable not enabled")
+    @pytest.mark.skipif(
+        not os.getenv("BUILD_README"),
+        reason="BUILD_README environment variable not enabled",
+    )
     def test_build_docstring(self):
         # Run "tox -e update-readme"
         # Why this here?
@@ -152,7 +153,10 @@ class TestChecks(common.ChecksCommon):
                 )
         check_example_content = f"# Examples\n{check_example_content}"
         new_readme = self.re_replace(
-            "[//]: # (start-example)", "[//]: # (end-example)", check_example_content, new_readme
+            "[//]: # (start-example)",
+            "[//]: # (end-example)",
+            check_example_content,
+            new_readme,
         )
         with open(readme_path, "w", encoding="UTF-8") as f_readme:
             f_readme.write(new_readme)
@@ -217,22 +221,16 @@ class TestChecks(common.ChecksCommon):
         template_xml = os.path.join(self.test_repo_path, "test_module", "website_templates.xml")
         with open(template_xml, "rb") as f_template_xml:
             content = f_template_xml.read()
-        assert (
-            b'''<template
+        assert b'''<template
         name="test_module_widget"
         inherit_id="web.assets_backend"
-        id="assets_backend"'''
-            in content
-        ), "The XML wrong xmlid order was previously fixed"
+        id="assets_backend"''' in content, "The XML wrong xmlid order was previously fixed"
 
-        assert (
-            b"""<template
+        assert b"""<template
         name='test_module_widget_2'
         inherit_id="web.assets_backend"
         id='assets_backend_2'
-    />"""
-            in content
-        ), "The XML wrong xmlid order was previously fixed"
+    />""" in content, "The XML wrong xmlid order was previously fixed"
 
         template1_xml = os.path.join(self.test_repo_path, "broken_module", "template1.xml")
         with open(template1_xml, "rb") as f_template1:
@@ -264,8 +262,7 @@ class TestChecks(common.ChecksCommon):
         with open(py_comment, "rb") as f:
             content = f.read()
 
-        assert (
-            b"""
+        assert b"""
 # comment normal
 # pylint: comment
 # Copyright 2016 Vauxoo
@@ -274,14 +271,17 @@ class TestChecks(common.ChecksCommon):
 # flake8: comment
 # comment normal
 
-"""
-            in content
-        ), "The py Copyright was previously fixed"
+""" in content, "The py Copyright was previously fixed"
 
         escaped_double_quotes = os.path.join(self.test_repo_path, "test_module", "model_view.xml")
         with open(escaped_double_quotes, "rb") as f:
             content = f.read()
-        t_out = os.path.join(self.test_repo_path, "odoo18_module", "views", "deprecated_qweb_directives15.xml")
+        t_out = os.path.join(
+            self.test_repo_path,
+            "odoo18_module",
+            "views",
+            "deprecated_qweb_directives15.xml",
+        )
 
         with open(t_out, "rb") as f:
             content = f.read()
@@ -338,21 +338,15 @@ class TestChecks(common.ChecksCommon):
 
         with open(template_xml, "rb") as f_template_xml:
             content = f_template_xml.read()
-        assert (
-            b'''<template
+        assert b'''<template
         id="assets_backend"
         name="test_module_widget"
-        inherit_id="web.assets_backend"'''
-            in content
-        ), "The XML xmlid order was not fixed"
-        assert (
-            b"""<template
+        inherit_id="web.assets_backend"''' in content, "The XML xmlid order was not fixed"
+        assert b"""<template
         id='assets_backend_2'
         name='test_module_widget_2'
         inherit_id="web.assets_backend"
-    />"""
-            in content
-        ), "The XML xmlid order was not fixed"
+    />""" in content, "The XML xmlid order was not fixed"
 
         with open(template1_xml, "rb") as f_template1:
             content_t1 = f_template1.read()
@@ -385,14 +379,11 @@ class TestChecks(common.ChecksCommon):
 
         with open(py_comment, "rb") as f:
             content = f.read()
-        assert (
-            b"""
+        assert b"""
 # pylint: comment
 # flake8: comment
 
-"""
-            in content
-        ), "The py Copyright was not fixed"
+""" in content, "The py Copyright was not fixed"
 
         with open(escaped_double_quotes, "rb") as f:
             content = f.read()
@@ -406,7 +397,10 @@ class TestChecks(common.ChecksCommon):
     def test_xml_attributes_order_custom(self):
         custom_order = oca_pre_commit_hooks.global_parser.parse_xml_attributes_order("[class], [id], [t-if]")
         all_check_errors = self.checks_run(
-            self.file_paths, no_exit=True, no_verbose=True, xml_attributes_order=custom_order
+            self.file_paths,
+            no_exit=True,
+            no_verbose=True,
+            xml_attributes_order=custom_order,
         )
         real_errors = self.get_grouped_errors(all_check_errors)
         assert "xml-tag-position" in real_errors
@@ -418,7 +412,7 @@ class TestChecks(common.ChecksCommon):
             with tempfile.TemporaryDirectory() as tmp_dir:
                 config_path = os.path.join(tmp_dir, oca_pre_commit_hooks.global_parser.CONFIG_NAME)
                 with open(config_path, "w", encoding="UTF-8") as f:
-                    f.write("[MESSAGES_CONTROL]\n" "xml_attributes_order = [class], [id], [t-if]\n")
+                    f.write("[MESSAGES_CONTROL]\nxml_attributes_order = [class], [id], [t-if]\n")
                 mp.setattr(sys, "argv", ["", f"--config={config_path}"])
                 parser = oca_pre_commit_hooks.global_parser.GlobalParser()
                 args = parser.parse_args()
