@@ -113,9 +113,14 @@ class TestChecks(common.ChecksCommon):
         )
 
         # Find a better way to get the --help string
-        help_content = subprocess.check_output(["oca-checks-odoo-module", "--help"], stderr=subprocess.STDOUT).decode(
-            sys.stdout.encoding
-        )
+        # COLUMNS is fixed to avoid argparse wrapping at different widths depending on the terminal,
+        # which would produce a non-deterministic README (words split mid-token across runs).
+        help_env = {**os.environ, "COLUMNS": "1200"}
+        help_content = subprocess.check_output(
+            ["oca-checks-odoo-module", "--help"],
+            stderr=subprocess.STDOUT,
+            env=help_env,
+        ).decode(sys.stdout.encoding)
         help_content = f"# Help\n```bash\n{help_content}\n```"
         # remove extra spaces
         help_content = re.sub(r"\n(      )+", " ", help_content)

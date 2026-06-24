@@ -79,15 +79,36 @@ class TestChecksPO(common.ChecksCommon):
             ugly_po_cp = os.path.join(tmpdir, "ugly.po")
             copyfile(ugly_po, ugly_po_cp)
 
-            self.checks_run([ugly_po_cp], enable={"po-pretty-format"}, no_exit=True, no_verbose=False, autofix=False)
-            with open(ugly_po_cp, encoding="utf-8") as ugly_fd, open(autofix_po, encoding="utf-8") as pretty_fd:
+            self.checks_run(
+                [ugly_po_cp],
+                enable={"po-pretty-format"},
+                no_exit=True,
+                no_verbose=False,
+                autofix=False,
+            )
+            with (
+                open(ugly_po_cp, encoding="utf-8") as ugly_fd,
+                open(autofix_po, encoding="utf-8") as pretty_fd,
+            ):
                 assert ugly_fd.read() != pretty_fd.read()
 
-            self.checks_run([ugly_po_cp], enable={"po-pretty-format"}, no_exit=True, no_verbose=False, autofix=True)
-            with open(ugly_po_cp, encoding="utf-8") as ugly_fd, open(autofix_po, encoding="utf-8") as pretty_fd:
+            self.checks_run(
+                [ugly_po_cp],
+                enable={"po-pretty-format"},
+                no_exit=True,
+                no_verbose=False,
+                autofix=True,
+            )
+            with (
+                open(ugly_po_cp, encoding="utf-8") as ugly_fd,
+                open(autofix_po, encoding="utf-8") as pretty_fd,
+            ):
                 assert ugly_fd.read() == pretty_fd.read()
 
-    @pytest.mark.skipif(not os.getenv("BUILD_README"), reason="BUILD_README environment variable not enabled")
+    @pytest.mark.skipif(
+        not os.getenv("BUILD_README"),
+        reason="BUILD_README environment variable not enabled",
+    )
     def test_build_docstring(self):
         checks_found, checks_docstring = oca_pre_commit_hooks.utils.get_checks_docstring(
             [oca_pre_commit_hooks.checks_odoo_module_po.ChecksOdooModulePO]
@@ -99,13 +120,21 @@ class TestChecksPO(common.ChecksCommon):
 
         checks_docstring = f"# Checks PO\n{checks_docstring}"
         new_readme = self.re_replace(
-            "[//]: # (start-checks-po)", "[//]: # (end-checks-po)", checks_docstring, readme_content
+            "[//]: # (start-checks-po)",
+            "[//]: # (end-checks-po)",
+            checks_docstring,
+            readme_content,
         )
 
         # Find a better way to get the --help string
-        help_content = subprocess.check_output(["oca-checks-po", "--help"], stderr=subprocess.STDOUT).decode(
-            sys.stdout.encoding
-        )
+        # COLUMNS is fixed to avoid argparse wrapping at different widths depending on the terminal,
+        # which would produce a non-deterministic README (words split mid-token across runs).
+        help_env = {**os.environ, "COLUMNS": "1200"}
+        help_content = subprocess.check_output(
+            ["oca-checks-po", "--help"],
+            stderr=subprocess.STDOUT,
+            env=help_env,
+        ).decode(sys.stdout.encoding)
         help_content = f"# Help PO\n```bash\n{help_content}\n```"
         # remove extra spaces
         help_content = re.sub(r"\n(      )+", " ", help_content)
@@ -128,7 +157,10 @@ class TestChecksPO(common.ChecksCommon):
                 check_example_content += f"\n    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v{version}/{msg}"
         check_example_content = f"# Examples PO\n{check_example_content}"
         new_readme = self.re_replace(
-            "[//]: # (start-example-po)", "[//]: # (end-example-po)", check_example_content, new_readme
+            "[//]: # (start-example-po)",
+            "[//]: # (end-example-po)",
+            check_example_content,
+            new_readme,
         )
         with open(readme_path, "w", encoding="UTF-8") as f_readme:
             f_readme.write(new_readme)
