@@ -49,6 +49,7 @@ EXPECTED_ERRORS = {
     "xml-deprecated-openerp-node": 4,
     "xml-deprecated-qweb-directive-15": 4,
     "xml-deprecated-qweb-directive": 2,
+    "xml-deprecated-res-groups-category-id": 3,
     "xml-deprecated-tree-attribute": 3,
     "xml-duplicate-fields": 3,
     "xml-duplicate-record-id": 2,
@@ -302,6 +303,15 @@ class TestChecks(common.ChecksCommon):
         assert content.count(b"t-esc") > 1, "The deprecated t-esc was previously fixed"
         assert content.count(b"t-raw") > 1, "The deprecated t-raw was previously fixed"
 
+        res_groups_19 = os.path.join(self.test_repo_path, "odoo19_module", "security", "res_groups.xml")
+        with open(res_groups_19, "rb") as f:
+            content = f.read()
+        assert content.count(b'name="category_id"') == 4, "The deprecated category_id was previously fixed"
+
+        res_groups_18 = os.path.join(self.test_repo_path, "odoo18_module", "views", "res_groups_category.xml")
+        with open(res_groups_18, "rb") as f:
+            content_18_before = f.read()
+
         self.checks_run(self.file_paths, autofix=True, no_exit=True, no_verbose=False)
 
         # After autofix
@@ -407,6 +417,16 @@ class TestChecks(common.ChecksCommon):
         # comments contain 1 valid deprecated
         assert content.count(b"t-esc") == 1, "The deprecated t-esc was not fixed"
         assert content.count(b"t-raw") == 1, "The deprecated t-esc was not fixed"
+
+        with open(res_groups_19, "rb") as f:
+            content = f.read()
+        # Only the "category_id" of the "res.partner" record is kept
+        assert content.count(b'name="category_id"') == 1, "The deprecated category_id was not fixed"
+        assert b'<field name="category_id" eval="[(6, 0, [])]" />' in content, "A valid category_id was removed"
+
+        with open(res_groups_18, "rb") as f:
+            content = f.read()
+        assert content == content_18_before, "The category_id was fixed for a version lower than 19.0"
 
     def test_xml_attributes_order_custom(self):
         custom_order = oca_pre_commit_hooks.global_parser.parse_xml_attributes_order("[class], [id], [t-if]")

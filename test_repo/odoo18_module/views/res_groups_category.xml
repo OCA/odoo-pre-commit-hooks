@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <!-- "category_id" is still valid before Odoo 19, it must not be reported nor autofixed -->
+    <record id="group_odoo18" model="res.groups">
+        <field name="name">Group Odoo 18</field>
+        <field name="category_id" ref="base.module_category_hidden" />
+    </record>
+</odoo>

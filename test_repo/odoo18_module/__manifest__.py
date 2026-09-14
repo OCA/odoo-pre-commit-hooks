@@ -9,5 +9,6 @@
     'data': [
         'views/deprecated_chatter.xml',
         'views/deprecated_qweb_directives15.xml',
+        'views/res_groups_category.xml',
     ],
 }
