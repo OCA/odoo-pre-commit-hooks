@@ -171,6 +171,18 @@ for use of deprecated QWeb directives t-*-options
 t-esc and t-raw directives are deprecated in Odoo v15.0, use t-out instead.
 For more details https://github.com/odoo/odoo/commit/01875541b1a8131cb and https://github.com/odoo/odoo/pull/70004
 
+* Check xml-deprecated-res-groups-category-id
+
+Odoo 19 removed the field `category_id` of `res.groups`. It was replaced by `privilege_id`,
+a many2one to the new model `res.groups.privilege`, so a record still writing `category_id`
+breaks the installation with
+`ValueError: Invalid field 'category_id' on model 'res.groups'`.
+The autofix removes the field, the very change Odoo applied to its own groups whose category
+was only a technical one. Set `privilege_id` by hand instead when the group is meant to be
+displayed under a privilege in the user form.
+For more details https://github.com/odoo/odoo/commit/33637d137ed52f5faabaafd5c208e187042be8eb
+and https://github.com/odoo/odoo/pull/199988
+
 * Check xml-header-missing
 Generated when the XML file is missing the XML declaration header '<?xml version="1.0" encoding="UTF-8" ?>'
 
@@ -458,6 +470,12 @@ options:
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.26/test_repo/odoo18_module/views/deprecated_qweb_directives15.xml#L6 Deprecated QWeb directive `t-esc`. Use `t-out` instead
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.26/test_repo/odoo18_module/views/deprecated_qweb_directives15.xml#L7 Deprecated QWeb directive `t-raw`. Use `t-out` instead
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.26/test_repo/odoo18_module/views/deprecated_qweb_directives15.xml#L15 Deprecated QWeb directive `t-esc`. Use `t-out` instead
+
+ * xml-deprecated-res-groups-category-id
+
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.26/test_repo/odoo19_module/security/res_groups.xml#L6 Deprecated `<field name="category_id"` of `res.groups` removed in Odoo 19.0 Use `<field name="privilege_id" ref="..."` with a `res.groups.privilege` record instead
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.26/test_repo/odoo19_module/security/res_groups.xml#L12 Deprecated `<field name="category_id"` of `res.groups` removed in Odoo 19.0 Use `<field name="privilege_id" ref="..."` with a `res.groups.privilege` record instead
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.26/test_repo/odoo19_module/security/res_groups.xml#L15 Deprecated `<field name="category_id"` of `res.groups` removed in Odoo 19.0 Use `<field name="privilege_id" ref="..."` with a `res.groups.privilege` record instead
 
  * xml-deprecated-tree-attribute
 

@@ -93,3 +93,43 @@ def test_xml_record_id_autofixes_preserve_menuitem_layout():
         xml_content = (module_dst / "model_view_odoo2.xml").read_text()
         assert "<menuitem id='menu_root' name=\"Root\" />" in xml_content
         assert '<menuitem id=\'menu_root2\'\n        name="Root 2"\n        parent="menu_root"' in xml_content
+
+
+def test_xml_deprecated_res_groups_category_id_autofix_preserves_format():
+    with temporary_module_copy("test_repo/odoo19_module") as module_dst:
+        checks_odoo_module.run(
+            [str(module_dst / "__manifest__.py")],
+            enable={"xml-deprecated-res-groups-category-id"},
+            no_exit=True,
+            autofix=True,
+        )
+
+        xml_content = (module_dst / "security" / "res_groups.xml").read_text()
+        # Only the "category_id" of the "res.partner" record survives
+        assert xml_content.count('name="category_id"') == 1
+        assert '<field name="category_id" eval="[(6, 0, [])]" />' in xml_content
+        assert (
+            '<record id="group_see_all_approval_requests" model="res.groups">\n'
+            '        <field name="name">See All Approval Requests</field>\n'
+            "    </record>" in xml_content
+        )
+        assert (
+            '<record id="group_multiline" model="res.groups">\n'
+            '        <field name="name">Multiline Category</field>\n'
+            "    </record>" in xml_content
+        )
+        assert '<record id="group_closing_tag" model="res.groups"></record>' in xml_content
+
+
+def test_xml_deprecated_res_groups_category_id_not_reported_before_19():
+    with temporary_module_copy("test_repo/odoo18_module") as module_dst:
+        errors = checks_odoo_module.run(
+            [str(module_dst / "__manifest__.py")],
+            enable={"xml-deprecated-res-groups-category-id"},
+            no_exit=True,
+            autofix=True,
+        )
+
+        assert not errors
+        xml_content = (module_dst / "views" / "res_groups_category.xml").read_text()
+        assert '<field name="category_id" ref="base.module_category_hidden" />' in xml_content

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <!-- Deprecated "category_id" of "res.groups" autofixed removing the whole field -->
+    <record id="group_see_all_approval_requests" model="res.groups">
+        <field name="name">See All Approval Requests</field>
+        <field name="category_id" ref="base.module_category_hidden" />
+    </record>
+    <record id="group_multiline" model="res.groups">
+        <field
+            name="category_id"
+            ref="base.module_category_hidden"
+        />
+        <field name="name">Multiline Category</field>
+    </record>
+    <record id="group_closing_tag" model="res.groups"><field name="category_id" ref="base.module_category_hidden"></field></record>
+    <!-- "category_id" of another model is valid, it must be kept -->
+    <record id="partner_category" model="res.partner">
+        <field name="name">Partner With Category</field>
+        <field name="category_id" eval="[(6, 0, [])]" />
+    </record>
+</odoo>

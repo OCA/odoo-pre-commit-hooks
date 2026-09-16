@@ -14,6 +14,13 @@ class XMLAttributeSpan:
 
 
 @dataclass(frozen=True)
+class XMLCloseTag:
+    tag: str
+    start: int
+    end: int
+
+
+@dataclass(frozen=True)
 class XMLStartTag:
     tag: str
     start: int
@@ -36,7 +43,7 @@ class XMLStartTagLocator:
         self.filename = filename
         with open(filename, "rb") as f_content:
             self.content = f_content.read()
-        self.tags = self._scan_start_tags(self.content)
+        self.tags, self.close_tags = self._scan_start_tags(self.content)
         self._element_tags = {}
         self._map_tree(tree)
 
@@ -50,6 +57,7 @@ class XMLStartTagLocator:
     @classmethod
     def _scan_start_tags(cls, content):  # noqa: C901 pylint: disable=too-complex
         tags = []
+        close_tags = []
         i = 0
         line = 1
         content_len = len(content)
@@ -81,6 +89,10 @@ class XMLStartTagLocator:
                 continue
             if content.startswith(b"</", i):
                 new_i = cls._consume_until(content, i + 2, b">")
+                name_end = i + 2
+                while name_end < new_i and content[name_end : name_end + 1] not in b" \t\r\n>":
+                    name_end += 1
+                close_tags.append(XMLCloseTag(content[i + 2 : name_end].decode("utf-8", errors="replace"), i, new_i))
                 line += content[i:new_i].count(b"\n")
                 i = new_i
                 continue
@@ -149,7 +161,7 @@ class XMLStartTagLocator:
 
             tags.append(XMLStartTag(tag_name, tag_start, tag_name_end, i, tag_line, tuple(attrs)))
 
-        return tags
+        return tags, close_tags
 
     def _map_tree(self, tree):
         tag_iter = iter(self.tags)
@@ -169,6 +181,67 @@ class XMLStartTagLocator:
         if not tag_info:
             return None
         return tag_info.get_attr(attr_name)
+
+    def _is_self_closed(self, tag_info):
+        return self.content[tag_info.end - 2 : tag_info.end] == b"/>"
+
+    def element_span(self, element):
+        """Return the (start, end) byte span of the whole element, closing tag included.
+
+        `None` is returned when the start tag was not mapped or its closing tag is missing.
+        """
+        tag_info = self.get_tag(element)
+        if not tag_info:
+            return None
+        if self._is_self_closed(tag_info):
+            return tag_info.start, tag_info.end
+
+        # Nested elements sharing the tag name open the depth again, so the first closing tag
+        # is not necessarily the one of this element, e.g. "<field><field/></field>"
+        events = [
+            (tag.start, 1, tag.end)
+            for tag in self.tags
+            if tag.tag == tag_info.tag and tag.start >= tag_info.end and not self._is_self_closed(tag)
+        ]
+        events += [(tag.start, -1, tag.end) for tag in self.close_tags if tag.tag == tag_info.tag]
+        depth = 1
+        for start, delta, end in sorted(events):
+            if start < tag_info.end:
+                continue
+            depth += delta
+            if not depth:
+                return tag_info.start, end
+        return None
+
+    def _widen_span_to_whole_lines(self, start, end):
+        """Widen the span to the whole lines when the element is the only content of them.
+
+        It avoids leaving a blank indented line behind after removing the element.
+        """
+        line_start = self.content.rfind(b"\n", 0, start) + 1
+        if self.content[line_start:start].strip():
+            return start, end
+        line_end = self.content.find(b"\n", end)
+        line_end = len(self.content) if line_end == -1 else line_end + 1
+        if self.content[end:line_end].strip():
+            return start, end
+        return line_start, line_end
+
+    def remove_elements(self, elements):
+        """Return the content of the file without the given elements.
+
+        The elements not mapped to a start tag are skipped so the rest is still removed.
+        """
+        spans = []
+        for element in elements:
+            span = self.element_span(element)
+            if span:
+                spans.append(self._widen_span_to_whole_lines(*span))
+        content = self.content
+        # Removing from the end keeps the offsets of the previous spans valid
+        for start, end in sorted(set(spans), reverse=True):
+            content = content[:start] + content[end:]
+        return content
 
     def rewrite_start_tag(
         self, content, element, attr_name_replacements=None, attr_value_replacements=None, first_attr=None

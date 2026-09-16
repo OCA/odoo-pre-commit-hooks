@@ -49,6 +49,8 @@ class ChecksOdooModuleXML(BaseChecker):
     xpath_openerp = etree.XPath("/openerp")
     xpath_xpath = etree.XPath("//xpath")
     xpath_oe_chatter = etree.XPath("//div[hasclass('oe_chatter')]")
+    # No `/openerp` variant: that root node predates Odoo 9 and the check only runs from 19.0 on
+    xpath_res_groups_category = etree.XPath("/odoo//record[@model='res.groups']/field[@name='category_id']")
 
     tree_deprecate_attrs = {"string", "colors", "fonts"}
     xpath_tree_deprecated = etree.XPath(f".//tree[{'|'.join(f'@{a}' for a in tree_deprecate_attrs)}]")
@@ -768,6 +770,44 @@ class ChecksOdooModuleXML(BaseChecker):
                     filepath=manifest_data["filename_short"],
                     line=xpath_node.sourceline,
                 )
+
+    @utils.only_required_for_checks("xml-deprecated-res-groups-category-id")
+    def check_xml_deprecated_res_groups_category_id(self):
+        """* Check xml-deprecated-res-groups-category-id
+
+        Odoo 19 removed the field `category_id` of `res.groups`. It was replaced by `privilege_id`,
+        a many2one to the new model `res.groups.privilege`, so a record still writing `category_id`
+        breaks the installation with
+        `ValueError: Invalid field 'category_id' on model 'res.groups'`.
+        The autofix removes the field, the very change Odoo applied to its own groups whose category
+        was only a technical one. Set `privilege_id` by hand instead when the group is meant to be
+        displayed under a privilege in the user form.
+        For more details https://github.com/odoo/odoo/commit/33637d137ed52f5faabaafd5c208e187042be8eb
+        and https://github.com/odoo/odoo/pull/199988
+        """
+        if not self.module_version or self.module_version < Version("19"):
+            return
+
+        for manifest_data in self.manifest_datas:
+            if not self.is_message_enabled("xml-deprecated-res-groups-category-id", manifest_data["disabled_checks"]):
+                continue
+            deprecated_fields = []
+            for field_node in self.xpath_res_groups_category(manifest_data["node"]):
+                self.register_error(
+                    code="xml-deprecated-res-groups-category-id",
+                    message='Deprecated `<field name="category_id"` of `res.groups` removed in Odoo 19.0',
+                    info='Use `<field name="privilege_id" ref="..."` with a `res.groups.privilege` record instead',
+                    filepath=manifest_data["filename_short"],
+                    line=field_node.sourceline,
+                )
+                deprecated_fields.append(field_node)
+            if not self.autofix or not deprecated_fields:
+                continue
+            locator = self._get_tag_locator(manifest_data)
+            content = locator.remove_elements(deprecated_fields)
+            if content != locator.content:
+                utils.perform_fix(manifest_data["filename"], content)
+                self.update_node(manifest_data)  # update sourceline after removing lines
 
     @utils.only_required_for_checks("xml-deprecated-oe-chatter")
     def check_xml_deprecated_oe_chatter(self):
