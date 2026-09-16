@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <!-- A noupdate record is only skipped when it already exists, so the deprecated field
+         still breaks a fresh install. It must be reported and autofixed like any other. -->
+    <data noupdate="1">
+        <record id="group_noupdate_data" model="res.groups">
+            <field name="name">Group In Noupdate Data</field>
+            <field name="category_id" ref="base.module_category_hidden" />
+        </record>
+    </data>
+    <record id="group_outside_data" model="res.groups">
+        <field name="name">Group Outside Data</field>
+    </record>
+</odoo>

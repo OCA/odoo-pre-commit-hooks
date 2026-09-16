@@ -49,7 +49,7 @@ EXPECTED_ERRORS = {
     "xml-deprecated-openerp-node": 4,
     "xml-deprecated-qweb-directive-15": 4,
     "xml-deprecated-qweb-directive": 2,
-    "xml-deprecated-res-groups-category-id": 3,
+    "xml-deprecated-res-groups-category-id": 4,
     "xml-deprecated-tree-attribute": 3,
     "xml-duplicate-fields": 3,
     "xml-duplicate-record-id": 2,
@@ -312,6 +312,11 @@ class TestChecks(common.ChecksCommon):
         with open(res_groups_18, "rb") as f:
             content_18_before = f.read()
 
+        res_groups_noupdate = os.path.join(self.test_repo_path, "odoo19_module", "security", "res_groups_noupdate.xml")
+        with open(res_groups_noupdate, "rb") as f:
+            content = f.read()
+        assert b'name="category_id"' in content, "The deprecated category_id was previously fixed"
+
         self.checks_run(self.file_paths, autofix=True, no_exit=True, no_verbose=False)
 
         # After autofix
@@ -427,6 +432,12 @@ class TestChecks(common.ChecksCommon):
         with open(res_groups_18, "rb") as f:
             content = f.read()
         assert content == content_18_before, "The category_id was fixed for a version lower than 19.0"
+
+        with open(res_groups_noupdate, "rb") as f:
+            content = f.read()
+        # A record inside `<data noupdate="1">` is reached and fixed like any other one
+        assert b'name="category_id"' not in content, "The deprecated category_id was not fixed under noupdate"
+        assert b'<data noupdate="1">' in content, "The noupdate data node was altered"
 
     def test_xml_attributes_order_custom(self):
         custom_order = oca_pre_commit_hooks.global_parser.parse_xml_attributes_order("[class], [id], [t-if]")

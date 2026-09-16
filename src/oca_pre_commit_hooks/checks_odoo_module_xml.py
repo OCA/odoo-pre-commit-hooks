@@ -49,10 +49,8 @@ class ChecksOdooModuleXML(BaseChecker):
     xpath_openerp = etree.XPath("/openerp")
     xpath_xpath = etree.XPath("//xpath")
     xpath_oe_chatter = etree.XPath("//div[hasclass('oe_chatter')]")
-    xpath_res_groups_category = etree.XPath(
-        "/odoo//record[@model='res.groups']/field[@name='category_id'] | "
-        "/openerp//record[@model='res.groups']/field[@name='category_id']"
-    )
+    # No `/openerp` variant: that root node predates Odoo 9 and the check only runs from 19.0 on
+    xpath_res_groups_category = etree.XPath("/odoo//record[@model='res.groups']/field[@name='category_id']")
 
     tree_deprecate_attrs = {"string", "colors", "fonts"}
     xpath_tree_deprecated = etree.XPath(f".//tree[{'|'.join(f'@{a}' for a in tree_deprecate_attrs)}]")
