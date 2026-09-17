@@ -26,6 +26,7 @@
         'template1_disable.xml',
         'ir.model.access.csv',
         'xml_wo_header.xml',
+        'xml_class_overridden.xml',
     ],
     'demo': ['demo/duplicated_id_demo.xml', 'file_no_exist.xml'],
     'test': ['file_no_exist.yml'],

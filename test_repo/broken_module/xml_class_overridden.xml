@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <template id="class_overridden_by_attf">
+        <div class="page-item" t-attf-class="{{'active' if page_num == current_page else ''}}"/>
+    </template>
+
+    <template id="class_overridden_by_att">
+        <span class="badge-blue" t-att-class="'d-none' if hidden else ''"/>
+    </template>
+
+    <template id="class_overridden_partially" inherit_id="module.template">
+        <xpath expr="//ul" position="inside">
+            <li class="nav-item fw-bold" t-attf-class="nav-item #{'active' if current else ''}"/>
+        </xpath>
+    </template>
+
+    <template id="class_repeated_by_dynamic_is_not_reported">
+        <div class="nav-item" t-attf-class="nav-item #{'active' if current else ''}"/>
+        <div class="o_footer_content" t-attf-class="{{'d-flex' if empty else 'row'}} o_footer_content"/>
+    </template>
+
+    <template id="class_alone_is_fine">
+        <div class="only-static"/>
+        <div t-attf-class="only-dynamic #{extra}"/>
+        <div t-att-class="'only-dynamic'"/>
+    </template>
+</odoo>

@@ -152,6 +152,22 @@ duplicate CSV "id" AKA xmlid but for CSV files
 * Check csv-syntax-error
 Check syntax error for CSV files declared in the manifest
 
+* Check xml-class-overridden-by-dynamic
+
+A server-rendered QWeb element that carries `class` beside `t-att-class` or
+`t-attf-class` keeps only the dynamic one. QWeb compiles both into a single
+`attrs` dictionary, the static attributes first and the dynamic ones after, so the
+dynamic value replaces the whole `class` key:
+https://github.com/odoo/odoo/blob/c3376d7854da41bcf4adae712dbc0c4bb36d8a8d/odoo/addons/base/models/ir_qweb.py#L1894-L1966
+Nothing reports it. The view still combines, the page still answers 200 and the
+element still reaches the DOM, only without the classes that were meant to style
+it, so it is found as a layout that silently stopped applying.
+Only the classes the dynamic value does not spell out are reported: a class
+written in both places still renders, and flagging it would report working code.
+Templates declared under `assets` or `qweb` are skipped. Owl compiles those in the
+browser and its `setClass` calls `classList.add`, so there the static and the
+dynamic classes are combined instead of one replacing the other.
+
 * Check xml-deprecated-data-node
 Deprecated <data> node inside <odoo> xml node
 
@@ -403,8 +419,8 @@ options:
 
  * manifest-superfluous-key
 
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.27/test_repo/broken_module/__openerp__.py#L32 Delete empty values. You can disable this check by adding the following comment to the affected line or just above it `# lint-ignore=manifest-superfluous-key` or `# lint-ignore`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.27/test_repo/broken_module/__openerp__.py#L34 Delete empty values. You can disable this check by adding the following comment to the affected line or just above it `# lint-ignore=manifest-superfluous-key` or `# lint-ignore`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.27/test_repo/broken_module/__openerp__.py#L33 Delete empty values. You can disable this check by adding the following comment to the affected line or just above it `# lint-ignore=manifest-superfluous-key` or `# lint-ignore`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.27/test_repo/broken_module/__openerp__.py#L35 Delete empty values. You can disable this check by adding the following comment to the affected line or just above it `# lint-ignore=manifest-superfluous-key` or `# lint-ignore`
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.27/test_repo/woversion_module/__manifest__.py#L8 Delete empty values. You can disable this check by adding the following comment to the affected line or just above it `# lint-ignore=manifest-superfluous-key` or `# lint-ignore`
 
  * manifest-syntax-error
@@ -433,6 +449,12 @@ options:
  * weblate-component-too-long
 
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.27/test_repo/syntax_err_module/__manifest__.py#L1 Repo Name + Odoo version + Module name is too long for weblate component 'big-big-big-big-big-big-big-big-big-big-big-big-big-big-big-big-big--00.0-syntax_err_module' size 91 is longer than 90 characters
+
+ * xml-class-overridden-by-dynamic
+
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.27/test_repo/broken_module/xml_class_overridden.xml#L4 The class `page-item` never reaches the page: `t-attf-class` on the same element replaces the whole `class` attribute Move it into `t-attf-class` or drop the `class` attribute
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.27/test_repo/broken_module/xml_class_overridden.xml#L8 The class `badge-blue` never reaches the page: `t-att-class` on the same element replaces the whole `class` attribute Move it into `t-att-class` or drop the `class` attribute
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.27/test_repo/broken_module/xml_class_overridden.xml#L13 The class `fw-bold` never reaches the page: `t-attf-class` on the same element replaces the whole `class` attribute Move it into `t-attf-class` or drop the `class` attribute
 
  * xml-create-user-wo-reset-password
 
@@ -565,7 +587,7 @@ options:
 
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.27/test_repo/broken_module/model_view.xml#L11 Use of translatable xpath `text()`
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.27/test_repo/broken_module/template1.xml#L39 Use of translatable xpath `text()`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.27/test_repo/broken_module/template1_copy.xml#L31 Use of translatable xpath `text()`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.27/test_repo/broken_module/template1_copy.xml#L37 Use of translatable xpath `text()`
 
 [//]: # (end-example)
 
