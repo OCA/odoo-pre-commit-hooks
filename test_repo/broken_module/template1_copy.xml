@@ -27,6 +27,12 @@
     </template>
 
     <templates id="my_template_xpath" xml:space="preserve">
+        <t t-name="OwlComponent">
+            <!-- Owl combines both class attributes, so this file (declared under `assets`)
+                 must not raise xml-class-overridden-by-dynamic -->
+            <div class="o_card" t-att-class="{'o_selected': state.selected}"/>
+            <div class="o_card" t-attf-class="o_card #{state.kind}"/>
+        </t>
         <t t-name="t-name" t-inherit="module.Inherited" t-inherit-mode="extension" owl="1">
             <xpath expr="//div[contains(text(), 'Translatable Value')]" position="replace">
                 <div>

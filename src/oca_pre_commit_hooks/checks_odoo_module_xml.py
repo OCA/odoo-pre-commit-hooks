@@ -49,6 +49,7 @@ class ChecksOdooModuleXML(BaseChecker):
     xpath_openerp = etree.XPath("/openerp")
     xpath_xpath = etree.XPath("//xpath")
     xpath_oe_chatter = etree.XPath("//div[hasclass('oe_chatter')]")
+    xpath_class_and_dynamic_class = etree.XPath("//*[@class][@t-att-class or @t-attf-class]")
     # No `/openerp` variant: that root node predates Odoo 9 and the check only runs from 19.0 on
     xpath_res_groups_category = etree.XPath("/odoo//record[@model='res.groups']/field[@name='category_id']")
 
@@ -825,6 +826,50 @@ class ChecksOdooModuleXML(BaseChecker):
                 self.register_error(
                     code="xml-deprecated-oe-chatter",
                     message=("Please replace old style chatters with the new tag <chatter/>."),
+                    filepath=manifest_data["filename_short"],
+                    line=xpath_node.sourceline,
+                )
+
+    @utils.only_required_for_checks("xml-class-overridden-by-dynamic")
+    def check_xml_class_overridden_by_dynamic(self):
+        """* Check xml-class-overridden-by-dynamic
+
+        A server-rendered QWeb element that carries `class` beside `t-att-class` or
+        `t-attf-class` keeps only the dynamic one. QWeb compiles both into a single
+        `attrs` dictionary, the static attributes first and the dynamic ones after, so the
+        dynamic value replaces the whole `class` key:
+        https://github.com/odoo/odoo/blob/c3376d7854da41bcf4adae712dbc0c4bb36d8a8d/odoo/addons/base/models/ir_qweb.py#L1894-L1966
+        Nothing reports it. The view still combines, the page still answers 200 and the
+        element still reaches the DOM, only without the classes that were meant to style
+        it, so it is found as a layout that silently stopped applying.
+        Only the classes the dynamic value does not spell out are reported: a class
+        written in both places still renders, and flagging it would report working code.
+        Templates declared under `assets` or `qweb` are skipped. Owl compiles those in the
+        browser and its `setClass` calls `classList.add`, so there the static and the
+        dynamic classes are combined instead of one replacing the other.
+        """
+        for manifest_data in self.manifest_datas:
+            if manifest_data["data_section"] in ("assets", "qweb"):
+                continue
+            for xpath_node in self.xpath_class_and_dynamic_class(manifest_data["node"]):
+                dynamic = "t-att-class" if xpath_node.get("t-att-class") is not None else "t-attf-class"
+                dynamic_value = xpath_node.get(dynamic)
+                # A class the dynamic value spells out somewhere is not lost, it is only
+                # written twice. Reporting those too would flag code that still renders.
+                dropped = [
+                    css_class
+                    for css_class in xpath_node.get("class").split()
+                    if not re.search(rf"(?<![\w-]){re.escape(css_class)}(?![\w-])", dynamic_value)
+                ]
+                if not dropped:
+                    continue
+                self.register_error(
+                    code="xml-class-overridden-by-dynamic",
+                    message=(
+                        f"The class `{' '.join(dropped)}` never reaches the page: "
+                        f"`{dynamic}` on the same element replaces the whole `class` attribute"
+                    ),
+                    info=f"Move it into `{dynamic}` or drop the `class` attribute",
                     filepath=manifest_data["filename_short"],
                     line=xpath_node.sourceline,
                 )
