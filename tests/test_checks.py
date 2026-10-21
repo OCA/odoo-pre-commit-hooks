@@ -46,6 +46,7 @@ EXPECTED_ERRORS = {
     "xml-create-user-wo-reset-password": 1,
     "xml-dangerous-qweb-replace-low-priority": 9,
     "xml-deprecated-data-node": 8,
+    "xml-deprecated-field-format-option": 8,
     "xml-deprecated-openerp-node": 4,
     "xml-deprecated-qweb-directive-15": 4,
     "xml-deprecated-qweb-directive": 2,
@@ -317,6 +318,11 @@ class TestChecks(common.ChecksCommon):
             content = f.read()
         assert b'name="category_id"' in content, "The deprecated category_id was previously fixed"
 
+        field_format_19 = os.path.join(self.test_repo_path, "odoo19_module", "views", "field_format_option.xml")
+        with open(field_format_19, "rb") as f:
+            content = f.read()
+        assert b"enable_formatting" not in content.split(b"<!-- Reported")[0], "The format option was previously fixed"
+
         self.checks_run(self.file_paths, autofix=True, no_exit=True, no_verbose=False)
 
         # After autofix
@@ -438,6 +444,12 @@ class TestChecks(common.ChecksCommon):
         # A record inside `<data noupdate="1">` is reached and fixed like any other one
         assert b'name="category_id"' not in content, "The deprecated category_id was not fixed under noupdate"
         assert b'<data noupdate="1">' in content, "The noupdate data node was altered"
+
+        with open(field_format_19, "rb") as f:
+            content = f.read()
+        assert b'<field name="year" options="{\'enable_formatting\': false}" />' in content, "format was not fixed"
+        # Kept: a conflict with "enable_formatting", a non-boolean value, a nested dict, a value and "t-options"
+        assert content.count(b"'format'") == 8, "A format option not meant to be fixed was changed"
 
     def test_xml_attributes_order_custom(self):
         custom_order = oca_pre_commit_hooks.global_parser.parse_xml_attributes_order("[class], [id], [t-if]")

@@ -9,5 +9,7 @@
     'data': [
         'security/res_groups.xml',
         'security/res_groups_noupdate.xml',
+        'views/field_format_option.xml',
+        'views/field_format_option_disable.xml',
     ],
 }

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <record id="view_field_format_option_form" model="ir.ui.view">
+        <field name="name">field.format.option.form</field>
+        <field name="model">res.partner</field>
+        <field name="arch" type="xml">
+            <form>
+                <!-- Deprecated "format" option autofixed renaming the key -->
+                <field name="year" options="{'format': false}" />
+                <field name="color" options='{"format": False, "type": "number"}' widget="integer" />
+                <field name="sequence" options="{'step': 1,  'format' :0}"/>
+                <field
+                    name="credit_limit"
+                    options="{
+                        'currency_field': 'currency_id',
+                        'format': False,
+                    }"
+                />
+                <field name="debit_limit" options="{&quot;format&quot;: true}" />
+                <!-- Reported but not autofixed, "enable_formatting" is already set -->
+                <field name="partner_latitude" options="{'format': false, 'enable_formatting': false}" />
+                <!-- Reported but not autofixed, the value is not a boolean -->
+                <field name="partner_longitude" options="{'format': 'dd/MM/yyyy'}" />
+                <!-- Reported but not autofixed, a nested dict uses the key too -->
+                <field name="color_index" options="{'format': false, 'datepicker': {'format': false}}" />
+                <!-- Not reported, "format" is not a top-level key, not a key or the options cannot be parsed -->
+                <field name="date" options="{'datepicker': {'format': false}}" />
+                <field name="comment" options="{'placeholder': 'format'}" />
+                <field name="ref" options="{'enable_formatting': false}" />
+                <field name="barcode" options="{'format': false" />
+            </form>
+        </field>
+    </record>
+    <!-- "format" of "t-options" is valid for QWeb, it must be kept -->
+    <template id="field_format_option_qweb">
+        <span t-field="doc.date" t-options="{'widget': 'date', 'format': 'MMM d'}" />
+    </template>
+</odoo>

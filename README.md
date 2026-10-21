@@ -155,6 +155,17 @@ Check syntax error for CSV files declared in the manifest
 * Check xml-deprecated-data-node
 Deprecated <data> node inside <odoo> xml node
 
+* Check xml-deprecated-field-format-option
+
+The option `format` of the numeric fields, e.g. `<field name="year" options="{'format': false}" />`,
+was read only by the legacy `NumericField` widget. Odoo 17.0 replaced it by `enable_formatting`
+and no field widget reads `format` any more, so the option is silently ignored and the value is
+still formatted, e.g. the year 2026 is displayed as "2,026".
+The autofix renames the key to `enable_formatting` when its value is a boolean and the options do
+not have `enable_formatting` already. `t-options` of QWeb templates are not checked, `format` is
+valid there, e.g. `t-options="{'widget': 'date', 'format': 'MMM d'}"`.
+For more details https://github.com/odoo/odoo/commit/592794b397ba7f6468e45a5cc3e93681b1ed8578
+
 * Check xml-deprecated-oe-chatter
 
 Odoo 18 introduced a new XML tag `<chatter/>` which replaces the old way to declare
@@ -449,6 +460,12 @@ options:
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.27/test_repo/broken_module/demo/duplicated_id_demo.xml#L3 Deprecated `<data>` node Use `<odoo>` instead of `<odoo><data>` or `<odoo noupdate="1">` instead of `<odoo><data noupdate="1">`
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.27/test_repo/broken_module/model_view.xml#L3 Deprecated `<data>` node Use `<odoo>` instead of `<odoo><data>` or `<odoo noupdate="1">` instead of `<odoo><data noupdate="1">`
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.27/test_repo/broken_module/model_view2.xml#L3 Deprecated `<data>` node Use `<odoo>` instead of `<odoo><data>` or `<odoo noupdate="1">` instead of `<odoo><data noupdate="1">`
+
+ * xml-deprecated-field-format-option
+
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.27/test_repo/odoo19_module/views/field_format_option.xml#L9 Deprecated option `format` of `<field options=...` ignored since Odoo 17.0 Use `enable_formatting` instead
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.27/test_repo/odoo19_module/views/field_format_option.xml#L10 Deprecated option `format` of `<field options=...` ignored since Odoo 17.0 Use `enable_formatting` instead
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.27/test_repo/odoo19_module/views/field_format_option.xml#L11 Deprecated option `format` of `<field options=...` ignored since Odoo 17.0 Use `enable_formatting` instead
 
  * xml-deprecated-oe-chatter
 

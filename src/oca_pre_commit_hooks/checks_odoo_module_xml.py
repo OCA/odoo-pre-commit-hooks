@@ -1,5 +1,8 @@
+import ast
+import io
 import os
 import re
+import tokenize
 from collections import defaultdict, namedtuple
 from copy import deepcopy
 from typing import Dict, List
@@ -15,6 +18,9 @@ DFTL_MIN_PRIORITY = 99
 XML_HEADER_EXPECTED = b'<?xml version="1.0" encoding="UTF-8" ?>'
 XML_HEADER_RE = re.compile(rb"^<\?xml[^>]*\?>", re.IGNORECASE | re.MULTILINE)
 NUMBER_RE = re.compile(r"^(?P<integer>[+-]?\d+)(?P<decimal>\.\d+)?$")
+# The key `format` as written in the raw attribute value, including quotes escaped as XML entities
+FIELD_OPTION_FORMAT_RE = re.compile(rb"(?P<quote>'|\"|&quot;|&apos;|&#39;|&#34;)format(?P=quote)(?=\s*:)")
+BOOLEAN_VALUES = {"True", "False", "true", "false", "0", "1"}
 
 
 # Same as Odoo: https://github.com/odoo/odoo/commit/9cefa76988ff94c3d590c6631b604755114d0297
@@ -51,6 +57,7 @@ class ChecksOdooModuleXML(BaseChecker):
     xpath_oe_chatter = etree.XPath("//div[hasclass('oe_chatter')]")
     # No `/openerp` variant: that root node predates Odoo 9 and the check only runs from 19.0 on
     xpath_res_groups_category = etree.XPath("/odoo//record[@model='res.groups']/field[@name='category_id']")
+    xpath_field_options = etree.XPath("/odoo//field[@options]")
 
     tree_deprecate_attrs = {"string", "colors", "fonts"}
     xpath_tree_deprecated = etree.XPath(f".//tree[{'|'.join(f'@{a}' for a in tree_deprecate_attrs)}]")
@@ -78,6 +85,37 @@ class ChecksOdooModuleXML(BaseChecker):
     @staticmethod
     def _get_numeric_field_by_model(model_name):
         return utils.DFLT_NUMERIC_FIELDS + (utils.DFLT_NUMERIC_FIELDS_BY_MODEL.get(model_name) or [])
+
+    @staticmethod
+    def _get_options_keys(options):
+        """Return {key: value} of the top-level keys of a field `options` dict
+
+        The value is the first token after the colon, enough to tell a boolean literal apart.
+        An expression that cannot be tokenized returns an empty dict.
+        """
+        try:
+            tokens = [
+                token
+                for token in tokenize.generate_tokens(io.StringIO(options).readline)
+                if token.type not in (tokenize.NL, tokenize.NEWLINE, tokenize.COMMENT)
+            ]
+        except (tokenize.TokenError, SyntaxError):
+            return {}
+        keys = {}
+        depth = 0
+        for idx, token in enumerate(tokens):
+            if token.type == tokenize.OP and token.string in "{[(":
+                depth += 1
+            elif token.type == tokenize.OP and token.string in "}])":
+                depth -= 1
+            elif (
+                token.type == tokenize.STRING
+                and depth == 1
+                and idx + 2 < len(tokens)
+                and tokens[idx + 1].string == ":"
+            ):
+                keys[ast.literal_eval(token.string)] = tokens[idx + 2].string
+        return keys
 
     def _get_first_tag(self, fileobj_xml):
         buffer = []
@@ -808,6 +846,62 @@ class ChecksOdooModuleXML(BaseChecker):
             if content != locator.content:
                 utils.perform_fix(manifest_data["filename"], content)
                 self.update_node(manifest_data)  # update sourceline after removing lines
+
+    @utils.only_required_for_checks("xml-deprecated-field-format-option")
+    def check_xml_deprecated_field_format_option(self):
+        """* Check xml-deprecated-field-format-option
+
+        The option `format` of the numeric fields, e.g. `<field name="year" options="{'format': false}" />`,
+        was read only by the legacy `NumericField` widget. Odoo 17.0 replaced it by `enable_formatting`
+        and no field widget reads `format` any more, so the option is silently ignored and the value is
+        still formatted, e.g. the year 2026 is displayed as "2,026".
+        The autofix renames the key to `enable_formatting` when its value is a boolean and the options do
+        not have `enable_formatting` already. `t-options` of QWeb templates are not checked, `format` is
+        valid there, e.g. `t-options="{'widget': 'date', 'format': 'MMM d'}"`.
+        For more details https://github.com/odoo/odoo/commit/592794b397ba7f6468e45a5cc3e93681b1ed8578
+        """
+        if not self.module_version or self.module_version < Version("17"):
+            return
+
+        for manifest_data in self.manifest_datas:
+            if not self.is_message_enabled("xml-deprecated-field-format-option", manifest_data["disabled_checks"]):
+                continue
+            locator = self._get_tag_locator(manifest_data) if self.autofix else None
+            replacements = []
+            for field_node in self.xpath_field_options(manifest_data["node"]):
+                options_keys = self._get_options_keys(field_node.get("options"))
+                if "format" not in options_keys:
+                    continue
+                self.register_error(
+                    code="xml-deprecated-field-format-option",
+                    message="Deprecated option `format` of `<field options=...` ignored since Odoo 17.0",
+                    info="Use `enable_formatting` instead",
+                    filepath=manifest_data["filename_short"],
+                    line=field_node.sourceline,
+                )
+                if (
+                    not self.autofix
+                    or "enable_formatting" in options_keys
+                    or options_keys["format"] not in BOOLEAN_VALUES
+                ):
+                    continue
+                attr_span = locator.get_attr(field_node, "options")
+                matches = (
+                    list(FIELD_OPTION_FORMAT_RE.finditer(locator.content, attr_span.value_start, attr_span.value_end))
+                    if attr_span
+                    else []
+                )
+                # More than one match means a nested dict also uses the key, it is not guessed which one
+                if len(matches) != 1:
+                    continue
+                quote = matches[0].group("quote")
+                replacements.append((matches[0].start(), matches[0].end(), quote + b"enable_formatting" + quote))
+            if replacements:
+                content = locator.content
+                for start, end, new_key in reversed(replacements):
+                    content = content[:start] + new_key + content[end:]
+                utils.perform_fix(manifest_data["filename"], content)
+                self.update_node(manifest_data)
 
     @utils.only_required_for_checks("xml-deprecated-oe-chatter")
     def check_xml_deprecated_oe_chatter(self):

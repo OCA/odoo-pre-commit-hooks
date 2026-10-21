@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <!-- oca-hooks:disable=xml-deprecated-field-format-option -->
+    <record id="view_field_format_option_disable_form" model="ir.ui.view">
+        <field name="name">field.format.option.disable.form</field>
+        <field name="model">res.partner</field>
+        <field name="arch" type="xml">
+            <form>
+                <field name="year" options="{'format': false}" />
+            </form>
+        </field>
+    </record>
+</odoo>
