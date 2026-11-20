@@ -219,6 +219,13 @@ if the record is integer but without eval attribute
 instead of
 `<field name="sequence" eval="100" />`
 
+* Check xml-invisible-in-list-view
+
+Using `invisible="1"` or `invisible="True"` on a `<field>` inside a `<list>` or `<tree>`
+view does not hide the column properly.  Since Odoo 17 the correct attribute to hide an
+entire column is `column_invisible="True"`.
+For more details see https://www.odoo.com/documentation/17.0/developer/reference/backend/views.html#lists
+
 * Check xml-create-user-wo-reset-password
 records of user without `context="{'no_reset_password': True}"`
 This context avoid send email and mail log warning
@@ -521,6 +528,12 @@ options:
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.27/test_repo/broken_module/demo/duplicated_id_demo.xml#L1 XML header expected '<?xml version="1.0" encoding="UTF-8" ?>' but received '<?xml version="1.0" encoding="utf-8"?>'
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.27/test_repo/broken_module/deprecated_disable.xml#L1 XML header expected '<?xml version="1.0" encoding="UTF-8" ?>' but received '<?xml version="1.0" encoding="utf-8" ?>'
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.27/test_repo/broken_module/model_view.xml#L1 XML header expected '<?xml version="1.0" encoding="UTF-8" ?>' but received '<?xml version="1.0" encoding="utf-8"?>'
+
+ * xml-invisible-in-list-view
+
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.27/test_repo/odoo18_module/views/invisible_in_list.xml#L11 Use `column_invisible="True"` instead of `invisible` for field `state` inside a list/tree view `invisible` in a list hides the cell per-row; `column_invisible` hides the whole column
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.27/test_repo/odoo19_module/views/invisible_in_list.xml#L11 Use `column_invisible="True"` instead of `invisible` for field `state` inside a list/tree view `invisible` in a list hides the cell per-row; `column_invisible` hides the whole column
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.27/test_repo/odoo19_module/views/invisible_in_list.xml#L23 Use `column_invisible="True"` instead of `invisible` for field `active` inside a list/tree view `invisible` in a list hides the cell per-row; `column_invisible` hides the whole column
 
  * xml-not-valid-char-link
 

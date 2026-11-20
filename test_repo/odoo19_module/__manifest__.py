@@ -9,5 +9,6 @@
     'data': [
         'security/res_groups.xml',
         'security/res_groups_noupdate.xml',
+        'views/invisible_in_list.xml',
     ],
 }
