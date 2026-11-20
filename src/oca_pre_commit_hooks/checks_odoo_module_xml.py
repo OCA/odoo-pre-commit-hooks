@@ -58,6 +58,8 @@ class ChecksOdooModuleXML(BaseChecker):
         './/list//field[@invisible="1" or @invisible="True"] | .//tree//field[@invisible="1" or @invisible="True"]'
     )
 
+    xpath_closest_view_node = etree.XPath("ancestor::*[self::list or self::tree or self::form or self::kanban][1]")
+
     tree_deprecate_attrs = {"string", "colors", "fonts"}
     xpath_tree_deprecated = etree.XPath(f".//tree[{'|'.join(f'@{a}' for a in tree_deprecate_attrs)}]")
 
@@ -843,11 +845,17 @@ class ChecksOdooModuleXML(BaseChecker):
         view does not hide the column properly.  Since Odoo 17 the correct attribute to hide an
         entire column is `column_invisible="True"`.
         For more details see https://www.odoo.com/documentation/17.0/developer/reference/backend/views.html#lists
+
+        The autofix replaces `invisible="1"` and `invisible="True"` with `column_invisible="True"`.
+        It is skipped (the error is still reported) when the field already has `column_invisible`
+        or when its closest enclosing view node is not a `<list>` or `<tree>`, e.g. a `<form>`
+        declared inside the list.
         """
         if not self.module_version or self.module_version < Version("17"):
             return
         if record.get("model") != "ir.ui.view":
             return
+        fixable_nodes = []
         for field_node in self.xpath_invisible_in_list(record):
             field_name = field_node.get("name", "")
             self.register_error(
@@ -860,3 +868,29 @@ class ChecksOdooModuleXML(BaseChecker):
                 filepath=manifest_data["filename_short"],
                 line=field_node.sourceline,
             )
+            if "column_invisible" not in field_node.attrib and self.xpath_closest_view_node(field_node)[0].tag in {
+                "list",
+                "tree",
+            }:
+                fixable_nodes.append(field_node)
+        if not self.autofix or not fixable_nodes:
+            return
+        locator = self._get_tag_locator(manifest_data)
+        content = locator.content
+        replacements = []
+        for field_node in fixable_nodes:
+            attr_span = locator.get_attr(field_node, "invisible")
+            if attr_span:
+                replacements.append(attr_span)
+        # Replace from the end to keep the offsets of the previous spans valid
+        for attr_span in sorted(replacements, key=lambda span: span.name_start, reverse=True):
+            content = (
+                content[: attr_span.name_start]
+                + b"column_invisible"
+                + content[attr_span.name_end : attr_span.value_start]
+                + b"True"
+                + content[attr_span.value_end :]
+            )
+        if content != locator.content:
+            utils.perform_fix(manifest_data["filename"], content)
+            self.update_node(manifest_data)

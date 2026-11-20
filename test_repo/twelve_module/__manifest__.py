@@ -8,5 +8,6 @@
     ],
     'data': [
         'security/ir.model.access.csv',
+        'views/invisible_in_list.xml',
     ],
 }

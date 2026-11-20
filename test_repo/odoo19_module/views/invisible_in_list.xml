@@ -41,6 +41,35 @@
         </field>
     </record>
 
+    <!-- BAD: autofixed keeping the single quotes and the multiline attributes -->
+    <record id="view_partner_list_bad_layout" model="ir.ui.view">
+        <field name="name">res.partner.list.bad.layout</field>
+        <field name="model">res.partner</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name" />
+                <field name="email" invisible='1' />
+                <field
+                    name="phone"
+                    optional="show"
+                    invisible="True"
+                />
+            </list>
+        </field>
+    </record>
+
+    <!-- BAD: not autofixed, the field already has column_invisible -->
+    <record id="view_partner_list_bad_both" model="ir.ui.view">
+        <field name="name">res.partner.list.bad.both</field>
+        <field name="model">res.partner</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name" />
+                <field name="mobile" invisible="1" column_invisible="True" />
+            </list>
+        </field>
+    </record>
+
     <!-- GOOD: column_invisible="True" in a list is correct -->
     <record id="view_partner_list_good1" model="ir.ui.view">
         <field name="name">res.partner.list.good1</field>

@@ -226,6 +226,11 @@ view does not hide the column properly.  Since Odoo 17 the correct attribute to 
 entire column is `column_invisible="True"`.
 For more details see https://www.odoo.com/documentation/17.0/developer/reference/backend/views.html#lists
 
+The autofix replaces `invisible="1"` and `invisible="True"` with `column_invisible="True"`.
+It is skipped (the error is still reported) when the field already has `column_invisible`
+or when its closest enclosing view node is not a `<list>` or `<tree>`, e.g. a `<form>`
+declared inside the list.
+
 * Check xml-create-user-wo-reset-password
 records of user without `context="{'no_reset_password': True}"`
 This context avoid send email and mail log warning
