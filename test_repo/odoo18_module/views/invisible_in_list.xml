@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+
+    <!-- BAD: invisible="1" inside a list should be column_invisible="True" (v18 >= v17) -->
+    <record id="view_partner_list_invisible" model="ir.ui.view">
+        <field name="name">res.partner.list.invisible</field>
+        <field name="model">res.partner</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name" />
+                <field name="state" invisible="1" />
+            </list>
+        </field>
+    </record>
+
+</odoo>

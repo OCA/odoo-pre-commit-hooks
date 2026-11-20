@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+
+    <!-- BAD: invisible="1" inside a list should be column_invisible="True" -->
+    <record id="view_partner_list_bad1" model="ir.ui.view">
+        <field name="name">res.partner.list.bad1</field>
+        <field name="model">res.partner</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name" />
+                <field name="state" invisible="1" />
+            </list>
+        </field>
+    </record>
+
+    <!-- BAD: invisible="True" inside a tree should be column_invisible="True" -->
+    <record id="view_partner_list_bad2" model="ir.ui.view">
+        <field name="name">res.partner.list.bad2</field>
+        <field name="model">res.partner</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name" />
+                <field name="active" invisible="True" />
+            </tree>
+        </field>
+    </record>
+
+    <!-- BAD: invisible="1" inside a list embedded in a form (One2many sub-list) -->
+    <record id="view_partner_form_sublist" model="ir.ui.view">
+        <field name="name">res.partner.form.sublist</field>
+        <field name="model">res.partner</field>
+        <field name="arch" type="xml">
+            <form>
+                <field name="child_ids">
+                    <list>
+                        <field name="name" />
+                        <field name="type" invisible="1" />
+                    </list>
+                </field>
+            </form>
+        </field>
+    </record>
+
+    <!-- BAD: autofixed keeping the single quotes and the multiline attributes -->
+    <record id="view_partner_list_bad_layout" model="ir.ui.view">
+        <field name="name">res.partner.list.bad.layout</field>
+        <field name="model">res.partner</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name" />
+                <field name="email" invisible='1' />
+                <field
+                    name="phone"
+                    optional="show"
+                    invisible="True"
+                />
+            </list>
+        </field>
+    </record>
+
+    <!-- BAD: not autofixed, the field already has column_invisible -->
+    <record id="view_partner_list_bad_both" model="ir.ui.view">
+        <field name="name">res.partner.list.bad.both</field>
+        <field name="model">res.partner</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name" />
+                <field name="mobile" invisible="1" column_invisible="True" />
+            </list>
+        </field>
+    </record>
+
+    <!-- GOOD: column_invisible="True" in a list is correct -->
+    <record id="view_partner_list_good1" model="ir.ui.view">
+        <field name="name">res.partner.list.good1</field>
+        <field name="model">res.partner</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name" />
+                <field name="state" column_invisible="True" />
+            </list>
+        </field>
+    </record>
+
+    <!-- GOOD: invisible="1" inside a form is fine -->
+    <record id="view_partner_form_good" model="ir.ui.view">
+        <field name="name">res.partner.form.good</field>
+        <field name="model">res.partner</field>
+        <field name="arch" type="xml">
+            <form>
+                <field name="state" invisible="1" />
+            </form>
+        </field>
+    </record>
+
+    <!-- GOOD: invisible with a domain in a list is valid (per-row conditional) -->
+    <record id="view_partner_list_good2" model="ir.ui.view">
+        <field name="name">res.partner.list.good2</field>
+        <field name="model">res.partner</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name" />
+                <field name="phone" invisible="name == False" />
+            </list>
+        </field>
+    </record>
+
+</odoo>
