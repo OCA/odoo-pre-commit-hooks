@@ -58,7 +58,9 @@ class ChecksOdooModuleXML(BaseChecker):
         './/list//field[@invisible="1" or @invisible="True"] | .//tree//field[@invisible="1" or @invisible="True"]'
     )
 
-    xpath_closest_view_node = etree.XPath("ancestor::*[self::list or self::tree or self::form or self::kanban][1]")
+    xpath_closest_view_node = etree.XPath(
+        "ancestor::*[self::list or self::tree or self::form or self::kanban or self::groupby][1]"
+    )
 
     tree_deprecate_attrs = {"string", "colors", "fonts"}
     xpath_tree_deprecated = etree.XPath(f".//tree[{'|'.join(f'@{a}' for a in tree_deprecate_attrs)}]")
@@ -846,10 +848,15 @@ class ChecksOdooModuleXML(BaseChecker):
         entire column is `column_invisible="True"`.
         For more details see https://www.odoo.com/documentation/17.0/developer/reference/backend/views.html#lists
 
+        Only the fields lexically inside the `<list>` or `<tree>` are checked, so the ones added
+        by an inherited view (`<xpath ... position="inside">`, `<attribute name="invisible">`)
+        are not reported. A field inside a `<form>`, `<kanban>` or `<groupby>` declared in the
+        list is not reported either.
+
         The autofix replaces `invisible="1"` and `invisible="True"` with `column_invisible="True"`.
-        It is skipped (the error is still reported) when the field already has `column_invisible`
-        or when its closest enclosing view node is not a `<list>` or `<tree>`, e.g. a `<form>`
-        declared inside the list.
+        The column is then removed as a whole: its header, its footer total and its export
+        are gone too, instead of only emptying the cell of each row.
+        It is skipped (the error is still reported) when the field already has `column_invisible`.
         """
         if not self.module_version or self.module_version < Version("17"):
             return
@@ -857,6 +864,8 @@ class ChecksOdooModuleXML(BaseChecker):
             return
         fixable_nodes = []
         for field_node in self.xpath_invisible_in_list(record):
+            if self.xpath_closest_view_node(field_node)[0].tag not in {"list", "tree"}:
+                continue
             field_name = field_node.get("name", "")
             self.register_error(
                 code="xml-invisible-in-list-view",
@@ -868,10 +877,7 @@ class ChecksOdooModuleXML(BaseChecker):
                 filepath=manifest_data["filename_short"],
                 line=field_node.sourceline,
             )
-            if "column_invisible" not in field_node.attrib and self.xpath_closest_view_node(field_node)[0].tag in {
-                "list",
-                "tree",
-            }:
+            if "column_invisible" not in field_node.attrib:
                 fixable_nodes.append(field_node)
         if not self.autofix or not fixable_nodes:
             return
@@ -880,7 +886,12 @@ class ChecksOdooModuleXML(BaseChecker):
         replacements = []
         for field_node in fixable_nodes:
             attr_span = locator.get_attr(field_node, "invisible")
-            if attr_span:
+            # Do not rewrite another tag if the locator is out of sync with the parsed tree
+            if (
+                attr_span
+                and content[attr_span.name_start : attr_span.name_end] == b"invisible"
+                and content[attr_span.value_start : attr_span.value_end] in {b"1", b"True"}
+            ):
                 replacements.append(attr_span)
         # Replace from the end to keep the offsets of the previous spans valid
         for attr_span in sorted(replacements, key=lambda span: span.name_start, reverse=True):

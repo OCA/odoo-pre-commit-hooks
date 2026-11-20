@@ -164,10 +164,21 @@ def test_xml_invisible_in_list_view_autofix_preserves_format():
             enable={"xml-invisible-in-list-view"},
             no_exit=True,
         )
-        assert [(error.code, error.position.line) for error in errors_after] == [("xml-invisible-in-list-view", 68)]
+        assert len(errors_after) == 1
+        assert errors_after[0].code == "xml-invisible-in-list-view"
+        assert "field `mobile`" in errors_after[0].message
+
+        # Idempotent: a second autofix run does not change the file
+        checks_odoo_module.run(
+            [str(module_dst / "__manifest__.py")],
+            enable={"xml-invisible-in-list-view"},
+            no_exit=True,
+            autofix=True,
+        )
+        assert (module_dst / "views" / "invisible_in_list.xml").read_text() == xml_content
 
 
-def test_xml_invisible_in_list_view_autofix_skips_form_inside_list():
+def test_xml_invisible_in_list_view_ignores_fields_of_nested_non_list_views():
     with temporary_module_copy("test_repo/odoo19_module") as module_dst:
         xml_path = module_dst / "views" / "form_in_list.xml"
         xml_path.write_text(
@@ -178,10 +189,18 @@ def test_xml_invisible_in_list_view_autofix_skips_form_inside_list():
             '        <field name="model">res.partner</field>\n'
             '        <field name="arch" type="xml">\n'
             "            <list>\n"
+            '                <groupby name="partner_id">\n'
+            '                    <field name="phone" invisible="1" />\n'
+            "                </groupby>\n"
             '                <field name="child_ids">\n'
             "                    <form>\n"
             '                        <field name="name" invisible="1" />\n'
             "                    </form>\n"
+            "                </field>\n"
+            '                <field name="category_id">\n'
+            "                    <kanban>\n"
+            '                        <field name="color" invisible="1" />\n'
+            "                    </kanban>\n"
             "                </field>\n"
             "            </list>\n"
             "        </field>\n"
@@ -193,12 +212,13 @@ def test_xml_invisible_in_list_view_autofix_skips_form_inside_list():
             manifest_path.read_text().replace("'data': [", "'data': [\n        'views/form_in_list.xml',")
         )
         before = xml_path.read_text()
-        checks_odoo_module.run(
+        errors = checks_odoo_module.run(
             [str(manifest_path)],
             enable={"xml-invisible-in-list-view"},
             no_exit=True,
             autofix=True,
         )
+        assert not [error for error in errors if error.position.filepath.endswith("form_in_list.xml")]
         assert xml_path.read_text() == before
 
 

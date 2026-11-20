@@ -226,10 +226,15 @@ view does not hide the column properly.  Since Odoo 17 the correct attribute to 
 entire column is `column_invisible="True"`.
 For more details see https://www.odoo.com/documentation/17.0/developer/reference/backend/views.html#lists
 
+Only the fields lexically inside the `<list>` or `<tree>` are checked, so the ones added
+by an inherited view (`<xpath ... position="inside">`, `<attribute name="invisible">`)
+are not reported. A field inside a `<form>`, `<kanban>` or `<groupby>` declared in the
+list is not reported either.
+
 The autofix replaces `invisible="1"` and `invisible="True"` with `column_invisible="True"`.
-It is skipped (the error is still reported) when the field already has `column_invisible`
-or when its closest enclosing view node is not a `<list>` or `<tree>`, e.g. a `<form>`
-declared inside the list.
+The column is then removed as a whole: its header, its footer total and its export
+are gone too, instead of only emptying the cell of each row.
+It is skipped (the error is still reported) when the field already has `column_invisible`.
 
 * Check xml-create-user-wo-reset-password
 records of user without `context="{'no_reset_password': True}"`
