@@ -202,6 +202,11 @@ def test_xml_invisible_in_list_view_ignores_fields_of_nested_non_list_views():
             '                        <field name="color" invisible="1" />\n'
             "                    </kanban>\n"
             "                </field>\n"
+            '                <field name="message_ids">\n'
+            "                    <calendar>\n"
+            '                        <field name="date" invisible="1" />\n'
+            "                    </calendar>\n"
+            "                </field>\n"
             "            </list>\n"
             "        </field>\n"
             "    </record>\n"
@@ -233,4 +238,36 @@ def test_xml_invisible_in_list_view_is_skipped_before_odoo_17():
             autofix=True,
         )
         assert not errors
+        assert xml_path.read_text() == before
+
+
+def test_xml_invisible_in_list_view_autofix_keeps_values_that_are_not_literals():
+    with temporary_module_copy("test_repo/odoo19_module") as module_dst:
+        xml_path = module_dst / "views" / "char_reference.xml"
+        xml_path.write_text(
+            '<?xml version="1.0" encoding="UTF-8" ?>\n'
+            "<odoo>\n"
+            '    <record id="view_char_reference" model="ir.ui.view">\n'
+            '        <field name="name">char.reference</field>\n'
+            '        <field name="model">res.partner</field>\n'
+            '        <field name="arch" type="xml">\n'
+            "            <list>\n"
+            '                <field name="name" invisible="&#49;" />\n'
+            "            </list>\n"
+            "        </field>\n"
+            "    </record>\n"
+            "</odoo>\n"
+        )
+        manifest_path = module_dst / "__manifest__.py"
+        manifest_path.write_text(
+            manifest_path.read_text().replace("'data': [", "'data': [\n        'views/char_reference.xml',")
+        )
+        before = xml_path.read_text()
+        errors = checks_odoo_module.run(
+            [str(manifest_path)],
+            enable={"xml-invisible-in-list-view"},
+            no_exit=True,
+            autofix=True,
+        )
+        assert [error.position.filepath.endswith("char_reference.xml") for error in errors].count(True) == 1
         assert xml_path.read_text() == before

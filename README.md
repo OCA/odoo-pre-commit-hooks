@@ -226,10 +226,10 @@ view does not hide the column properly.  Since Odoo 17 the correct attribute to 
 entire column is `column_invisible="True"`.
 For more details see https://www.odoo.com/documentation/17.0/developer/reference/backend/views.html#lists
 
-Only the fields lexically inside the `<list>` or `<tree>` are checked, so the ones added
-by an inherited view (`<xpath ... position="inside">`, `<attribute name="invisible">`)
-are not reported. A field inside a `<form>`, `<kanban>` or `<groupby>` declared in the
-list is not reported either.
+Only the columns, the fields that are direct children of the `<list>` or `<tree>`, are
+checked, so the ones added by an inherited view (`<xpath ... position="inside">`,
+`<attribute name="invisible">`) are not reported. A field of a view declared inside a
+field of the list (`<form>`, `<kanban>`, ...) or of a `<groupby>` is not reported either.
 
 The autofix replaces `invisible="1"` and `invisible="True"` with `column_invisible="True"`.
 The column is then removed as a whole: its header, its footer total and its export
