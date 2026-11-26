@@ -133,3 +133,141 @@ def test_xml_deprecated_res_groups_category_id_not_reported_before_19():
         assert not errors
         xml_content = (module_dst / "views" / "res_groups_category.xml").read_text()
         assert '<field name="category_id" ref="base.module_category_hidden" />' in xml_content
+
+
+def test_xml_invisible_in_list_view_autofix_preserves_format():
+    with temporary_module_copy("test_repo/odoo19_module") as module_dst:
+        checks_odoo_module.run(
+            [str(module_dst / "__manifest__.py")],
+            enable={"xml-invisible-in-list-view"},
+            no_exit=True,
+            autofix=True,
+        )
+
+        xml_content = (module_dst / "views" / "invisible_in_list.xml").read_text()
+        assert '<field name="state" column_invisible="True" />' in xml_content
+        assert '<field name="active" column_invisible="True" />' in xml_content
+        assert '<field name="type" column_invisible="True" />' in xml_content
+        assert "<field name=\"email\" column_invisible='True' />" in xml_content
+        assert (
+            '<field\n                    name="phone"\n                    optional="show"\n'
+            '                    column_invisible="True"\n                />' in xml_content
+        )
+        # Not autofixed: the field already has column_invisible
+        assert '<field name="mobile" invisible="1" column_invisible="True" />' in xml_content
+        # Valid usages are kept
+        assert '<field name="state" invisible="1" />' in xml_content  # form view
+        assert '<field name="phone" invisible="name == False" />' in xml_content
+
+        errors_after = checks_odoo_module.run(
+            [str(module_dst / "__manifest__.py")],
+            enable={"xml-invisible-in-list-view"},
+            no_exit=True,
+        )
+        assert len(errors_after) == 1
+        assert errors_after[0].code == "xml-invisible-in-list-view"
+        assert "field `mobile`" in errors_after[0].message
+
+        # Idempotent: a second autofix run does not change the file
+        checks_odoo_module.run(
+            [str(module_dst / "__manifest__.py")],
+            enable={"xml-invisible-in-list-view"},
+            no_exit=True,
+            autofix=True,
+        )
+        assert (module_dst / "views" / "invisible_in_list.xml").read_text() == xml_content
+
+
+def test_xml_invisible_in_list_view_ignores_fields_of_nested_non_list_views():
+    with temporary_module_copy("test_repo/odoo19_module") as module_dst:
+        xml_path = module_dst / "views" / "form_in_list.xml"
+        xml_path.write_text(
+            '<?xml version="1.0" encoding="UTF-8" ?>\n'
+            "<odoo>\n"
+            '    <record id="view_form_in_list" model="ir.ui.view">\n'
+            '        <field name="name">form.in.list</field>\n'
+            '        <field name="model">res.partner</field>\n'
+            '        <field name="arch" type="xml">\n'
+            "            <list>\n"
+            '                <groupby name="partner_id">\n'
+            '                    <field name="phone" invisible="1" />\n'
+            "                </groupby>\n"
+            '                <field name="child_ids">\n'
+            "                    <form>\n"
+            '                        <field name="name" invisible="1" />\n'
+            "                    </form>\n"
+            "                </field>\n"
+            '                <field name="category_id">\n'
+            "                    <kanban>\n"
+            '                        <field name="color" invisible="1" />\n'
+            "                    </kanban>\n"
+            "                </field>\n"
+            '                <field name="message_ids">\n'
+            "                    <calendar>\n"
+            '                        <field name="date" invisible="1" />\n'
+            "                    </calendar>\n"
+            "                </field>\n"
+            "            </list>\n"
+            "        </field>\n"
+            "    </record>\n"
+            "</odoo>\n"
+        )
+        manifest_path = module_dst / "__manifest__.py"
+        manifest_path.write_text(
+            manifest_path.read_text().replace("'data': [", "'data': [\n        'views/form_in_list.xml',")
+        )
+        before = xml_path.read_text()
+        errors = checks_odoo_module.run(
+            [str(manifest_path)],
+            enable={"xml-invisible-in-list-view"},
+            no_exit=True,
+            autofix=True,
+        )
+        assert not [error for error in errors if error.position.filepath.endswith("form_in_list.xml")]
+        assert xml_path.read_text() == before
+
+
+def test_xml_invisible_in_list_view_is_skipped_before_odoo_17():
+    with temporary_module_copy("test_repo/twelve_module") as module_dst:
+        xml_path = module_dst / "views" / "invisible_in_list.xml"
+        before = xml_path.read_text()
+        errors = checks_odoo_module.run(
+            [str(module_dst / "__manifest__.py")],
+            enable={"xml-invisible-in-list-view"},
+            no_exit=True,
+            autofix=True,
+        )
+        assert not errors
+        assert xml_path.read_text() == before
+
+
+def test_xml_invisible_in_list_view_autofix_keeps_values_that_are_not_literals():
+    with temporary_module_copy("test_repo/odoo19_module") as module_dst:
+        xml_path = module_dst / "views" / "char_reference.xml"
+        xml_path.write_text(
+            '<?xml version="1.0" encoding="UTF-8" ?>\n'
+            "<odoo>\n"
+            '    <record id="view_char_reference" model="ir.ui.view">\n'
+            '        <field name="name">char.reference</field>\n'
+            '        <field name="model">res.partner</field>\n'
+            '        <field name="arch" type="xml">\n'
+            "            <list>\n"
+            '                <field name="name" invisible="&#49;" />\n'
+            "            </list>\n"
+            "        </field>\n"
+            "    </record>\n"
+            "</odoo>\n"
+        )
+        manifest_path = module_dst / "__manifest__.py"
+        manifest_path.write_text(
+            manifest_path.read_text().replace("'data': [", "'data': [\n        'views/char_reference.xml',")
+        )
+        before = xml_path.read_text()
+        errors = checks_odoo_module.run(
+            [str(manifest_path)],
+            enable={"xml-invisible-in-list-view"},
+            no_exit=True,
+            autofix=True,
+        )
+        assert [error.position.filepath.endswith("char_reference.xml") for error in errors].count(True) == 1
+        assert xml_path.read_text() == before

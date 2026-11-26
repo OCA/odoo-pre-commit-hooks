@@ -53,6 +53,7 @@ EXPECTED_ERRORS = {
     "xml-deprecated-tree-attribute": 3,
     "xml-duplicate-fields": 3,
     "xml-duplicate-record-id": 2,
+    "xml-invisible-in-list-view": 7,
     "xml-not-valid-char-link": 2,
     "xml-redundant-module-name": 3,
     "xml-syntax-error": 2,

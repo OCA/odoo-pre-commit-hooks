@@ -52,6 +52,12 @@ class ChecksOdooModuleXML(BaseChecker):
     # No `/openerp` variant: that root node predates Odoo 9 and the check only runs from 19.0 on
     xpath_res_groups_category = etree.XPath("/odoo//record[@model='res.groups']/field[@name='category_id']")
 
+    # Fields using invisible="1" or invisible="True" inside list/tree views.
+    # These should use column_invisible="True" instead (since Odoo 17).
+    xpath_invisible_in_list = etree.XPath(
+        './/list/field[@invisible="1" or @invisible="True"] | .//tree/field[@invisible="1" or @invisible="True"]'
+    )
+
     tree_deprecate_attrs = {"string", "colors", "fonts"}
     xpath_tree_deprecated = etree.XPath(f".//tree[{'|'.join(f'@{a}' for a in tree_deprecate_attrs)}]")
 
@@ -828,3 +834,72 @@ class ChecksOdooModuleXML(BaseChecker):
                     filepath=manifest_data["filename_short"],
                     line=xpath_node.sourceline,
                 )
+
+    @utils.only_required_for_checks("xml-invisible-in-list-view")
+    def visit_xml_record_invisible_list(self, manifest_data, record):
+        """* Check xml-invisible-in-list-view
+
+        Using `invisible="1"` or `invisible="True"` on a `<field>` inside a `<list>` or `<tree>`
+        view does not hide the column properly.  Since Odoo 17 the correct attribute to hide an
+        entire column is `column_invisible="True"`.
+        For more details see https://www.odoo.com/documentation/17.0/developer/reference/backend/views.html#lists
+
+        Only the columns, the fields that are direct children of the `<list>` or `<tree>`, are
+        checked, so the ones added by an inherited view (`<xpath ... position="inside">`,
+        `<attribute name="invisible">`) are not reported. A field of a view declared inside a
+        field of the list (`<form>`, `<kanban>`, ...) or of a `<groupby>` is not reported either.
+
+        The autofix replaces `invisible="1"` and `invisible="True"` with `column_invisible="True"`.
+        The column is then removed as a whole: its header, its footer total and its export
+        are gone too, instead of only emptying the cell of each row.
+        It is skipped (the error is still reported) when the field already has `column_invisible`.
+        """
+        if not self.module_version or self.module_version < Version("17"):
+            return
+        if record.get("model") != "ir.ui.view":
+            return
+        fixable_nodes = []
+        for field_node in self.xpath_invisible_in_list(record):
+            field_name = field_node.get("name", "")
+            self.register_error(
+                code="xml-invisible-in-list-view",
+                message=(
+                    f'Use `column_invisible="True"` instead of `invisible` '
+                    f"for field `{field_name}` inside a list/tree view"
+                ),
+                info="`invisible` in a list hides the cell per-row; `column_invisible` hides the whole column",
+                filepath=manifest_data["filename_short"],
+                line=field_node.sourceline,
+            )
+            if "column_invisible" not in field_node.attrib:
+                fixable_nodes.append(field_node)
+        if not self.autofix or not fixable_nodes:
+            return
+        locator = self._get_tag_locator(manifest_data)
+        content = locator.content
+        replacements = []
+        for field_node in fixable_nodes:
+            tag_info = locator.get_tag(field_node)
+            name_span = tag_info.get_attr("name") if tag_info else None
+            attr_span = tag_info.get_attr("invisible") if tag_info else None
+            # Do not rewrite another tag if the locator is out of sync with the parsed tree
+            if (
+                attr_span
+                and tag_info.tag == "field"
+                and name_span
+                and content[name_span.value_start : name_span.value_end] == field_node.get("name", "").encode()
+                and content[attr_span.value_start : attr_span.value_end] in {b"1", b"True"}
+            ):
+                replacements.append(attr_span)
+        # Replace from the end to keep the offsets of the previous spans valid
+        for attr_span in sorted(replacements, key=lambda span: span.name_start, reverse=True):
+            content = (
+                content[: attr_span.name_start]
+                + b"column_invisible"
+                + content[attr_span.name_end : attr_span.value_start]
+                + b"True"
+                + content[attr_span.value_end :]
+            )
+        if content != locator.content:
+            utils.perform_fix(manifest_data["filename"], content)
+            self.update_node(manifest_data)

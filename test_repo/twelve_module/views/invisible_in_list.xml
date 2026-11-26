@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+
+    <!-- GOOD: before Odoo 17 the check does not apply -->
+    <record id="view_partner_tree_invisible" model="ir.ui.view">
+        <field name="name">res.partner.tree.invisible</field>
+        <field name="model">res.partner</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name" />
+                <field name="state" invisible="1" />
+            </tree>
+        </field>
+    </record>
+
+</odoo>
